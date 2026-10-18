@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DiscordCord</title>
+  <style>
+    :root {
+      --bg-primary: #1e1f22; --bg-secondary: #2b2d31; --bg-tertiary: #111214;
+      --accent-blue: #5865f2; --accent-purple: #8a2be2; --text-main: #f2f3f5; --text-muted: #949ba4;
+    }
+    body { margin: 0; font-family: sans-serif; background-color: var(--bg-primary); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+    .sidebar, .right-sidebar { width: 220px; background-color: var(--bg-secondary); padding: 15px; display: flex; flex-direction: column; }
+    .sidebar { border-right: 1px solid var(--bg-tertiary); }
+    .right-sidebar { border-left: 1px solid var(--bg-tertiary); }
+    .channels { flex: 1; }
+    .channel-btn { width: 100%; padding: 10px; margin: 4px 0; border-radius: 6px; cursor: pointer; background: transparent; border: none; color: var(--text-muted); text-align: left; }
+    .channel-btn.active, .channel-btn:hover { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); color: #fff; }
+    .chat-area { flex: 1; display: flex; flex-direction: column; }
+    .messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .message { max-width: 60%; padding: 10px 14px; border-radius: 12px; background-color: var(--bg-secondary); align-self: flex-start; }
+    .message.user { align-self: flex-end; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); }
+    .chat-input-area { padding: 20px; }
+    .chat-input { width: 100%; padding: 12px; border-radius: 8px; border: none; background-color: var(--bg-secondary); color: var(--text-main); box-sizing: border-box; outline: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Auth Overlay -->
+  <div id="auth-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #111214; display: flex; align-items: center; justify-content: center; z-index: 1000;">
+    <div style="background: #2b2d31; padding: 40px; border-radius: 12px; width: 340px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); text-align: center; border: 2px solid #5865f2;">
+      <h2 id="auth-title" style="margin-top: 0; margin-bottom: 24px; color: #ffffff; font-size: 28px;">Welcome Back</h2>
+      <div style="text-align: left; margin-bottom: 5px; color: #8a2be2; font-weight: bold; font-size: 12px;">USERNAME</div>
+      <input type="text" id="auth-username" placeholder="Type your username..." style="width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 6px; border: 2px solid #5865f2; background: #ffffff; color: #000000; box-sizing: border-box; outline: none; font-size: 16px;">
+      <div style="text-align: left; margin-bottom: 5px; color: #8a2be2; font-weight: bold; font-size: 12px;">PASSWORD</div>
+      <input type="password" id="auth-password" placeholder="Type your password..." style="width: 100%; padding: 12px; margin-bottom: 24px; border-radius: 6px; border: 2px solid #5865f2; background: #ffffff; color: #000000; box-sizing: border-box; outline: none; font-size: 16px;">
+      <button id="auth-submit-btn" onclick="handleAuthSubmit()" style="width: 100%; padding: 14px; border-radius: 6px; border: none; background: linear-gradient(135deg, #5865f2, #8a2be2); color: #ffffff; font-weight: bold; font-size: 16px; cursor: pointer;">Login</button>
+      <p style="margin-top: 20px; font-size: 14px; color: #f2f3f5;">
+        <span id="auth-switch-prompt">Don't have an account?</span> 
+        <span id="auth-switch-btn" style="color: #5865f2; cursor: pointer; text-decoration: underline; font-weight: bold;" onclick="toggleAuthMode()">Sign up</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Chat Area -->
+  <div class="sidebar">
+    <h3>Channels</h3>
+    <div class="channels">
+      <button class="channel-btn active" onclick="switchChannel('general')"># general</button>
+      <button class="channel-btn" onclick="switchChannel('random')"># random</button>
+      <button class="channel-btn" onclick="switchChannel('games')"># games</button>
+    </div>
+  </div>
+  <div class="chat-area">
+    <div class="messages" id="message-container"></div>
+    <div class="chat-input-area">
+      <input type="text" id="chat-input" class="chat-input" placeholder="Message #general" onkeypress="handleKeyPress(event)">
+    </div>
+  </div>
+  <div class="right-sidebar">
+    <h3>Active Users</h3>
+    <div style="color: var(--text-muted); line-height: 2;">● Admin<br>● Developer</div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js'
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js'
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "discordcord-7c0b2.firebaseapp.com",
+      projectId: "discordcord-7c0b2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const data = {
+      general: [{ text: "Welcome to general!", user: false }],
+      random: [{ text: "Anything goes here!", user: false }],
+      games: [{ text: "Game talk starts here!", user: false }]
+    };
+    let currentChannel = 'general';
+    let isSignUpMode = false;
+
+    window.render = () => {
+      const container = document.getElementById('message-container');
+      container.innerHTML = data[currentChannel].map(m => `<div class="message ${m.user ? 'user' : ''}">${m.text}</div>`).join('');
+      container.scrollTop = container.scrollHeight;
+      document.getElementById('chat-input').placeholder = `Message #${currentChannel}`;
+    }
+
+    window.switchChannel = (channel) => {
+      currentChannel = channel;
+      document.querySelectorAll('.channel-btn').forEach(btn => btn.classList.toggle('active', btn.textContent.includes(channel)));
+      window.render();
+    }
+
+    window.handleKeyPress = (e) => {
+      if (e.key === 'Enter' && e.target.value.trim()) {
+        data[currentChannel].push({ text: e.target.value, user: true });
+        e.target.value = '';
+        window.render();
+      }
+    }
+
+    window.toggleAuthMode = () => {
+      isSignUpMode = !isSignUpMode;
+      document.getElementById('auth-title').textContent = isSignUpMode ? 'Create Account' : 'Welcome Back';
+      document.getElementById('auth-submit-btn').textContent = isSignUpMode ? 'Sign Up' : 'Login';
+      document.getElementById('auth-switch-prompt').textContent = isSignUpMode ? 'Already have an account?' : "Don't have an account?";
+      document.getElementById('auth-switch-btn').textContent = isSignUpMode ? 'Login' : 'Sign up';
+    }
+
+    window.handleAuthSubmit = () => {
+      const username = document.getElementById('auth-username').value.trim();
+      const password = document.getElementById('auth-password').value.trim();
+      const email = username + "@friends.com";
+
+      if (!username || !password) { alert("Please enter both fields."); return; }
+
+      if (isSignUpMode) {
+        createUserWithEmailAndPassword(auth, email, password)
+          .then(() => { alert("Account created!"); document.getElementById('auth-overlay').style.display = 'none'; })
+          .catch(err => alert(err.message));
+      } else {
+        signInWithEmailAndPassword(auth, email, password)
+          .then(() => { document.getElementById('auth-overlay').style.display = 'none'; })
+          .catch(err => alert(err.message));
+      }
+    }
+
+    window.render();
+  </script>
+</body>
+</html>
