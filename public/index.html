@@ -1169,7 +1169,7 @@ let pendingFile = null; let pendingPreview = null;
                 </div>
                 ${rep}
                 ${textVal ? `<div class="msg-bubble">${renderText(textVal)}</div>` : ''}
-                ${m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px;">` : ''}
+                ${m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px;${m.imageW && m.imageH ? ' aspect-ratio:' + m.imageW + '/' + m.imageH + ';' : ''}">` : ''}
               </div>
             </div>`;
         }).join('');
@@ -1249,6 +1249,16 @@ let pendingFile = null; let pendingPreview = null;
             return;
           }
           payload.image = pendingPreview;
+          // read dimensions so the image reserves space before it decodes (prevents scroll/layout glitch)
+          try {
+            const dims = await new Promise((resolve) => {
+              const im = new Image();
+              im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
+              im.onerror = () => resolve(null);
+              im.src = pendingPreview;
+            });
+            if (dims && dims.w && dims.h) { payload.imageW = dims.w; payload.imageH = dims.h; }
+          } catch (e) {}
           pendingFile = null; pendingPreview = null;
           window.cancelFile();
         }
