@@ -599,6 +599,9 @@
     window.cancelReq = async (id) => {
       await updateDoc(doc(db,"friends",id),{status:"canceled"});
     };
+    window.unfriendReq = async (id) => {
+      await updateDoc(doc(db,"friends",id),{status:"unfriended"});
+    };
 
     function rst() {
       lastActivity = Date.now();
@@ -1314,29 +1317,53 @@ window.hideServerCtx = hideServerCtx;
       const actions = document.getElementById('prof-actions');
       let html = '';
       if (u !== user) {
-        let btnHtml = `<button onclick="sendReq('${escHtml(u)}'); closeProfile();" style="background:var(--bl);color:#000;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Send Friend Request</button>`;
+        let friendDoc = null;
         try {
-          const existing = await getDocs(query(
+          const a = await getDocs(query(
             collection(db,"friends"),
             where("from","==",user),
             where("to","==",u),
-            where("status","==","pending")
+            where("status","==","accepted")
           ));
-          if (!existing.empty) {
-            btnHtml = `<button onclick="cancelReq('${existing.docs[0].id}'); closeProfile();" style="background:var(--mut);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Cancel Request</button>`;
-          } else {
-            const incoming = await getDocs(query(
+          if (!a.empty) friendDoc = a.docs[0];
+          else {
+            const b = await getDocs(query(
               collection(db,"friends"),
               where("from","==",u),
               where("to","==",user),
-              where("status","==","pending")
+              where("status","==","accepted")
             ));
-            if (!incoming.empty) {
-              btnHtml = `<button onclick="acceptReq('${incoming.docs[0].id}'); closeProfile();" style="background:var(--bl);color:#000;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Accept Request</button>`;
-            }
+            if (!b.empty) friendDoc = b.docs[0];
           }
         } catch (e) { console.log("friend check failed", e); }
-        html += btnHtml;
+        if (friendDoc) {
+          html += `<span style="color:var(--mut);font-size:11px;display:block;margin-bottom:4px;">Friends</span>`;
+          html += `<button onclick="unfriendReq('${friendDoc.id}'); closeProfile();" style="background:#ff4757;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Unfriend</button>`;
+        } else {
+          let btnHtml = `<button onclick="sendReq('${escHtml(u)}'); closeProfile();" style="background:var(--bl);color:#000;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Send Friend Request</button>`;
+          try {
+            const existing = await getDocs(query(
+              collection(db,"friends"),
+              where("from","==",user),
+              where("to","==",u),
+              where("status","==","pending")
+            ));
+            if (!existing.empty) {
+              btnHtml = `<button onclick="cancelReq('${existing.docs[0].id}'); closeProfile();" style="background:var(--mut);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Cancel Request</button>`;
+            } else {
+              const incoming = await getDocs(query(
+                collection(db,"friends"),
+                where("from","==",u),
+                where("to","==",user),
+                where("status","==","pending")
+              ));
+              if (!incoming.empty) {
+                btnHtml = `<button onclick="acceptReq('${incoming.docs[0].id}'); closeProfile();" style="background:var(--bl);color:#000;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Accept Request</button>`;
+              }
+            }
+          } catch (e) { console.log("friend check failed", e); }
+          html += btnHtml;
+        }
         html += `<button onclick="openDM('${escHtml(u)}'); closeProfile();" style="background:var(--bg-t);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;">Message</button>`;
       } else {
         html += `<div style="color:var(--mut);font-size:12px;">This is you</div>`;
