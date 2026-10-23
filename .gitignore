@@ -67,3 +67,7 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# OS junk
+desktop.ini
+Thumbs.db
