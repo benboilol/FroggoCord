@@ -330,6 +330,7 @@
       </div>
     </div>
     <div id="at-popup"></div>
+    <div id="reaction-picker" style="display:none; position:fixed; background:var(--bg-s); border-radius:8px; padding:6px; z-index:1003; box-shadow:0 8px 24px rgba(0,0,0,.5); max-width:260px; max-height:200px; overflow-y:auto; grid-template-columns:repeat(8,1fr); gap:2px;"></div>
     <div id="media-picker" style="display:none;">
       <div class="tabs">
         <button onclick="showTab('emojis')">Emojis</button>
@@ -370,7 +371,7 @@
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js'
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js'
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, updateDoc, deleteDoc, setDoc, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js'
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, updateDoc, deleteDoc, setDoc, where, getDocs, getDoc } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js'
 
 
     const config = { apiKey: "AIzaSyDicR3VX9ClJoO8SDEu_xMGR4fbbqsrSVE", authDomain: "discordcord-7c0b2.firebaseapp.com", projectId: "discordcord-7c0b2", storageBucket: "discordcord-7c0b2.firebasestorage.app", messagingSenderId: "138455635458", appId: "1:138455635458:web:a236f0ceca0cb6de22b91b" };
@@ -643,6 +644,45 @@
     window.deleteMsg = async (id) => { if (await appConfirm("Delete?")) await deleteDoc(doc(db,"messages",id)); }
     window.setReply = (id,u,t) => { reply = { id, user: u, text: t }; document.getElementById('reply-preview').style.display = 'block'; document.getElementById('reply-user').textContent = u; }
     window.cancelReply = () => { reply = null; document.getElementById('reply-preview').style.display = 'none'; }
+let pendingReactMsgId = null;
+window.toggleReaction = async (id, emoji) => {
+  if (!user || !id || !emoji) return;
+  try {
+    const ref = doc(db, 'messages', id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const data = snap.data() || {};
+    const current = (data.reactions && typeof data.reactions === 'object') ? { ...data.reactions } : {};
+    const users = Array.isArray(current[emoji]) ? [...current[emoji]] : [];
+    const idx = users.indexOf(user);
+    if (idx >= 0) users.splice(idx, 1); else users.push(user);
+    if (users.length) current[emoji] = users; else delete current[emoji];
+    // drop empty
+    Object.keys(current).forEach(k => { if (!Array.isArray(current[k]) || !current[k].length) delete current[k]; });
+    await updateDoc(ref, { reactions: current });
+  } catch (e) { console.error('toggleReaction', e); }
+};
+function showReactionPicker(msgId, anchor) {
+  pendingReactMsgId = msgId;
+  const picker = document.getElementById('reaction-picker');
+  if (!picker.dataset.filled) {
+    picker.innerHTML = REACTION_EMOJIS.map(e => `<span style="cursor:pointer;padding:4px;border-radius:4px;font-size:20px;text-align:center;line-height:1;" data-emoji="${escHtml(e)}" onclick="pickReaction('${e}')">${e}</span>`).join('');
+    picker.dataset.filled = '1';
+  }
+  const rect = anchor.getBoundingClientRect();
+  let left = rect.left;
+  if (left + 270 > window.innerWidth) left = window.innerWidth - 280;
+  if (left < 8) left = 8;
+  picker.style.left = left + 'px';
+  picker.style.top = (rect.bottom + 4) + 'px';
+  picker.style.display = 'grid';
+}
+function hideReactionPicker() { const p = document.getElementById('reaction-picker'); if (p) p.style.display = 'none'; pendingReactMsgId = null; }
+window.showReactionPicker = showReactionPicker; window.hideReactionPicker = hideReactionPicker;
+window.pickReaction = async (emoji) => {
+  if (pendingReactMsgId) await window.toggleReaction(pendingReactMsgId, emoji);
+  hideReactionPicker();
+};
     window.showTab = (t) => { document.getElementById('emoji-tab').style.display = t==='emojis'?'grid':'none'; document.getElementById('gif-tab').style.display = t==='gifs'?'flex':'none'; };
     window.insertEmoji = (e) => { document.getElementById('chat-input').value += e; document.getElementById('media-picker').style.display = 'none'; }
     
@@ -805,6 +845,8 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
       const act = el.dataset.action, id = el.dataset.id;
       if (act === 'edit') window.editMsg(id, el.dataset.text || '');
       else if (act === 'delete') window.deleteMsg(id);
+      else if (act === 'react') { showReactionPicker(id, el); }
+      else if (act === 'toggle-reaction') { window.toggleReaction(id, el.dataset.emoji); }
       else if (act === 'reply') {
         const msg = el.closest('.msg'), body = msg && msg.querySelector('.msg-bubble');
         window.setReply(id, el.dataset.user, body ? body.textContent : '');
@@ -895,6 +937,10 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
      }
      function hideServerCtx() { document.getElementById('server-ctx').style.display = 'none'; }
      document.addEventListener('click', hideServerCtx);
+document.addEventListener('click', (e) => {
+  const p = document.getElementById('reaction-picker');
+  if (p && p.style.display !== 'none' && !p.contains(e.target) && !e.target.closest('[data-action="react"]')) hideReactionPicker();
+});
      function openServerSettings(sid) {
        if (sid) ctxServerId = sid;
        hideServerCtx();
@@ -1134,6 +1180,22 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
       setTimeout(() => { msgBox.scrollTop = msgBox.scrollHeight; isPinning = false; }, 0);
     }
     const chatGifDims = {};
+    const REACTION_EMOJIS = ['👍','👎','❤️','😂','😮','😢','😡','🎉','🔥','👀','✅','❌','💯','🤔','😍','🙏','👏','💀','😭','😎','🥳','🤯'];
+    function renderReactions(m) {
+      const r = (m && m.reactions) || {};
+      const entries = Object.entries(r).filter(function(e){ return Array.isArray(e[1]) && e[1].length > 0; });
+      if (!entries.length) return '';
+      return '<div class="reactions" data-msgid="' + escHtml(m.id) + '" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">' +
+        entries.map(function(pair){
+          const emoji = pair[0]; const users = pair[1];
+          const mine = Array.isArray(users) && users.indexOf(user) >= 0;
+          return '<button data-action="toggle-reaction" data-msgid="' + escHtml(m.id) + '" data-emoji="' + escHtml(emoji) + '" style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;border:1px solid ' + (mine?'var(--bl)':'#4f545c') + ';background:' + (mine?'rgba(87,242,135,.12)':'var(--bg-t)') + ';color:var(--txt);font-size:13px;cursor:pointer;line-height:1.4;">' +
+            '<span>' + emoji + '</span><span style="font-weight:600;">' + users.length + '</span>' +
+          '</button>';
+        }).join('') +
+      '</div>';
+    }
+
 let pendingFile = null; let pendingPreview = null;
     function listen() {
       if (!chan) {
@@ -1158,6 +1220,7 @@ let pendingFile = null; let pendingPreview = null;
 
           const btns = me ? `<span data-action="edit" data-id="${m.id}" data-text="${escHtml(textVal)}" style="color:var(--bl);">Edit</span><span data-action="delete" data-id="${m.id}" style="color:#f23f43;">Delete</span>` : '';
           const rBtn = `<span data-action="reply" data-id="${m.id}" data-user="${safeUser}" style="color:var(--mut);">Reply</span>`;
+          const reactBtn = `<span data-action="react" data-id="${m.id}" style="color:var(--mut);">😀</span>`;
           return `
             <div class="msg ${me ? 'me' : ''} ${isP ? 'mention' : ''}" data-id="${m.id}">
               <div class="pfp" ${av}>${safeUser ? safeUser[0].toUpperCase() : '?'}</div>
@@ -1165,11 +1228,12 @@ let pendingFile = null; let pendingPreview = null;
                 <div class="msg-head">
                   <span class="msg-author ${me ? 'self' : ''}">${safeUser}</span>
                   <span class="msg-time">${fmtMsgTime(m.timestamp)}</span>
-                  <span class="msg-actions">${rBtn}${btns}</span>
+                  <span class="msg-actions">${reactBtn}${rBtn}${btns}</span>
                 </div>
                 ${rep}
                 ${textVal ? `<div class="msg-bubble">${renderText(textVal)}</div>` : ''}
                 ${m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px;${m.imageW && m.imageH ? ' aspect-ratio:' + m.imageW + '/' + m.imageH + ';' : ''}">` : ''}
+                ${renderReactions(m)}
               </div>
             </div>`;
         }).join('');
