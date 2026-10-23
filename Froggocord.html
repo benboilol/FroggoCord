@@ -1381,7 +1381,7 @@ let pendingFile = null; let pendingPreview = null;
       });
       if (window._typingRefresh) clearInterval(window._typingRefresh);
       window._typingRefresh = setInterval(renderTyping, 1000);
-      unsub = onSnapshot(query(collection(db,"messages"),orderBy("timestamp","asc")), (snap) => {
+      unsub = onSnapshot(query(collection(db,"messages"),where("channel","==",chan),orderBy("timestamp","asc")), (snap) => {
         const container = document.getElementById('message-container');
         const wasPinned = msgsPinned || snap.docChanges().some(c => c.type === "added" && c.doc.data().user === user);
         const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.channel === chan);
