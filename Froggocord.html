@@ -319,7 +319,7 @@
       </div>
     </div>
     <div class="user-panel" id="pfp-dropzone">
-      <div class="up-avatar-wrap"><div id="my-pfp" class="pfp up-avatar">U</div></div>
+      <div class="up-avatar-wrap" onclick="document.getElementById('pfp-file-input').click()"><div id="my-pfp" class="pfp up-avatar">U</div></div>
       <div class="up-info">
         <div class="up-name" id="up-name"></div>
         <select id="status-select" class="status-select">
@@ -331,6 +331,7 @@
       <button id="logout-btn" class="up-btn" title="Logout">⏻</button>
     </div>
   </div>
+  <input type="file" id="pfp-file-input" accept="image/*" style="display:none;">
 
   <div class="ca">
     <div id="chat-header" class="chat-header"><span class="hash">#</span><span class="hname">general</span></div>
@@ -396,7 +397,8 @@
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
     let chan = 'general', user = null, unsub = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'channels', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
-    let allUsers = [], backfillUsers = [];
+    let allUsers = [], backfillUsers = [], userPfpMap = new Map();
+    const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit
     const IDLE_MS = 120000;
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
     const prunePending = new Set();
@@ -506,7 +508,13 @@
         await setDoc(doc(db,"presence",user),{user,status:'online',lastActive:serverTimestamp()},{merge:true});
         setDoc(doc(db,"users",user),{user,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
         onSnapshot(collection(db,"users"),(snap)=>{
-          allUsers = snap.docs.map(d => d.data().user).filter(Boolean);
+          allUsers = []; userPfpMap.clear();
+          snap.docs.forEach(d => {
+            const data = d.data();
+            if (data.user) allUsers.push(data.user);
+            if (data.user && data.pfp) userPfpMap.set(data.user, data.pfp);
+          });
+          renderUserList();
           if (mode === 'dms') renderSidebar();
         });
         getDocs(collection(db,"messages")).then(snap=>{
@@ -550,6 +558,7 @@
         pfp = localStorage.getItem('pfp_'+user) || '';
         if (pfp.startsWith('file:///')) { pfp = ''; localStorage.removeItem('pfp_'+user); }
         if (pfp) { document.getElementById('my-pfp').style.backgroundImage = `url(${pfp})`; document.getElementById('my-pfp').textContent = ''; }
+        await setDoc(doc(db,"users",user),{user,pfp,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
         listen();
         loadServers().then(() => {
           const params = new URLSearchParams(window.location.search);
@@ -573,17 +582,58 @@
     window.addEventListener('touchstart', rst, { passive: true });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) rst(); });
 
+    const compressImage = async (file, maxSize = 512) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          const scale = Math.min(maxSize / w, maxSize / h, 1);
+          w = Math.round(w * scale); h = Math.round(h * scale);
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const types = ['image/avif', 'image/webp', 'image/jpeg'];
+          let i = 0;
+          const tryNext = () => {
+            if (i >= types.length) { resolve(canvas.toDataURL('image/jpeg', 0.85)); return; }
+            const url = canvas.toDataURL(types[i], 0.85);
+            if (url.startsWith('data:' + types[i] + ';')) { resolve(url); }
+            else { i++; tryNext(); }
+          };
+          tryNext();
+        };
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+    };
     const drop = document.getElementById('pfp-dropzone');
     drop.ondragover = (e) => e.preventDefault();
-    drop.ondrop = (e) => {
+    drop.ondrop = async (e) => {
       e.preventDefault(); const f = e.dataTransfer.files[0];
-      if (f && f.type.startsWith('image/')) {
-        const r = new FileReader(); r.onload=() => {
-          pfp = r.result; localStorage.setItem('pfp_'+user, pfp);
-          document.getElementById('my-pfp').style.backgroundImage = `url(${pfp})`;
-          document.getElementById('my-pfp').textContent = ''; listen();
-        }; r.readAsDataURL(f);
-      }
+      if (!f || !f.type.startsWith('image/')) return;
+      if (f.size > MAX_PFP_BYTES) { appAlert('PFP too large (max 500KB).'); return; }
+      try {
+        pfp = await compressImage(f);
+        localStorage.setItem('pfp_'+user, pfp);
+        await setDoc(doc(db,"users",user),{user,pfp,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+        document.getElementById('my-pfp').style.backgroundImage = `url(${pfp})`;
+        document.getElementById('my-pfp').textContent = '';
+        listen();
+      } catch (err) { appAlert('Failed to process image.'); }
+    };
+    document.getElementById('pfp-file-input').onchange = async (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      if (f.size > MAX_PFP_BYTES) { appAlert('PFP too large (max 500KB).'); e.target.value = ''; return; }
+      try {
+        pfp = await compressImage(f);
+        localStorage.setItem('pfp_'+user, pfp);
+        await setDoc(doc(db,"users",user),{user,pfp,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+        document.getElementById('my-pfp').style.backgroundImage = `url(${pfp})`;
+        document.getElementById('my-pfp').textContent = '';
+        listen();
+        e.target.value = '';
+      } catch (err) { appAlert('Failed to process image.'); }
     };
 
     window.switchChannel = (c) => { mode = 'channels'; dmWith = null; currentServer = null; chan = c; document.getElementById('dm-btn').classList.remove('active'); renderServerList(); renderUserList(); renderSidebar(); updateHeader(); listen(); }
@@ -653,13 +703,19 @@
        });
        online.sort((a,b) => (order[a.status] ?? 3) - (order[b.status] ?? 3) || a.user.localeCompare(b.user));
        offline.sort((a,b) => a.localeCompare(b));
-       const row = (name, status) =>
-         `<div class="member ${status === 'offline' ? 'off' : ''}" data-user="${escHtml(name)}" onclick="openProfile(this.dataset.user)">` +
-           `<div class="member-avatar">${escHtml((name||'?')[0].toUpperCase())}<span class="status-dot" title="${labels[status]||'Online'}" style="background:${colors[status]||'#80848e'}"></span></div>` +
+       const row = (name, status) => {
+         const upfp = userPfpMap.get(name);
+         const hasPfp = upfp && !upfp.startsWith('file:///');
+         const avStyle = hasPfp ? `style="background-image:url('${escHtml(upfp)}');"` : '';
+         const avContent = hasPfp ? '' : escHtml((name||'?')[0].toUpperCase());
+         return `<div class="member ${status === 'offline' ? 'off' : ''}" data-user="${escHtml(name)}" onclick="openProfile(this.dataset.user)">` +
+           `<div class="member-avatar" ${avStyle}>${avContent}<span class="status-dot" title="${labels[status]||'Online'}" style="background:${colors[status]||'#80848e'}"></span></div>` +
            `<div class="member-name">${escHtml(name)}</div>` +
          `</div>`;
+       };
        const ul = document.getElementById('user-list');
-       const sig = 'O:' + online.map(u => u.user + ':' + u.status).join('|') + '#F:' + offline.join('|') + '#' + (currentServer || '') + '/' + (mode || '');
+       const pfpSig = [...userPfpMap.entries()].map(([k,v]) => k + ':' + v.slice(0,16)).join('|');
+       const sig = 'O:' + online.map(u => u.user + ':' + u.status).join('|') + '#F:' + offline.join('|') + '#P:' + pfpSig + '#' + (currentServer || '') + '/' + (mode || '');
        if (sig !== userListSig) {
          userListSig = sig;
          let html = online.map(u => row(u.user, u.status)).join('');
