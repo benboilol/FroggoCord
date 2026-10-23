@@ -51,6 +51,7 @@
     .cb { width: 100%; display: flex; align-items: center; gap: 6px; padding: 6px 8px; margin: 1px 0; border-radius: 4px; cursor: pointer; background: transparent; color: var(--mut); text-align: left; font-size: 15px; font-weight: 500; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .cb:hover { background: var(--hover); color: var(--txt); }
     .cb.active { background: var(--active); color: var(--bright); }
+    .badge { background: var(--bl); color: #000; border-radius: 10px; padding: 1px 6px; font-size: 11px; font-weight: 700; margin-left: 6px; }
     .cb.muted { color: var(--mut); font-size: 13px; font-weight: 500; }
 
     /* ---------- user panel ---------- */
@@ -85,6 +86,12 @@
     .msg:hover .msg-actions { display: inline-flex; }
     .msg-actions span { cursor: pointer; }
     .msg-bubble { color: var(--txt); font-size: 15px; line-height: 1.375; word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; }
+.msg-bubble .codeblock { background: #1e1f22; border-radius: 4px; padding: 8px 10px; margin: 4px 0; overflow-x: auto; font-family: Consolas, "Courier New", monospace; font-size: 13px; white-space: pre; display: block; }
+.msg-bubble .codeblock code { background: transparent; padding: 0; }
+.msg-bubble code.inline-code { background: #1e1f22; padding: 1px 4px; border-radius: 3px; font-family: Consolas, "Courier New", monospace; font-size: 13px; }
+.msg-bubble .mention { background: rgba(87,242,135,.15); color: var(--bl); padding: 0 2px; border-radius: 3px; font-weight: 500; }
+.msg-bubble .spoiler { background: #2b2d31; color: transparent; text-shadow: 0 0 6px rgba(255,255,255,.6); cursor: pointer; border-radius: 3px; padding: 0 2px; user-select: none; }
+.msg-bubble .spoiler.revealed { background: transparent; color: inherit; text-shadow: none; user-select: text; }
     .msg-reply { font-size: 12px; color: var(--mut); margin: 2px 0; display: flex; align-items: center; gap: 6px; min-width: 0; }
     .msg-reply .bar { width: 14px; height: 10px; border-left: 2px solid #4f545c; border-top: 2px solid #4f545c; border-radius: 4px 0 0 0; flex-shrink: 0; }
     .msg-reply b { color: var(--txt); font-weight: 500; }
@@ -99,7 +106,7 @@
     .composer .plus:hover { background: var(--txt); }
     .composer .attach { background: transparent; border: none; font-size: 20px; cursor: pointer; color: var(--mut); padding: 4px; line-height: 1; flex-shrink: 0; }
     .composer .attach:hover { filter: brightness(1.2); }
-    .composer input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--txt); font-size: 15px; padding: 11px 0; font-family: inherit; }
+    .composer input, .composer textarea { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--txt); font-size: 15px; padding: 11px 0; font-family: inherit; resize: none; max-height: 200px; overflow-y: auto; line-height: 1.375; }
     .composer input::placeholder { color: var(--mut); }
     .composer .emoji { background: transparent; border: none; font-size: 20px; cursor: pointer; color: var(--mut); padding: 4px; line-height: 1; }
     .composer .emoji:hover { filter: brightness(1.2); }
@@ -355,7 +362,7 @@
         <input type="file" id="file-input" accept="image/*" style="display:none;">
         <button class="attach" title="Upload image" onclick="document.getElementById('file-input').click()">📎</button>
         <button class="plus" title="GIFs" onclick="document.getElementById('media-picker').style.display='flex';showTab('gifs')">+</button>
-        <input type="text" id="chat-input" placeholder="Message #general" onkeypress="handleKeyPress(event)">
+        <textarea id="chat-input" placeholder="Message #general" rows="1" onkeydown="handleKeyPress(event)"></textarea>
         <button id="emoji-btn" class="emoji" title="Emoji">😀</button>
       </div>
     </div>
@@ -377,7 +384,7 @@
 
     const config = { apiKey: "AIzaSyDicR3VX9ClJoO8SDEu_xMGR4fbbqsrSVE", authDomain: "discordcord-7c0b2.firebaseapp.com", projectId: "discordcord-7c0b2", storageBucket: "discordcord-7c0b2.firebasestorage.app", messagingSenderId: "138455635458", appId: "1:138455635458:web:a236f0ceca0cb6de22b91b" };
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
-    let chan = 'general', user = null, unsub = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'channels', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [];
+    let chan = 'general', user = null, unsub = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'channels', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
     let allUsers = [], backfillUsers = [];
     const IDLE_MS = 120000;
@@ -454,8 +461,31 @@
         const ar = d ? `aspect-ratio:${d.w}/${d.h};` : 'aspect-ratio:4/3;';
         return `<img data-src="${escHtml(u)}" src="" alt="gif" loading="lazy" style="max-width: min(320px, 100%); border-radius:8px; display:block; background:transparent; min-height:60px; ${ar}">`;
       }
-      return escHtml(raw);
+      return renderMarkdown(raw);
     };
+    const renderMarkdown = (raw) => {
+      let s = String(raw ?? '');
+      const codeBlocks = [];
+      s = s.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+        const i = codeBlocks.length;
+        codeBlocks.push(code);
+        return '\u0000CB' + i + '\u0000';
+      });
+      s = escHtml(s);
+      s = s.replace(/\|\|([\s\S]+?)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+      s = s.replace(/\*\*([\s\S]+?)\*\*/g, '<b>$1</b>');
+      s = s.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<i>$2</i>');
+      s = s.replace(/~~([\s\S]+?)~~/g, '<s>$1</s>');
+      s = s.replace(/`([^`\n]+?)`/g, '<code class="inline-code">$1</code>');
+      s = s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+      s = s.replace(/(^|\s)@(\w+)/g, (m, space, name) => space + '<span class="mention">@' + name + '</span>');
+      s = s.replace(/\u0000CB(\d+)\u0000/g, (_, i) => {
+        const code = codeBlocks[parseInt(i, 10)] || '';
+        return '<pre class="codeblock"><code>' + escHtml(code).replace(/^\n/, '').replace(/\n$/, '') + '</code></pre>';
+      });
+      return s;
+    };
+
 
     onAuthStateChanged(auth, async (u) => {
       if (u) {
@@ -568,6 +598,11 @@
       set.delete(user);
       return Array.from(set).sort((a,b) => a.localeCompare(b));
     }
+    const unreadBadge = (c) => {
+      const n = (window._unreadCounts && window._unreadCounts[c]) || 0;
+      return n > 0 ? '<span class="badge">' + n + '</span>' : '';
+    };
+
     function renderSidebar() {
       const h3 = document.querySelector('.sb h3');
       const ch = document.querySelector('.ch');
@@ -575,8 +610,8 @@
         const srv = currentServer ? servers.find(sv=>sv.id===currentServer) : null;
         h3.textContent = srv ? srv.name : 'Channels';
         ch.innerHTML = `<div class="cat">Text Channels</div>` +
-          `<button class="cb ${chan==='general'?'active':''}" onclick="switchChannel('general')"># general</button>` +
-          `<button class="cb ${chan==='random'?'active':''}" onclick="switchChannel('random')"># random</button>`;
+          `<button class="cb ${chan==='general'?'active':''}" onclick="switchChannel('general')"># general</button>` + unreadBadge('general') +
+          `<button class="cb ${chan==='random'?'active':''}" onclick="switchChannel('random')"># random</button>` + unreadBadge('random');
       } else {
         h3.textContent = 'Direct Messages';
         const users = knownUsers();
@@ -584,7 +619,7 @@
         if (users.length === 0) html += `<div class="rs-empty" style="padding:8px;">No users yet</div>`;
         users.forEach(u => {
           const safe = escHtml(u);
-          html += `<button class="cb ${dmWith===u?'active':''}" onclick="openDM(this.dataset.user)" data-user="${safe}">@ ${safe}</button>`;
+          html += `<button class="cb ${dmWith===u?'active':''}" onclick="openDM(this.dataset.user)" data-user="${safe}">@ ${safe}</button>${unreadBadge('dm_' + [user,u].sort().join('_'))}`;
         });
         ch.innerHTML = html;
       }
@@ -852,6 +887,15 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
          deleteDoc(doc(db,'typing',tid)).catch(()=>{});
        }
      }
+     function markRead(c) {
+       if (!user || !c) return;
+       lastRead[c] = Date.now();
+       if (window._unreadCounts) window._unreadCounts[c] = 0;
+       const key = c + '__' + user;
+       setDoc(doc(db,'reads',key), { channel: c, user, lastRead: serverTimestamp() }, { merge: true }).catch(()=>{});
+       renderSidebar();
+     }
+     function getLastRead(c) { return lastRead[c] || 0; }
 
     document.getElementById('message-container').addEventListener('click', (e) => {
       const el = e.target.closest('[data-action]'); if (!el) return;
@@ -1111,7 +1155,7 @@ document.addEventListener('click', (e) => {
       dmWith = null;
       document.getElementById('dm-btn').classList.remove('active');
       chan = 'srv_' + sid + '_' + cname;
-      document.querySelector('.ch').innerHTML = `<div class="cat">Text Channels</div>` + (s.channels||[{name:'general'}]).map(c => `<button class="cb ${chan===('srv_'+sid+'_'+c.name)?'active':''}" onclick="switchServerChannel('${sid}','${escHtml(c.name)}')"># ${escHtml(c.name)}</button>`).join('') +
+      document.querySelector('.ch').innerHTML = `<div class="cat">Text Channels</div>` + (s.channels||[{name:'general'}]).map(c => `<button class="cb ${chan===('srv_'+sid+'_'+c.name)?'active':''}" onclick="switchServerChannel('${sid}','${escHtml(c.name)}')"># ${escHtml(c.name)}</button>${unreadBadge('srv_' + sid + '_' + c.name)}`).join('') +
         `<button class="cb muted" onclick="createChannel('${sid}')" style="color:var(--bl);">+ Add Channel</button>` +
         `<button class="cb muted" onclick="shareInvite('${sid}')">Invite Code: ${escHtml(s.inviteCode)}</button>`;
       renderServerList();
@@ -1219,6 +1263,12 @@ let pendingFile = null; let pendingPreview = null;
         container.innerHTML = '<div class="msgs-inner"><div class="msgs-empty">Select a user to start a DM</div></div>';
         return;
       }
+      markRead(chan);
+      const key = chan + '__' + user;
+      getDoc(doc(db,'reads',key)).then((snap) => {
+        if (snap.exists()) lastRead[chan] = snap.data().lastRead ? snap.data().lastRead.toMillis() : Date.now();
+        renderSidebar();
+      }).catch(()=>{});
       if (unsub) unsub();
       // typing listener
       const typingQuery = query(collection(db,'typing'), where('channel','==',chan));
@@ -1247,18 +1297,21 @@ let pendingFile = null; let pendingPreview = null;
       });
       if (window._typingRefresh) clearInterval(window._typingRefresh);
       window._typingRefresh = setInterval(renderTyping, 1000);
-      // refresh typing display every 2s to drop stale
-      if (window._typingRefresh) clearInterval(window._typingRefresh);
-      window._typingRefresh = setInterval(() => {
-        const el = document.getElementById('typing-indicator');
-        if (el && el.style.display === 'block') {
-          // re-trigger by re-running filter is complex; just leave, stale filtered on next snapshot
-        }
-      }, 2000);
       unsub = onSnapshot(query(collection(db,"messages"),orderBy("timestamp","asc")), (snap) => {
         const container = document.getElementById('message-container');
         const wasPinned = msgsPinned || snap.docChanges().some(c => c.type === "added" && c.doc.data().user === user);
         const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.channel === chan);
+        window._unreadCounts = {};
+        snap.docs.forEach(d => {
+          const m = d.data();
+          if (!m || !m.channel) return;
+          const ch = m.channel;
+          const chLr = lastRead[ch] || 0;
+          if ((m.timestamp ? m.timestamp.toMillis() : 0) > chLr && m.user !== user) {
+            window._unreadCounts[ch] = (window._unreadCounts[ch] || 0) + 1;
+          }
+        });
+        renderSidebar();
         container.innerHTML = docs.map(m => {
           const me = m.user === user;
           const safeUser = escHtml(m.user);
@@ -1355,7 +1408,9 @@ chatInput.addEventListener('blur', () => { if (user) setTyping(false); });
     window.insertAt = (u) => { const val = chatInput.value; const at = val.lastIndexOf('@'); chatInput.value = val.substring(0, at) + `@${u} `; atPopup.style.display = 'none'; chatInput.focus(); }
 
     window.handleKeyPress = async (e) => {
-      if (e.key === 'Enter' && (e.target.value.trim() || pendingFile) && user) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if ((e.target.value.trim() || pendingFile) && user) {
         const t = e.target.value.trim(); e.target.value = '';
         const payload = { text: t, user, channel: chan, pfp, timestamp: serverTimestamp() };
         if (pendingFile) {
@@ -1385,6 +1440,7 @@ chatInput.addEventListener('blur', () => { if (user) setTyping(false); });
         setTyping(false);
         await addDoc(collection(db, "messages"), payload);
       }
+    }
     }
 
     document.getElementById('auth-submit-btn').addEventListener('click', () => {
