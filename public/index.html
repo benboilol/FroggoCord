@@ -553,7 +553,11 @@
           renderUserList();
         });
         onSnapshot(query(collection(db,"friends"),where("to","==",user)),(snap)=>{
-          document.getElementById('req-list').innerHTML = snap.docs.filter(d => d.data().status === "pending").map(d=>`<div>${escHtml(d.data().from)} <button onclick="acceptReq('${d.id}')" style="font-size:10px;">Accept</button></div>`).join('');
+          const pending = snap.docs.filter(d => d.data().status === "pending");
+          document.getElementById('req-list').innerHTML = pending.map(d=>{
+            const data = d.data();
+            return `<div>${escHtml(data.from)} sent you a request <button onclick="acceptReq('${d.id}')" style="font-size:10px;padding:2px 6px;background:var(--bl);color:#000;border:none;border-radius:3px;">Accept</button> <button onclick="declineReq('${d.id}')" style="font-size:10px;padding:2px 6px;background:#ff4757;color:#fff;border:none;border-radius:3px;">Decline</button></div>`;
+          }).join('');
         });
         pfp = localStorage.getItem('pfp_'+user) || '';
         if (pfp.startsWith('file:///')) { pfp = ''; localStorage.removeItem('pfp_'+user); }
@@ -568,8 +572,50 @@
       } else { if (heartbeat) { clearInterval(heartbeat); heartbeat = null; } if (user) setDoc(doc(db,"presence",user),{status:'offline'},{merge:true}); document.getElementById('auth-overlay').style.display = 'flex'; }
     });
 
-    window.acceptReq = async (id) => { await updateDoc(doc(db,"friends",id),{status:"accepted"}); appAlert("Accepted!"); }
-    window.sendReq = async (u) => { if(u) await addDoc(collection(db,"friends"),{from:user,to:u,status:"pending",timestamp:serverTimestamp()}); }
+    window.acceptReq = async (id) => {
+      if (await appConfirm("Accept friend request?")) {
+        await updateDoc(doc(db,"friends",id),{status:"accepted"});
+        appAlert("Friend request accepted!");
+      }
+    };
+    window.declineReq = async (id) => {
+      if (await appConfirm("Decline friend request?")) {
+        await updateDoc(doc(db,"friends",id),{status:"declined"});
+        appAlert("Request declined.");
+      }
+    };
+    window.sendReq = async (u) => {
+      if (!u || u === user) { appAlert("You can't friend yourself."); return; }
+      // Block duplicate outgoing pending requests
+      const existing = await getDocs(query(
+        collection(db,"friends"),
+        where("from","==",user),
+        where("to","==",u),
+        where("status","==","pending")
+      ));
+      if (!existing.empty) {
+        appAlert("Friend request already sent to " + u);
+        return;
+      }
+      // Block if they already sent you one (tell them to accept instead)
+      const incoming = await getDocs(query(
+        collection(db,"friends"),
+        where("from","==",u),
+        where("to","==",user),
+        where("status","==","pending")
+      ));
+      if (!incoming.empty) {
+        appAlert(u + " has already sent you a friend request. Check your requests.");
+        return;
+      }
+      await addDoc(collection(db,"friends"),{from:user,to:u,status:"pending",timestamp:serverTimestamp()});
+    };
+    window.cancelReq = async (id) => {
+      if (await appConfirm("Cancel friend request?")) {
+        await updateDoc(doc(db,"friends",id),{status:"canceled"});
+        appAlert("Request canceled.");
+      }
+    };
 
     function rst() {
       lastActivity = Date.now();
@@ -1275,7 +1321,7 @@ window.hideServerCtx = hideServerCtx;
     window.loadServers = loadServers;
 
     // Profiles
-    window.openProfile = (u) => {
+    window.openProfile = async (u) => {
       const modal = document.getElementById('profile-modal');
       document.getElementById('prof-avatar').textContent = (u||'?')[0].toUpperCase();
       document.getElementById('prof-name').textContent = u;
@@ -1285,7 +1331,29 @@ window.hideServerCtx = hideServerCtx;
       const actions = document.getElementById('prof-actions');
       let html = '';
       if (u !== user) {
-        html += `<button onclick="sendReq('${escHtml(u)}'); closeProfile();" style="background:var(--bl);color:#000;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Send Friend Request</button>`;
+        let btnHtml = `<button onclick="sendReq('${escHtml(u)}'); closeProfile();" style="background:var(--bl);color:#000;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Send Friend Request</button>`;
+        try {
+          const existing = await getDocs(query(
+            collection(db,"friends"),
+            where("from","==",user),
+            where("to","==",u),
+            where("status","==","pending")
+          ));
+          if (!existing.empty) {
+            btnHtml = `<button onclick="cancelReq('${existing.docs[0].id}'); closeProfile();" style="background:var(--mut);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Cancel Request</button>`;
+          } else {
+            const incoming = await getDocs(query(
+              collection(db,"friends"),
+              where("from","==",u),
+              where("to","==",user),
+              where("status","==","pending")
+            ));
+            if (!incoming.empty) {
+              btnHtml = `<button onclick="acceptReq('${incoming.docs[0].id}'); closeProfile();" style="background:var(--bl);color:#000;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Accept Request</button>`;
+            }
+          }
+        } catch (e) { console.log("friend check failed", e); }
+        html += btnHtml;
         html += `<button onclick="openDM('${escHtml(u)}'); closeProfile();" style="background:var(--bg-t);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;">Message</button>`;
       } else {
         html += `<div style="color:var(--mut);font-size:12px;">This is you</div>`;
