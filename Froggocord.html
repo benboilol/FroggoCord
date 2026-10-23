@@ -552,8 +552,8 @@
           lastPresenceUsers = all;
           renderUserList();
         });
-        onSnapshot(query(collection(db,"friends"),where("to","==",user),where("status","==","pending")),(snap)=>{
-          document.getElementById('req-list').innerHTML = snap.docs.map(d=>`<div>${escHtml(d.data().from)} <button onclick="acceptReq('${d.id}')" style="font-size:10px;">Accept</button></div>`).join('');
+        onSnapshot(query(collection(db,"friends"),where("to","==",user)),(snap)=>{
+          document.getElementById('req-list').innerHTML = snap.docs.filter(d => d.data().status === "pending").map(d=>`<div>${escHtml(d.data().from)} <button onclick="acceptReq('${d.id}')" style="font-size:10px;">Accept</button></div>`).join('');
         });
         pfp = localStorage.getItem('pfp_'+user) || '';
         if (pfp.startsWith('file:///')) { pfp = ''; localStorage.removeItem('pfp_'+user); }
@@ -669,9 +669,13 @@
       if (mode === 'channels') {
         const srv = currentServer ? servers.find(sv=>sv.id===currentServer) : null;
         h3.textContent = srv ? srv.name : 'Channels';
-        ch.innerHTML = `<div class="cat">Text Channels</div>` +
-          `<button class="cb ${chan==='general'?'active':''}" onclick="switchChannel('general')"># general</button>` + unreadBadge('general') +
-          `<button class="cb ${chan==='random'?'active':''}" onclick="switchChannel('random')"># random</button>` + unreadBadge('random');
+        if (srv) {
+          ch.innerHTML = `<div class="cat">Text Channels</div>` + (srv.channels||[{name:'general'}]).map(c => `<button class="cb ${chan===('srv_'+currentServer+'_'+c.name)?'active':''}" onclick="switchServerChannel('${srv.id}','${escHtml(c.name)}')"># ${escHtml(c.name)}</button>${unreadBadge('srv_' + currentServer + '_' + c.name)}`).join('');
+        } else {
+          ch.innerHTML = `<div class="cat">Text Channels</div>` +
+            `<button class="cb ${chan==='general'?'active':''}" onclick="switchChannel('general')"># general</button>` + unreadBadge('general') +
+            `<button class="cb ${chan==='random'?'active':''}" onclick="switchChannel('random')"># random</button>` + unreadBadge('random');
+        }
       } else {
         h3.textContent = 'Direct Messages';
         const users = knownUsers();
@@ -1381,10 +1385,10 @@ let pendingFile = null; let pendingPreview = null;
       });
       if (window._typingRefresh) clearInterval(window._typingRefresh);
       window._typingRefresh = setInterval(renderTyping, 1000);
-      unsub = onSnapshot(query(collection(db,"messages"),where("channel","==",chan),orderBy("timestamp","asc")), (snap) => {
+      unsub = onSnapshot(query(collection(db,"messages"),where("channel","==",chan)), (snap) => {
         const container = document.getElementById('message-container');
         const wasPinned = msgsPinned || snap.docChanges().some(c => c.type === "added" && c.doc.data().user === user);
-        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.channel === chan);
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.channel === chan).sort((a,b) => (a.timestamp ? a.timestamp.toMillis() : 0) - (b.timestamp ? b.timestamp.toMillis() : 0));
         window._unreadCounts = {};
         snap.docs.forEach(d => {
           const m = d.data();
