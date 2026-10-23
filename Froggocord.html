@@ -167,6 +167,11 @@
     .btn-danger:hover { filter: brightness(1.08); }
     .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
     .modal-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    #lightbox { display: none; align-items: center; justify-content: center; position: fixed; inset: 0; background: #111214; z-index: 5000; padding: 16px; cursor: zoom-out; }
+    #lightbox.hidden { display: none; }
+    #lightbox img { max-width: 95vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 0 40px rgba(0,0,0,.6); cursor: zoom-out; }
+    #lightbox-close { position: absolute; top: 16px; right: 24px; color: #fff; font-size: 30px; font-weight: 700; cursor: pointer; z-index: 5001; }
+    #lightbox-info { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 13px; background: rgba(0,0,0,.5); padding: 4px 10px; border-radius: 4px; }
     .modal-tabs button { flex: 1; padding: 8px; border: none; border-radius: 4px; cursor: pointer; background: var(--bg-t); color: var(--txt); font-weight: 600; font-size: 14px; }
     #server-modal .modal-card { width: 420px; }
     #server-modal #sm-name, #server-modal #sm-code { background: var(--bg-t); border: none; }
@@ -338,7 +343,12 @@
     </div>
     <div id="at-popup"></div>
     <div id="reaction-picker" style="display:none; position:fixed; background:var(--bg-s); border-radius:8px; padding:6px; z-index:1003; box-shadow:0 8px 24px rgba(0,0,0,.5); max-width:260px; max-height:200px; overflow-y:auto; grid-template-columns:repeat(8,1fr); gap:2px;"></div>
-    <div id="media-picker" style="display:none;">
+    <div id="lightbox" class="hidden" onclick="closeLightbox()">
+    <span id="lightbox-close" onclick="event.stopPropagation(); closeLightbox()">✕</span>
+    <img id="lightbox-img" src="" alt="enlarged">
+    <div id="lightbox-info"></div>
+  </div>
+  <div id="media-picker" style="display:none;">
       <div class="tabs">
         <button onclick="showTab('emojis')">Emojis</button>
         <button onclick="showTab('gifs')">GIFs</button>
@@ -1108,7 +1118,25 @@ document.addEventListener('click', (e) => {
      // wire ctx menu clicks
      document.getElementById('ctx-settings').onclick = openServerSettings;
      document.getElementById('ctx-leave').onclick = leaveServer;
-     window.hideServerCtx = hideServerCtx;
+     window.openLightbox = (url, label) => {
+  const lb = document.getElementById('lightbox');
+  const img = document.getElementById('lightbox-img');
+  const info = document.getElementById('lightbox-info');
+  if (!lb || !img) return;
+  img.src = url;
+  info.textContent = label || '';
+  lb.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+};
+window.closeLightbox = () => {
+  const lb = document.getElementById('lightbox');
+  const img = document.getElementById('lightbox-img');
+  if (!lb) return;
+  lb.classList.add('hidden');
+  if (img) img.src = '';
+  document.body.style.overflow = '';
+};
+window.hideServerCtx = hideServerCtx;
      window.showServerCtx = showServerCtx;
      window.openServerSettings = openServerSettings;
      window.closeServerSettings = closeServerSettings;
@@ -1335,7 +1363,7 @@ let pendingFile = null; let pendingPreview = null;
                 </div>
                 ${rep}
                 ${textVal ? `<div class="msg-bubble">${renderText(textVal)}</div>` : ''}
-                ${m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px;${m.imageW && m.imageH ? ' aspect-ratio:' + m.imageW + '/' + m.imageH + ';' : ''}">` : ''}
+                ${m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px;cursor:pointer;${m.imageW && m.imageH ? ' aspect-ratio:' + m.imageW + '/' + m.imageH + ';' : ''}" onclick="openLightbox('${escHtml(m.image)}','Image')">` : ''}
                 ${renderReactions(m)}
               </div>
             </div>`;
