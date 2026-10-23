@@ -573,16 +573,12 @@
     });
 
     window.acceptReq = async (id) => {
-      if (await appConfirm("Accept friend request?")) {
-        await updateDoc(doc(db,"friends",id),{status:"accepted"});
-        appAlert("Friend request accepted!");
-      }
+      await updateDoc(doc(db,"friends",id),{status:"accepted"});
+      appAlert("Friend request accepted!");
     };
     window.declineReq = async (id) => {
-      if (await appConfirm("Decline friend request?")) {
-        await updateDoc(doc(db,"friends",id),{status:"declined"});
-        appAlert("Request declined.");
-      }
+      await updateDoc(doc(db,"friends",id),{status:"declined"});
+      appAlert("Request declined.");
     };
     window.sendReq = async (u) => {
       if (!u || u === user) { appAlert("You can't friend yourself."); return; }
@@ -611,10 +607,8 @@
       await addDoc(collection(db,"friends"),{from:user,to:u,status:"pending",timestamp:serverTimestamp()});
     };
     window.cancelReq = async (id) => {
-      if (await appConfirm("Cancel friend request?")) {
-        await updateDoc(doc(db,"friends",id),{status:"canceled"});
-        appAlert("Request canceled.");
-      }
+      await updateDoc(doc(db,"friends",id),{status:"canceled"});
+      appAlert("Request canceled.");
     };
 
     function rst() {
