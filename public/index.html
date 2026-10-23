@@ -97,6 +97,8 @@
     .composer { background: var(--input); border-radius: 8px; display: flex; align-items: center; padding: 0 8px 0 16px; gap: 8px; }
     .composer .plus { background: var(--mut); color: var(--input); border-radius: 50%; width: 22px; height: 22px; border: none; font-weight: 700; cursor: pointer; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .composer .plus:hover { background: var(--txt); }
+    .composer .attach { background: transparent; border: none; font-size: 20px; cursor: pointer; color: var(--mut); padding: 4px; line-height: 1; flex-shrink: 0; }
+    .composer .attach:hover { filter: brightness(1.2); }
     .composer input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--txt); font-size: 15px; padding: 11px 0; font-family: inherit; }
     .composer input::placeholder { color: var(--mut); }
     .composer .emoji { background: transparent; border: none; font-size: 20px; cursor: pointer; color: var(--mut); padding: 4px; line-height: 1; }
@@ -340,7 +342,16 @@
       </div>
     </div>
     <div class="composer-wrap">
+      <div id="file-preview" style="display:none; padding: 0 0 8px;">
+        <div style="display:flex; align-items:center; gap:8px; background:#2b2d31; border-radius:6px; padding:6px 10px;">
+          <img id="file-preview-img" src="" alt="preview" style="max-height:60px; max-width:80px; border-radius:4px; object-fit:cover;">
+          <span id="file-preview-name" style="flex:1; font-size:13px; color:var(--txt); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+          <span style="cursor:pointer; color:var(--mut); font-weight:700; padding:4px;" onclick="cancelFile()">✕</span>
+        </div>
+      </div>
       <div class="composer">
+        <input type="file" id="file-input" accept="image/*" style="display:none;">
+        <button class="attach" title="Upload image" onclick="document.getElementById('file-input').click()">📎</button>
         <button class="plus" title="GIFs" onclick="document.getElementById('media-picker').style.display='flex';showTab('gifs')">+</button>
         <input type="text" id="chat-input" placeholder="Message #general" onkeypress="handleKeyPress(event)">
         <button id="emoji-btn" class="emoji" title="Emoji">😀</button>
@@ -360,6 +371,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js'
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js'
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, updateDoc, deleteDoc, setDoc, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js'
+
 
     const config = { apiKey: "AIzaSyDicR3VX9ClJoO8SDEu_xMGR4fbbqsrSVE", authDomain: "discordcord-7c0b2.firebaseapp.com", projectId: "discordcord-7c0b2", storageBucket: "discordcord-7c0b2.firebasestorage.app", messagingSenderId: "138455635458", appId: "1:138455635458:web:a236f0ceca0cb6de22b91b" };
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
@@ -638,7 +650,36 @@
       const p = document.getElementById('media-picker'); p.style.display = p.style.display==='none'?'flex':'none';
     });
 
-    const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','😮','😢','😡','🤯','😱','😴','🤤','😵','🤪','😜','😛','🤑','🤫','🤭','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵‍💫','🤠','😈','👿','👹','👺','🤡','👻','👽','👾','🤖','💩','😺','😸','😹','😻','😼','😽','🙀','😿','😾','👋','🤚','🖐','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','👃','🧠','🫀','🫁','🦷','🦴','👀','👁','👅','👄','💋','🩸','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','🔥','✨','⭐','🌟','💫','⚡','☀️','🌙','☁️','🌧','⛈','🌩','❄️','☃️','⛄','🌬','💨','🌪','🌈','☂️','☔','⚡','🎉','🎊','🎈','🎁','🎀','🏆','🥇','🥈','🥉','🏅','🎖','🎯','🎲','🎮','🕹','🎰','🧩','♟','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🎷','🎺','🎸','🎻','🪕','📱','💻','⌨️','🖥','🖨','🖱','🖲','💽','💾','💿','📀','📼','📷','📸','📹','🎥','📽','🎞','📞','☎️','📟','📠','📺','📻','🎙','🎚','🎛','⏱','⏲','⏰'];
+    // ---- file upload (images / gifs) ----
+const fileInputEl = document.getElementById('file-input');
+if (fileInputEl) {
+  fileInputEl.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (!f.type.startsWith('image/')) { appAlert('Only images and GIFs can be uploaded.'); fileInputEl.value = ''; return; }
+    if (f.size > 700000) { appAlert('Image too large (max ~700KB).'); fileInputEl.value = ''; return; }
+    pendingFile = f;
+    const r = new FileReader();
+    r.onload = () => {
+      pendingPreview = r.result;
+      document.getElementById('file-preview-img').src = pendingPreview;
+      document.getElementById('file-preview-name').textContent = f.name + ' (' + (f.size/1024).toFixed(0) + 'KB)';
+      document.getElementById('file-preview').style.display = 'block';
+    };
+    r.onerror = () => { appAlert('Failed to read file.'); pendingFile = null; };
+    r.readAsDataURL(f);
+    fileInputEl.value = '';
+  });
+}
+window.cancelFile = () => {
+  pendingFile = null; pendingPreview = null;
+  const fp = document.getElementById('file-preview');
+  if (fp) fp.style.display = 'none';
+  const img = document.getElementById('file-preview-img');
+  if (img) img.src = '';
+};
+
+const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','😮','😢','😡','🤯','😱','😴','🤤','😵','🤪','😜','😛','🤑','🤫','🤭','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵‍💫','🤠','😈','👿','👹','👺','🤡','👻','👽','👾','🤖','💩','😺','😸','😹','😻','😼','😽','🙀','😿','😾','👋','🤚','🖐','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','👃','🧠','🫀','🫁','🦷','🦴','👀','👁','👅','👄','💋','🩸','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','🔥','✨','⭐','🌟','💫','⚡','☀️','🌙','☁️','🌧','⛈','🌩','❄️','☃️','⛄','🌬','💨','🌪','🌈','☂️','☔','⚡','🎉','🎊','🎈','🎁','🎀','🏆','🥇','🥈','🥉','🏅','🎖','🎯','🎲','🎮','🕹','🎰','🧩','♟','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🎷','🎺','🎸','🎻','🪕','📱','💻','⌨️','🖥','🖨','🖱','🖲','💽','💾','💿','📀','📼','📷','📸','📹','🎥','📽','🎞','📞','☎️','📟','📠','📺','📻','🎙','🎚','🎛','⏱','⏲','⏰'];
     document.getElementById('emoji-tab').innerHTML = emojis.map(e => `<span style="cursor:pointer;" onclick="insertEmoji('${e}')">${e}</span>`).join('');
 
     let gifTimer = null, gifQuery = '', gifOffset = 0, gifLoading = false, gifHasMore = true;
@@ -1093,6 +1134,7 @@
       setTimeout(() => { msgBox.scrollTop = msgBox.scrollHeight; isPinning = false; }, 0);
     }
     const chatGifDims = {};
+let pendingFile = null; let pendingPreview = null;
     function listen() {
       if (!chan) {
         if (unsub) { unsub(); unsub = null; }
@@ -1126,7 +1168,8 @@
                   <span class="msg-actions">${rBtn}${btns}</span>
                 </div>
                 ${rep}
-                <div class="msg-bubble">${renderText(textVal)}</div>
+                ${textVal ? `<div class="msg-bubble">${renderText(textVal)}</div>` : ''}
+                ${m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px;">` : ''}
               </div>
             </div>`;
         }).join('');
@@ -1172,7 +1215,8 @@
             if (mt > appLoadTime && m.user && m.user !== user && document.hidden) {
               const txt = String(m.text ?? '');
               const isP = txt.includes('@everyone') || txt.includes(`@${user}`);
-              new Notification(isP ? `⚠️ PINGED` : `@${m.user}`, { body: txt.includes('<img') ? 'Sent a GIF 📷' : txt });
+              const hasImg = txt.includes('<img') || !!m.image;
+               new Notification(isP ? `⚠️ PINGED` : `@${m.user}`, { body: hasImg ? 'Sent an image 📷' : txt });
             }
           }
         });
@@ -1193,9 +1237,21 @@
     window.insertAt = (u) => { const val = chatInput.value; const at = val.lastIndexOf('@'); chatInput.value = val.substring(0, at) + `@${u} `; atPopup.style.display = 'none'; chatInput.focus(); }
 
     window.handleKeyPress = async (e) => {
-      if (e.key === 'Enter' && e.target.value.trim() && user) {
-        const t = e.target.value; e.target.value = '';
+      if (e.key === 'Enter' && (e.target.value.trim() || pendingFile) && user) {
+        const t = e.target.value.trim(); e.target.value = '';
         const payload = { text: t, user, channel: chan, pfp, timestamp: serverTimestamp() };
+        if (pendingFile) {
+          if (pendingFile.size > 700000) {
+            appAlert('Image too large (max ~700KB). Larger files need Firebase Storage, which requires billing.');
+            pendingFile = null; pendingPreview = null;
+            window.cancelFile();
+            document.getElementById('chat-input').value = t;
+            return;
+          }
+          payload.image = pendingPreview;
+          pendingFile = null; pendingPreview = null;
+          window.cancelFile();
+        }
         if (reply) { payload.replyTo = { user: reply.user, text: reply.text }; window.cancelReply(); }
         await addDoc(collection(db, "messages"), payload);
       }
