@@ -855,7 +855,7 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
 
     document.getElementById('message-container').addEventListener('click', (e) => {
       const el = e.target.closest('[data-action]'); if (!el) return;
-      const act = el.dataset.action, id = el.dataset.id;
+      const act = el.dataset.action, id = el.dataset.id || el.dataset.msgid;
       if (act === 'edit') window.editMsg(id, el.dataset.text || '');
       else if (act === 'delete') window.deleteMsg(id);
       else if (act === 'react') { showReactionPicker(id, el); }
