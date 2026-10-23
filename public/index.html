@@ -574,41 +574,30 @@
 
     window.acceptReq = async (id) => {
       await updateDoc(doc(db,"friends",id),{status:"accepted"});
-      appAlert("Friend request accepted!");
     };
     window.declineReq = async (id) => {
       await updateDoc(doc(db,"friends",id),{status:"declined"});
-      appAlert("Request declined.");
     };
     window.sendReq = async (u) => {
-      if (!u || u === user) { appAlert("You can't friend yourself."); return; }
-      // Block duplicate outgoing pending requests
+      if (!u || u === user) return;
       const existing = await getDocs(query(
         collection(db,"friends"),
         where("from","==",user),
         where("to","==",u),
         where("status","==","pending")
       ));
-      if (!existing.empty) {
-        appAlert("Friend request already sent to " + u);
-        return;
-      }
-      // Block if they already sent you one (tell them to accept instead)
+      if (!existing.empty) return;
       const incoming = await getDocs(query(
         collection(db,"friends"),
         where("from","==",u),
         where("to","==",user),
         where("status","==","pending")
       ));
-      if (!incoming.empty) {
-        appAlert(u + " has already sent you a friend request. Check your requests.");
-        return;
-      }
+      if (!incoming.empty) return;
       await addDoc(collection(db,"friends"),{from:user,to:u,status:"pending",timestamp:serverTimestamp()});
     };
     window.cancelReq = async (id) => {
       await updateDoc(doc(db,"friends",id),{status:"canceled"});
-      appAlert("Request canceled.");
     };
 
     function rst() {
