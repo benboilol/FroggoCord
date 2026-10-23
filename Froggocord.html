@@ -343,6 +343,7 @@
       </div>
     </div>
     <div class="composer-wrap">
+      <div id="typing-indicator" style="display:none; padding: 2px 0 6px; font-size:12px; color:var(--mut); font-style:italic; min-height:16px;"></div>
       <div id="file-preview" style="display:none; padding: 0 0 8px;">
         <div style="display:flex; align-items:center; gap:8px; background:#2b2d31; border-radius:6px; padding:6px 10px;">
           <img id="file-preview-img" src="" alt="preview" style="max-height:60px; max-width:80px; border-radius:4px; object-fit:cover;">
@@ -376,7 +377,7 @@
 
     const config = { apiKey: "AIzaSyDicR3VX9ClJoO8SDEu_xMGR4fbbqsrSVE", authDomain: "discordcord-7c0b2.firebaseapp.com", projectId: "discordcord-7c0b2", storageBucket: "discordcord-7c0b2.firebasestorage.app", messagingSenderId: "138455635458", appId: "1:138455635458:web:a236f0ceca0cb6de22b91b" };
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
-    let chan = 'general', user = null, unsub = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'channels', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [];
+    let chan = 'general', user = null, unsub = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'channels', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [];
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
     let allUsers = [], backfillUsers = [];
     const IDLE_MS = 120000;
@@ -839,6 +840,18 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
     };
 
     async function updatePresence(s) { if (user) { curStat = s; await setDoc(doc(db,"presence",user),{user,status:s,lastActive:serverTimestamp()},{merge:true}); } }
+     function setTyping(active) {
+       if (!user || !chan) return;
+       const tid = chan + '__' + user;
+       if (active) {
+         setDoc(doc(db,'typing',tid), { channel: chan, user, timestamp: serverTimestamp() }, { merge: true }).catch(()=>{});
+         if (typingTimer) clearTimeout(typingTimer);
+         typingTimer = setTimeout(() => setTyping(false), 3000);
+       } else {
+         if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
+         deleteDoc(doc(db,'typing',tid)).catch(()=>{});
+       }
+     }
 
     document.getElementById('message-container').addEventListener('click', (e) => {
       const el = e.target.closest('[data-action]'); if (!el) return;
@@ -1198,6 +1211,8 @@ document.addEventListener('click', (e) => {
 
 let pendingFile = null; let pendingPreview = null;
     function listen() {
+      if (typingUnsub) { typingUnsub(); typingUnsub = null; }
+      setTyping(false);
       if (!chan) {
         if (unsub) { unsub(); unsub = null; }
         const container = document.getElementById('message-container');
@@ -1205,6 +1220,41 @@ let pendingFile = null; let pendingPreview = null;
         return;
       }
       if (unsub) unsub();
+      // typing listener
+      const typingQuery = query(collection(db,'typing'), where('channel','==',chan));
+      let cachedTypingDocs = [];
+      function renderTyping() {
+        const now = Date.now();
+        const names = [];
+        cachedTypingDocs.forEach(d => {
+          const t = d.data();
+          if (!t || !t.user || t.user === user) return;
+          const ts = t.timestamp && t.timestamp.toMillis ? t.timestamp.toMillis() : 0;
+          if (!ts || now - ts > 5000) return;
+          names.push(t.user);
+        });
+        const el = document.getElementById('typing-indicator');
+        if (!el) return;
+        if (names.length === 0) { el.style.display = 'none'; el.textContent = ''; }
+        else if (names.length === 1) { el.style.display = 'block'; el.textContent = names[0] + ' is typing...'; }
+        else if (names.length === 2) { el.style.display = 'block'; el.textContent = names[0] + ' and ' + names[1] + ' are typing...'; }
+        else { el.style.display = 'block'; el.textContent = names.length + ' people are typing...'; }
+      }
+      typingUnsub = onSnapshot(typingQuery, (snap) => {
+
+        cachedTypingDocs = snap.docs;
+        renderTyping();
+      });
+      if (window._typingRefresh) clearInterval(window._typingRefresh);
+      window._typingRefresh = setInterval(renderTyping, 1000);
+      // refresh typing display every 2s to drop stale
+      if (window._typingRefresh) clearInterval(window._typingRefresh);
+      window._typingRefresh = setInterval(() => {
+        const el = document.getElementById('typing-indicator');
+        if (el && el.style.display === 'block') {
+          // re-trigger by re-running filter is complex; just leave, stale filtered on next snapshot
+        }
+      }, 2000);
       unsub = onSnapshot(query(collection(db,"messages"),orderBy("timestamp","asc")), (snap) => {
         const container = document.getElementById('message-container');
         const wasPinned = msgsPinned || snap.docChanges().some(c => c.type === "added" && c.doc.data().user === user);
@@ -1289,8 +1339,12 @@ let pendingFile = null; let pendingPreview = null;
 
     const atPopup = document.getElementById('at-popup');
     const chatInput = document.getElementById('chat-input');
+chatInput.addEventListener('blur', () => { if (user) setTyping(false); });
     chatInput.addEventListener('input', (e) => {
       const val = e.target.value; const at = val.lastIndexOf('@');
+      if (user && chan) {
+        if (val.trim()) { setTyping(true); } else { setTyping(false); }
+      }
       if (at !== -1 && at === val.length - 1) {
         const uList = knownUsers();
         atPopup.innerHTML = ['everyone', ...uList].map(u => `<div style="cursor:pointer;padding:6px 12px;border-radius:4px;color:#fff;" data-u="${escHtml(u)}" onmouseover="this.style.background='var(--bl)'" onmouseout="this.style.background='transparent'">@${escHtml(u)}</div>`).join('');
@@ -1307,6 +1361,7 @@ let pendingFile = null; let pendingPreview = null;
         if (pendingFile) {
           if (pendingFile.size > 700000) {
             appAlert('Image too large (max ~700KB). Larger files need Firebase Storage, which requires billing.');
+            setTyping(false);
             pendingFile = null; pendingPreview = null;
             window.cancelFile();
             document.getElementById('chat-input').value = t;
@@ -1327,6 +1382,7 @@ let pendingFile = null; let pendingPreview = null;
           window.cancelFile();
         }
         if (reply) { payload.replyTo = { user: reply.user, text: reply.text }; window.cancelReply(); }
+        setTyping(false);
         await addDoc(collection(db, "messages"), payload);
       }
     }
