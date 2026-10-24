@@ -2,3 +2,6 @@ Format instructions:
 Start with your id. Then the date and timestamp. Then a list of things you changed
 Note: Fiaguhop137's ID is 1f89a. DragonDog558's ID is 1da20(Ben: if you want you can change this). If you are OpenCodeAI, use DragonDog558's id.
 1f89a-2026.10.23-16.16.37: Added changelog
+
+1. Replicate everything that a basic chat app like Discord or Stoat has.
+2. Idk vro make nitro features not nitro???
