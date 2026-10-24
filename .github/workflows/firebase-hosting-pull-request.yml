@@ -17,4 +17,4 @@ jobs:
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DISCORDCORD_7C0B2 }}
-          projectId: discordcord-7c0b2
+          projectId: froggocord

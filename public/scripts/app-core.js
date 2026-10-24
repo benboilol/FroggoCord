@@ -24,7 +24,7 @@ const {
   getDoc
 } = window.froggocordFirebase;
 
-    const config = { apiKey: "AIzaSyDicR3VX9ClJoO8SDEu_xMGR4fbbqsrSVE", authDomain: "discordcord-7c0b2.firebaseapp.com", projectId: "discordcord-7c0b2", storageBucket: "discordcord-7c0b2.firebasestorage.app", messagingSenderId: "138455635458", appId: "1:138455635458:web:a236f0ceca0cb6de22b91b" };
+    const config = { apiKey: "AIzaSyDicR3VX9ClJoO8SDEu_xMGR4fbbqsrSVE", authDomain: "froggocord.firebaseapp.com", projectId: "froggocord", storageBucket: "froggocord.firebasestorage.app", messagingSenderId: "138455635458", appId: "1:138455635458:web:a236f0ceca0cb6de22b91b" };
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
     let chan = 'general', user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'channels', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
