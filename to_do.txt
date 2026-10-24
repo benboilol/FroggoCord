@@ -1,0 +1,9 @@
+Features to add(broad):
+themes
+settings
+Tasks(explicit):
+themes: hot swappable css files via javascript. will need settings button
+themes: multiple css files, a coherent naming scheme(ex: ash, obsidian, magma, fulgurite, plasma)
+settings: a button
+settings: a overlay
+settings: theme tab
