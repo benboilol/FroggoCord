@@ -1,11 +1,92 @@
 Features to add(broad):
-themes
-settings
+(done) themes:
+settings:
 chatting: Replicate everything that a basic chat app like Discord or Stoat has.
 nitro: Idk vro make nitro features not nitro???
 Tasks(explicit):
-themes: hot swappable css files via javascript. will need settings button
-themes: multiple css files, a coherent naming scheme(ex: ash, obsidian, magma, fulgurite, plasma)
-settings: a button
-settings: a overlay
-settings: theme tab
+(done) themes: hot swappable css files via javascript. will need settings button
+(done) themes: multiple css files, a coherent naming scheme(ex: ash, obsidian, magma, fulgurite, plasma)
+(done) settings: a button
+(done) settings: a overlay
+(done) settings: theme tab
+(done) settings: persist the selected theme across sessions on this device.
+settings: add tabs for account, appearance, notifications, privacy, and accessibility.
+settings: add controls appropriate to each implemented setting.
+settings: add a way to reset preferences to defaults.
+(done) chatting: real-time messaging.
+(done) chatting: edit and delete your own messages.
+(done) chatting: reply to messages.
+(done) chatting: mention users (basic @mentions).
+(done) chatting: emoji reactions.
+chatting: display message timestamps and edit indicators.
+(done) chatting: support multiline text, basic Markdown, code blocks, and safe clickable links.
+chatting: display message history with pagination.
+chatting: show sending, sent, and failed message states.
+chatting: support message retries without accidental duplicates.
+(done) chatting: show typing indicators.
+(done) chatting: show online, idle, do-not-disturb, and offline statuses.
+(done) chatting: display unread message indicators and counts.
+(done) chatting: support direct messages.
+(done) chatting: support friend requests, including sending, accepting, declining, and canceling requests.
+chatting: support blocking users.
+chatting: support user profiles, avatars, display names, biographies, and custom statuses.
+(done) chatting: support profile cards when clicking users.
+(done) chatting: support creating, joining, leaving, and deleting servers.
+chatting: support server invitation codes, including creation and revocation.
+chatting: support creating, renaming, reordering, and deleting text channels.
+chatting: support channel topics and descriptions.
+(done) chatting: support server member lists.
+chatting: support server ownership, administrators, roles, and permissions.
+chatting: support channel visibility and channel-specific permissions.
+chatting: support pinned messages.
+chatting: support searching messages by text, author, and date.
+chatting: allow jumping to messages from search results.
+(done) chatting: support image attachments with previews.
+chatting: support file attachments with enforced size and type limits.
+chatting: support multiple attachments per message.
+(done) chatting: support GIF search and sharing.
+chatting: support link previews.
+chatting: support custom emoji and stickers.
+chatting: support moderation actions, including message deletion, member removal, and bans for authorized moderators.
+chatting: support reporting and blocking mechanisms.
+chatting: reconnect after temporary network interruptions.
+(done) chatting: clean up message and typing listeners when changing channels.
+chatting: support keyboard navigation and accessible controls.
+chatting: provide useful errors for failed operations.
+nitro: make all customization and premium-style features available to every user without a paid subscription.
+nitro: allow users to customize their profile banners.
+nitro: allow users to customize profile colors and accents.
+nitro: allow users to customize their profile layout.
+nitro: support custom profile decorations.
+nitro: support profile badges earned through achievements or participation.
+nitro: support custom animated avatars, subject to reasonable file size and performance limits.
+nitro: support custom animated profile banners, subject to reasonable file size and performance limits.
+nitro: support custom server icons and banners.
+nitro: support server-specific emoji and sticker collections.
+nitro: support richer message embeds.
+nitro: support expanded GIF and sticker features.
+nitro: support customizable chat density and layout.
+nitro: support multiple image attachments and image galleries.
+nitro: support larger attachment limits where infrastructure permits.
+nitro: support profile effects and optional animations.
+nitro: support custom sound effects or a server soundboard.
+nitro: support per-server visual customization.
+nitro: support optional custom interface accents and background images.
+nitro: do not artificially restrict ordinary messaging, themes, basic profile customization, or other core functionality to create a premium tier.
+Security: enforce authentication and authorization on the backend and database rules.
+Security: use stable authentication UIDs rather than usernames as security identities.
+Security: validate messages, uploads, reactions, friend requests, and administrative actions server-side.
+Security: enforce rate limits and resource limits.
+Security: prevent unauthorized users from reading, modifying, or deleting other users' data.
+Security: test database rules before deployment.
+Development: preserve the existing project structure.
+Development: keep public/index.html HTML-only.
+Development: keep public/script.js JavaScript-only.
+Development: keep public/style.css CSS-only.
+Development: keep each theme in its own CSS file.
+Development: do not modify Froggocord.html; it is a legacy redirect.
+Development: do not delete or overwrite the README.
+Development: preserve existing working features.
+Development: inspect the Git working tree before editing.
+Development: inspect the complete diff and test changes before committing.
+Development: do not claim a feature is complete until it has been verified.
