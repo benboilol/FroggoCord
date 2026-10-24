@@ -12,6 +12,105 @@
     const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit
     const IDLE_MS = 120000;
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
+    const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma'];
+    const THEME_STORAGE_KEY = 'froggocord-theme';
+    const themeLink = document.getElementById('theme-stylesheet');
+    let activeTheme = 'obsidian';
+    let themeLoadId = 0;
+
+    function setThemeSelection(theme) {
+      document.querySelectorAll('.theme-option').forEach(option => {
+        const selected = option.dataset.theme === theme;
+        option.setAttribute('aria-checked', String(selected));
+      });
+    }
+
+    function applyTheme(theme, persist = true) {
+      if (!THEME_IDS.includes(theme) || !themeLink) return Promise.resolve(false);
+      if (theme === activeTheme && themeLink.dataset.theme === theme) {
+        setThemeSelection(theme);
+        return Promise.resolve(true);
+      }
+
+      const requestId = ++themeLoadId;
+      const previousHref = themeLink.href;
+      const previousTheme = activeTheme;
+      const status = document.getElementById('theme-status');
+      if (status) status.textContent = 'Applying ' + theme[0].toUpperCase() + theme.slice(1) + '…';
+
+      return new Promise(resolve => {
+        themeLink.onload = () => {
+          if (requestId !== themeLoadId) return resolve(false);
+          activeTheme = theme;
+          themeLink.dataset.theme = theme;
+          setThemeSelection(theme);
+          if (persist) {
+            try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch (e) {}
+          }
+          if (status) status.textContent = '';
+          resolve(true);
+        };
+        themeLink.onerror = () => {
+          if (requestId !== themeLoadId) return resolve(false);
+          themeLink.onload = null;
+          themeLink.onerror = null;
+          themeLink.href = previousHref;
+          activeTheme = previousTheme;
+          setThemeSelection(previousTheme);
+          if (!persist) {
+            try { localStorage.removeItem(THEME_STORAGE_KEY); } catch (e) {}
+          }
+          if (status) status.textContent = 'Could not load that theme. Your current theme is unchanged.';
+          resolve(false);
+        };
+        themeLink.href = 'themes/' + theme + '.css';
+      });
+    }
+
+    function openSettings() {
+      const modal = document.getElementById('settings-modal');
+      if (!modal) return;
+      modal.setAttribute('aria-hidden', 'false');
+      modal.style.display = 'flex';
+      requestAnimationFrame(() => {
+        modal.classList.add('visible');
+        modal.querySelector('.modal-card').classList.add('visible');
+      });
+      document.getElementById('settings-close').focus();
+    }
+
+    function closeSettings() {
+      const modal = document.getElementById('settings-modal');
+      if (!modal) return;
+      modal.classList.remove('visible');
+      modal.querySelector('.modal-card').classList.remove('visible');
+      modal.setAttribute('aria-hidden', 'true');
+      setTimeout(() => { modal.style.display = 'none'; }, 180);
+      document.getElementById('settings-btn').focus();
+    }
+
+    document.getElementById('settings-btn').addEventListener('click', openSettings);
+    document.getElementById('settings-close').addEventListener('click', closeSettings);
+    document.getElementById('settings-done').addEventListener('click', closeSettings);
+    document.getElementById('settings-modal').addEventListener('click', event => {
+      if (event.target.id === 'settings-modal') closeSettings();
+    });
+    document.querySelectorAll('.theme-option').forEach(option => {
+      option.addEventListener('click', () => applyTheme(option.dataset.theme));
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && document.getElementById('settings-modal').getAttribute('aria-hidden') === 'false') closeSettings();
+    });
+
+    themeLink.dataset.theme = 'obsidian';
+    let savedTheme = 'obsidian';
+    try {
+      const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+      if (THEME_IDS.includes(storedTheme)) savedTheme = storedTheme;
+    } catch (e) {}
+    if (savedTheme !== 'obsidian') applyTheme(savedTheme, false);
+    else setThemeSelection(savedTheme);
+
     const prunePending = new Set();
     function prunePresence(id) {
       if (prunePending.has(id)) return;
@@ -175,7 +274,7 @@
           const pending = snap.docs.filter(d => d.data().status === "pending");
           document.getElementById('req-list').innerHTML = pending.map(d=>{
             const data = d.data();
-            return `<div>${escHtml(data.from)} sent you a request <button onclick="acceptReq('${d.id}')" style="font-size:10px;padding:2px 6px;background:var(--bl);color:#000;border:none;border-radius:3px;">Accept</button> <button onclick="declineReq('${d.id}')" style="font-size:10px;padding:2px 6px;background:#ff4757;color:#fff;border:none;border-radius:3px;">Decline</button></div>`;
+            return `<div>${escHtml(data.from)} sent you a request <button onclick="acceptReq('${d.id}')" style="font-size:10px;padding:2px 6px;background:var(--bl);color:var(--accent-contrast);border:none;border-radius:3px;">Accept</button> <button onclick="declineReq('${d.id}')" style="font-size:10px;padding:2px 6px;background:var(--danger);color:var(--white);border:none;border-radius:3px;">Decline</button></div>`;
           }).join('');
         });
         pfp = localStorage.getItem('pfp_'+user) || '';
@@ -343,7 +442,7 @@
        const server = currentServer ? servers.find(sv => sv.id === currentServer) : null;
        const scope = server ? (server.members || []) : (user ? [...knownUsers(), user] : knownUsers());
        const presMap = new Map(lastPresenceUsers.map(p => [p.user, p]));
-       const colors = { online: '#23a55a', idle: '#f0b232', dnd: '#f23f43', offline: '#80848e' };
+       const colors = { online: 'var(--pr)', idle: 'var(--yellow)', dnd: 'var(--danger)', offline: 'var(--mut)' };
        const labels = { online: 'Online', idle: 'Idle', dnd: 'Do Not Disturb', offline: 'Offline' };
        const order = { online: 0, idle: 1, dnd: 2, offline: 3 };
        const seen = new Set();
@@ -364,7 +463,7 @@
          const avStyle = hasPfp ? `style="background-image:url('${escHtml(upfp)}');"` : '';
          const avContent = hasPfp ? '' : escHtml((name||'?')[0].toUpperCase());
          return `<div class="member ${status === 'offline' ? 'off' : ''}" data-user="${escHtml(name)}" onclick="openProfile(this.dataset.user)">` +
-           `<div class="member-avatar" ${avStyle}>${avContent}<span class="status-dot" title="${labels[status]||'Online'}" style="background:${colors[status]||'#80848e'}"></span></div>` +
+           `<div class="member-avatar" ${avStyle}>${avContent}<span class="status-dot" title="${labels[status]||'Online'}" style="background:${colors[status]||'var(--mut)'}"></span></div>` +
            `<div class="member-name">${escHtml(name)}</div>` +
          `</div>`;
        };
@@ -490,7 +589,7 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
         const w = parseInt(g.images.fixed_height.width, 10) || 0;
         const h = parseInt(g.images.fixed_height.height, 10) || 0;
         const ar = (w > 0 && h > 0) ? `aspect-ratio:${w}/${h};` : '';
-        return `<img data-src="${safe}" src="" alt="gif" loading="lazy" style="width:100%; height:auto; ${ar}display:block; cursor:pointer; border-radius:6px; background:#232428;" onclick="sendGif('${safe}')">`;
+        return `<img data-src="${safe}" src="" alt="gif" loading="lazy" style="width:100%; height:auto; ${ar}display:block; cursor:pointer; border-radius:6px; background:var(--panel);" onclick="sendGif('${safe}')">`;
       }).join('');
       if (append) gifResults.insertAdjacentHTML('beforeend', html);
       else gifResults.innerHTML = html;
@@ -515,7 +614,7 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
         if (gifs.length) renderGifBatch(gifs, append && offset > 0);
         else if (!append) gifResults.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--mut);padding:20px;">No GIFs found</div>';
       } catch (err) {
-        if (!append) gifResults.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#ff4757;padding:20px;">Failed to load GIFs</div>';
+        if (!append) gifResults.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--danger);padding:20px;">Failed to load GIFs</div>';
       } finally {
         gifLoading = false;
       }
@@ -644,9 +743,9 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
       document.getElementById('sm-create').style.display = tab==='create'?'block':'none';
       document.getElementById('sm-join').style.display = tab==='join'?'block':'none';
       document.getElementById('sm-create-tab').style.background = tab==='create'?'var(--bl)':'var(--bg-t)';
-      document.getElementById('sm-create-tab').style.color = tab==='create'?'#000':'#fff';
+      document.getElementById('sm-create-tab').style.color = tab==='create'?'var(--accent-contrast)':'var(--white)';
       document.getElementById('sm-join-tab').style.background = tab==='join'?'var(--bl)':'var(--bg-t)';
-      document.getElementById('sm-join-tab').style.color = tab==='join'?'#000':'#fff';
+      document.getElementById('sm-join-tab').style.color = tab==='join'?'var(--accent-contrast)':'var(--white)';
     }
     async function createServerFromModal() {
       const name = document.getElementById('sm-name').value.trim(); if (!name) { appAlert('Enter a server name'); return; }
@@ -758,8 +857,8 @@ document.addEventListener('click', (e) => {
          let btn = '';
          if (!isOwner && s.owner === user) {
            btn = isAdmin
-             ? `<button onclick="toggleAdmin('${escHtml(m)}',false)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:#ff4757;color:#fff;cursor:pointer;">Remove Admin</button>`
-             : `<button onclick="toggleAdmin('${escHtml(m)}',true)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--bl);color:#000;cursor:pointer;">Make Admin</button>`;
+             ? `<button onclick="toggleAdmin('${escHtml(m)}',false)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Remove Admin</button>`
+             : `<button onclick="toggleAdmin('${escHtml(m)}',true)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--bl);color:var(--accent-contrast);cursor:pointer;">Make Admin</button>`;
          }
          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bg-t);font-size:12px;color:var(--txt);"><span>${escHtml(m)}${badge}</span>${btn}</div>`;
        }).join('');
@@ -957,9 +1056,9 @@ window.hideServerCtx = hideServerCtx;
         } catch (e) { console.log("friend check failed", e); }
         if (friendDoc) {
           html += `<span style="color:var(--mut);font-size:11px;display:block;margin-bottom:4px;">Friends</span>`;
-          html += `<button onclick="unfriendReq('${friendDoc.id}'); closeProfile();" style="background:#ff4757;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Unfriend</button>`;
+          html += `<button onclick="unfriendReq('${friendDoc.id}'); closeProfile();" style="background:var(--danger);color:var(--white);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Unfriend</button>`;
         } else {
-          let btnHtml = `<button onclick="sendReq('${escHtml(u)}'); closeProfile();" style="background:var(--bl);color:#000;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Send Friend Request</button>`;
+          let btnHtml = `<button onclick="sendReq('${escHtml(u)}'); closeProfile();" style="background:var(--bl);color:var(--accent-contrast);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Send Friend Request</button>`;
           try {
             const existing = await getDocs(query(
               collection(db,"friends"),
@@ -968,7 +1067,7 @@ window.hideServerCtx = hideServerCtx;
               where("status","==","pending")
             ));
             if (!existing.empty) {
-              btnHtml = `<button onclick="cancelReq('${existing.docs[0].id}'); closeProfile();" style="background:var(--mut);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Cancel Request</button>`;
+              btnHtml = `<button onclick="cancelReq('${existing.docs[0].id}'); closeProfile();" style="background:var(--mut);color:var(--white);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Cancel Request</button>`;
             } else {
               const incoming = await getDocs(query(
                 collection(db,"friends"),
@@ -977,13 +1076,13 @@ window.hideServerCtx = hideServerCtx;
                 where("status","==","pending")
               ));
               if (!incoming.empty) {
-                btnHtml = `<button onclick="acceptReq('${incoming.docs[0].id}'); closeProfile();" style="background:var(--bl);color:#000;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Accept Request</button>`;
+                btnHtml = `<button onclick="acceptReq('${incoming.docs[0].id}'); closeProfile();" style="background:var(--bl);color:var(--accent-contrast);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Accept Request</button>`;
               }
             }
           } catch (e) { console.log("friend check failed", e); }
           html += btnHtml;
         }
-        html += `<button onclick="openDM('${escHtml(u)}'); closeProfile();" style="background:var(--bg-t);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;">Message</button>`;
+        html += `<button onclick="openDM('${escHtml(u)}'); closeProfile();" style="background:var(--bg-t);color:var(--white);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;">Message</button>`;
       } else {
         html += `<div style="color:var(--mut);font-size:12px;">This is you</div>`;
       }
@@ -1031,7 +1130,7 @@ window.hideServerCtx = hideServerCtx;
         entries.map(function(pair){
           const emoji = pair[0]; const users = pair[1];
           const mine = Array.isArray(users) && users.indexOf(user) >= 0;
-          return '<button data-action="toggle-reaction" data-msgid="' + escHtml(m.id) + '" data-emoji="' + escHtml(emoji) + '" style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;border:1px solid ' + (mine?'var(--bl)':'#4f545c') + ';background:' + (mine?'rgba(87,242,135,.12)':'var(--bg-t)') + ';color:var(--txt);font-size:13px;cursor:pointer;line-height:1.4;">' +
+          return '<button data-action="toggle-reaction" data-msgid="' + escHtml(m.id) + '" data-emoji="' + escHtml(emoji) + '" style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;border:1px solid ' + (mine?'var(--bl)':'var(--reply-line)') + ';background:' + (mine?'var(--mention-bg)':'var(--bg-t)') + ';color:var(--txt);font-size:13px;cursor:pointer;line-height:1.4;">' +
             '<span>' + emoji + '</span><span style="font-weight:600;">' + users.length + '</span>' +
           '</button>';
         }).join('') +
@@ -1106,7 +1205,7 @@ let pendingFile = null; let pendingPreview = null;
           const textVal = String(m.text ?? '');
           const isP = textVal.includes('@everyone') || textVal.includes(`@${user}`);
 
-          const btns = me ? `<span data-action="edit" data-id="${m.id}" data-text="${escHtml(textVal)}" style="color:var(--bl);">Edit</span><span data-action="delete" data-id="${m.id}" style="color:#f23f43;">Delete</span>` : '';
+          const btns = me ? `<span data-action="edit" data-id="${m.id}" data-text="${escHtml(textVal)}" style="color:var(--bl);">Edit</span><span data-action="delete" data-id="${m.id}" style="color:var(--danger);">Delete</span>` : '';
           const rBtn = `<span data-action="reply" data-id="${m.id}" data-user="${safeUser}" style="color:var(--mut);">Reply</span>`;
           const reactBtn = `<span data-action="react" data-id="${m.id}" style="color:var(--mut);">😀</span>`;
           return `
@@ -1185,7 +1284,7 @@ chatInput.addEventListener('blur', () => { if (user) setTyping(false); });
       }
       if (at !== -1 && at === val.length - 1) {
         const uList = knownUsers();
-        atPopup.innerHTML = ['everyone', ...uList].map(u => `<div style="cursor:pointer;padding:6px 12px;border-radius:4px;color:#fff;" data-u="${escHtml(u)}" onmouseover="this.style.background='var(--bl)'" onmouseout="this.style.background='transparent'">@${escHtml(u)}</div>`).join('');
+        atPopup.innerHTML = ['everyone', ...uList].map(u => `<div style="cursor:pointer;padding:6px 12px;border-radius:4px;color:var(--white);" data-u="${escHtml(u)}" onmouseover="this.style.background='var(--bl)'" onmouseout="this.style.background='transparent'">@${escHtml(u)}</div>`).join('');
         atPopup.style.display = 'flex';
       } else if (!val.includes('@') || val.endsWith(' ')) { atPopup.style.display = 'none'; }
     });

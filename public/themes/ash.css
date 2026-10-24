@@ -1,0 +1,9 @@
+# FroggoCord theme: Ash
+:root {
+  --bg-p:#202328; --bg-s:#2c3036; --bg-t:#25292f; --chat:#343941; --chat-hover:#3b4149; --hover:#454c55; --active:#505863;
+  --panel:#292d33; --input:#3d434b; --txt:#d9dee5; --bright:#f4f6f8; --mut:#9ba5b1; --bl:#b8c4d3; --pr:#8798ad; --danger:#d5686d; --yellow:#d8b46c;
+  --scroll-thumb:#191c20; --accent-contrast:#202328; --white:#fff; --shadow-line:rgba(0,0,0,.22); --banner-shade:rgba(0,0,0,.65); --banner-shadow:rgba(0,0,0,.8);
+  --border:#505761; --code-bg:#22262c; --mention-bg:rgba(184,196,211,.16); --spoiler-bg:#444b54; --spoiler-glow:rgba(255,255,255,.55); --reply-line:#737d89; --highlight-bg:rgba(216,180,108,.08);
+  --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.72); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#191c20; --link:#a9c8f0;
+  --swatch-a:#30343a; --swatch-b:#59616b; --swatch-c:#adb6c2;
+}

@@ -1,0 +1,9 @@
+# FroggoCord theme: Plasma
+:root {
+  --bg-p:#181329; --bg-s:#241b37; --bg-t:#1e1731; --chat:#2c2042; --chat-hover:#382650; --hover:#44305f; --active:#52386f;
+  --panel:#211932; --input:#38274e; --txt:#e8dcf5; --bright:#fff4ff; --mut:#b09bc4; --bl:#ed5cff; --pr:#bd43d9; --danger:#ed5369; --yellow:#f4c15f;
+  --scroll-thumb:#120e20; --accent-contrast:#20142b; --white:#fff; --shadow-line:rgba(0,0,0,.24); --banner-shade:rgba(0,0,0,.66); --banner-shadow:rgba(0,0,0,.8);
+  --border:#634675; --code-bg:#20172f; --mention-bg:rgba(237,92,255,.16); --spoiler-bg:#44305f; --spoiler-glow:rgba(255,240,255,.6); --reply-line:#77578a; --highlight-bg:rgba(244,193,95,.08);
+  --overlay-shadow:rgba(0,0,0,.52); --overlay-bg:rgba(8,4,15,.76); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#120e20; --link:#d68cff;
+  --swatch-a:#1d1630; --swatch-b:#52307c; --swatch-c:#ed5cff;
+}
