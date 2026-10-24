@@ -10,7 +10,7 @@ Tasks(explicit):
 (done) settings: a overlay
 (done) settings: theme tab
 (done) settings: persist the selected theme across sessions on this device.
-settings: add tabs for account, appearance, notifications, privacy, and accessibility.
+settings: add tabs for account, notifications, privacy, and accessibility.
 settings: add controls appropriate to each implemented setting.
 settings: add a way to reset preferences to defaults.
 (done) chatting: real-time messaging.
