@@ -1,0 +1,16 @@
+/* FroggoCord theme: Fulgurite */
+:root {
+  --bg-p:#1e1f22; --bg-s:#2b2d31; --bg-t:#1e1f22; --chat:#313338; --chat-hover:#2e3035; --hover:#35373c; --active:#404249;
+  --panel:#232428; --input:#383a40; --txt:#dbdee1; --bright:#f2f3f5; --mut:#949ba4; --bl:#57f287; --pr:#23a55a; --danger:#da373c; --yellow:#f0b232;
+  --scroll-thumb:#1a1b1e; --accent-contrast:#000; --white:#fff; --shadow-line:rgba(0,0,0,.2); --banner-shade:rgba(0,0,0,.65); --banner-shadow:rgba(0,0,0,.8);
+  --border:#3f4147; --code-bg:#1e1f22; --mention-bg:rgba(87,242,135,.15); --spoiler-bg:#2b2d31; --spoiler-glow:rgba(255,255,255,.6); --reply-line:#4f545c; --highlight-bg:rgba(240,178,50,.06);
+  --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.7); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#111214; --link:#00a8fc;
+  --swatch-a:#1e1f22; --swatch-b:#313338; --swatch-c:#57f287;
+}
+
+.ash-swatch { --swatch-a:#303236; --swatch-b:#77797d; --swatch-c:#c3c5c8; }
+.obsidian-swatch { --swatch-a:#100b18; --swatch-b:#512c70; --swatch-c:#d98bff; }
+.fulgurite-swatch { --swatch-a:#1e1f22; --swatch-b:#313338; --swatch-c:#57f287; }
+.magma-swatch { --swatch-a:#241719; --swatch-b:#6f2925; --swatch-c:#ff8247; }
+.plasma-swatch { --swatch-a:#fff5fb; --swatch-b:#ff45c7; --swatch-c:#6427cf; }
+.alpenglow-swatch { --swatch-a:#ffc999; --swatch-b:#9059ff; --swatch-c:#ff4aa2; }

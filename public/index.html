@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FroggoCord</title>
+<<<<<<< HEAD
   <style>
     :root {
       --bg-p: #1e1f22; --bg-s: #2b2d31; --bg-t: #1e1f22;
@@ -206,6 +207,11 @@
     #auth-switch-btn { color: #00a8fc; cursor: pointer; font-weight: 500; }
     #auth-switch-btn:hover { text-decoration: underline; }
   </style>
+=======
+  <link rel="stylesheet" href="style.css?v=20261024-0010">
+  <link id="theme-stylesheet" rel="stylesheet" href="themes/fulgurite.css?v=20261024-0010">
+  <link rel="icon" href="favicon.ico?v=2" type="image/x-icon">
+>>>>>>> 863a84a88095b87185ffa5f10ba9e3d7c4deacab
 </head>
 <body>
 
@@ -233,7 +239,7 @@
 
   <div id="server-ctx">
     <div id="ctx-settings" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='transparent'">Server Settings</div>
-    <div id="ctx-leave" style="color:#f23f43;" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='transparent'">Leave Server</div>
+    <div id="ctx-leave" style="color:var(--danger);" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='transparent'">Leave Server</div>
   </div>
 
   <div id="server-settings-modal" class="modal">
@@ -284,6 +290,31 @@
     </div>
   </div>
 
+  <div id="settings-modal" class="modal" aria-hidden="true">
+    <div class="modal-card settings-card" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="settings-heading">
+        <h3 id="settings-title">Settings</h3>
+        <button id="settings-close" class="settings-close" type="button" aria-label="Close settings">✕</button>
+      </div>
+      <div class="settings-tabs" role="tablist" aria-label="Settings sections">
+        <button class="settings-tab active" id="settings-theme-tab" type="button" role="tab" aria-selected="true" aria-controls="settings-theme-panel">Theme</button>
+      </div>
+      <section id="settings-theme-panel" role="tabpanel" aria-labelledby="settings-theme-tab">
+        <p class="settings-description">Choose a theme. Your selection applies immediately and is saved on this device.</p>
+        <div class="theme-options" role="radiogroup" aria-label="Color theme">
+          <button class="theme-option" type="button" role="radio" data-theme="ash" aria-checked="false"><span class="theme-swatch ash-swatch"></span><span>Ash</span></button>
+          <button class="theme-option" type="button" role="radio" data-theme="obsidian" aria-checked="false"><span class="theme-swatch obsidian-swatch"></span><span>Obsidian</span></button>
+          <button class="theme-option" type="button" role="radio" data-theme="magma" aria-checked="false"><span class="theme-swatch magma-swatch"></span><span>Magma</span></button>
+          <button class="theme-option" type="button" role="radio" data-theme="fulgurite" aria-checked="false"><span class="theme-swatch fulgurite-swatch"></span><span>Fulgurite</span></button>
+          <button class="theme-option" type="button" role="radio" data-theme="plasma" aria-checked="false"><span class="theme-swatch plasma-swatch"></span><span>Plasma</span></button>
+          <button class="theme-option" type="button" role="radio" data-theme="alpenglow" aria-checked="false"><span class="theme-swatch alpenglow-swatch"></span><span>Alpenglow</span></button>
+        </div>
+        <div id="theme-status" class="theme-status" aria-live="polite"></div>
+      </section>
+      <div class="modal-actions"><button id="settings-done" class="btn btn-primary" type="button">Done</button></div>
+    </div>
+  </div>
+
   <div id="auth-overlay">
     <div class="auth-card">
       <h2 id="auth-title">Welcome Back!</h2>
@@ -330,6 +361,7 @@
           <option value="dnd">Do Not Disturb</option>
         </select>
       </div>
+      <button id="settings-btn" class="up-btn" title="Settings" aria-label="Open settings">⚙</button>
       <button id="logout-btn" class="up-btn" title="Logout">⏻</button>
     </div>
   </div>
@@ -345,7 +377,7 @@
       </div>
     </div>
     <div id="at-popup"></div>
-    <div id="reaction-picker" style="display:none; position:fixed; background:var(--bg-s); border-radius:8px; padding:6px; z-index:1003; box-shadow:0 8px 24px rgba(0,0,0,.5); max-width:260px; max-height:200px; overflow-y:auto; grid-template-columns:repeat(8,1fr); gap:2px;"></div>
+    <div id="reaction-picker" style="display:none; position:fixed; background:var(--bg-s); border-radius:8px; padding:6px; z-index:1003; box-shadow:0 8px 24px var(--overlay-shadow); max-width:260px; max-height:200px; overflow-y:auto; grid-template-columns:repeat(8,1fr); gap:2px;"></div>
     <div id="lightbox" class="hidden" onclick="closeLightbox()">
     <span id="lightbox-close" onclick="event.stopPropagation(); closeLightbox()">✕</span>
     <img id="lightbox-img" src="" alt="enlarged">
@@ -365,7 +397,7 @@
     <div class="composer-wrap">
       <div id="typing-indicator" style="display:none; padding: 2px 0 6px; font-size:12px; color:var(--mut); font-style:italic; min-height:16px;"></div>
       <div id="file-preview" style="display:none; padding: 0 0 8px;">
-        <div style="display:flex; align-items:center; gap:8px; background:#2b2d31; border-radius:6px; padding:6px 10px;">
+        <div style="display:flex; align-items:center; gap:8px; background:var(--spoiler-bg); border-radius:6px; padding:6px 10px;">
           <img id="file-preview-img" src="" alt="preview" style="max-height:60px; max-width:80px; border-radius:4px; object-fit:cover;">
           <span id="file-preview-name" style="flex:1; font-size:13px; color:var(--txt); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
           <span style="cursor:pointer; color:var(--mut); font-weight:700; padding:4px;" onclick="cancelFile()">✕</span>
@@ -387,6 +419,7 @@
     <h3 style="margin-top: 16px;">Requests</h3>
     <div id="req-list"></div>
   </div>
+<<<<<<< HEAD
 
 
 <script type="module">
@@ -1643,5 +1676,8 @@ chatInput.addEventListener('blur', () => { if (user) setTyping(false); });
     }
     window.render = () => {};
   </script>
+=======
+<script type="module" src="script.js?v=20261024-0010"></script>
+>>>>>>> 863a84a88095b87185ffa5f10ba9e3d7c4deacab
 </body>
 </html>
