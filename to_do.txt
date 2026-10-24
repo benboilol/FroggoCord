@@ -81,7 +81,7 @@ Security: prevent unauthorized users from reading, modifying, or deleting other 
 Security: test database rules before deployment.
 Development: preserve the existing project structure.
 Development: keep public/index.html HTML-only.
-Development: keep public/script.js JavaScript-only.
+Development: keep JavaScript in public/scripts/ and each file JavaScript-only.
 Development: keep public/style.css CSS-only.
 Development: keep each theme in its own CSS file.
 Development: do not modify Froggocord.html; it is a legacy redirect.

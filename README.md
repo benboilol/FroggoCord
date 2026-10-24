@@ -12,24 +12,32 @@ Include these rules in every AI coding prompt.
 4. Commit and push only after the changes have been reviewed and tested. Never push knowingly broken or incomplete work.
 5. Do not edit `Froggocord.html`. It is a legacy redirect.
 6. `public/index.html` is the main page. Put HTML markup in this file, but do not embed JavaScript or CSS in it.
-7. `public/script.js` contains JavaScript only.
+7. JavaScript lives in `public/scripts/`. `loader.js` loads the Firebase SDK and the feature scripts in order; keep each script JavaScript-only.
 8. `public/style.css` contains CSS only.
-9. The JavaScript and CSS files are already linked from `index.html`. Preserve those links unless changing them is explicitly necessary.
+9. The JavaScript loader and CSS files are linked from `index.html`. Preserve those links unless changing them is explicitly necessary.
 10. Do not remove, rename, or move existing files or functions without a clear technical reason.
 11. Before finishing, summarize the changes, tests performed, and any known problems. Append these to changelog.txt
 
 ## Important
 Do not assume that code is correct just because it runs. Preserve existing functionality, check Firebase permissions and data access, and avoid introducing unnecessary database reads or writes.
 
+## JavaScript files
+
+- `public/scripts/loader.js` imports Firebase and loads the app scripts sequentially as classic scripts. Keep the listed order: the files share app state, and `chat-view.js` registers authentication startup after the feature handlers are ready.
+- `public/scripts/app-core.js` initializes Firebase and contains shared state, theme/settings behavior, dialogs, and profile image handling.
+- `public/scripts/navigation-servers.js` contains channel and DM navigation, server creation/joining, and server settings.
+- `public/scripts/message-actions.js` contains message actions, reactions, attachments, emoji/GIF features, and presence updates.
+- `public/scripts/chat-view.js` contains profiles, message rendering/listeners, the message composer, and authentication startup.
+
 ## Adding a theme
 
 1. Choose a lowercase, hyphenated theme ID, such as `example-theme`, and create `public/themes/<theme-id>.css`.
 2. Start the file with a valid CSS comment, then copy the complete `:root` block from an existing theme. Change the values while keeping every custom property name. Do not put palette values in `style.css`; shared styles must use `var(--name)`.
-3. Add the theme ID to `THEME_IDS` in `public/script.js` and add a matching theme option to the settings theme list in `public/index.html`. Use a hyphenated swatch class based on the ID, such as `example-theme-swatch`.
+3. Add the theme ID to `THEME_IDS` in `public/scripts/app-core.js` and add a matching theme option to the settings theme list in `public/index.html`. Use a hyphenated swatch class based on the ID, such as `example-theme-swatch`.
 4. Add that swatch class and its three `--swatch-a`, `--swatch-b`, and `--swatch-c` values to every file in `public/themes/`. The active theme stylesheet provides the previews for every theme option.
-5. If the new theme should be the default, update `DEFAULT_THEME` in `script.js` and the theme stylesheet link in `index.html`.
-6. Bump `THEME_ASSET_VERSION` in `script.js` and the `?v=` values on the shared stylesheet, initial theme stylesheet, and module script links in `index.html`. This gives browsers a new URL for updated assets.
-7. Check that the theme defines all variables used by the shared stylesheet, run `node --check public/script.js`, inspect `git diff`, and append the change and verification results to `changelog.txt`.
+5. If the new theme should be the default, update `DEFAULT_THEME` in `public/scripts/app-core.js` and the theme stylesheet link in `public/index.html`.
+6. Bump `THEME_ASSET_VERSION` in `public/scripts/app-core.js` and the `?v=` values on the shared stylesheet, initial theme stylesheet, and loader script links in `public/index.html`. This gives browsers a new URL for updated assets.
+7. Check that the theme defines all variables used by the shared stylesheet, run `node --check` on the JavaScript files in `public/scripts/`, inspect `git diff`, and append the change and verification results to `changelog.txt`.
 
 Theme IDs, CSS filenames, the settings option's `data-theme`, and the swatch class must match. Keep theme definitions in CSS files and theme registration in the existing HTML and JavaScript files.
 
