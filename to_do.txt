@@ -1,6 +1,8 @@
 Features to add(broad):
 themes
 settings
+chatting: Replicate everything that a basic chat app like Discord or Stoat has.
+nitro: Idk vro make nitro features not nitro???
 Tasks(explicit):
 themes: hot swappable css files via javascript. will need settings button
 themes: multiple css files, a coherent naming scheme(ex: ash, obsidian, magma, fulgurite, plasma)
