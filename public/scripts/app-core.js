@@ -24,7 +24,7 @@ const {
   getDoc
 } = window.froggocordFirebase;
 
-    const config = { apiKey: "AIzaSyDicR3VX9ClJoO8SDEu_xMGR4fbbqsrSVE", authDomain: "froggocord.firebaseapp.com", projectId: "froggocord", storageBucket: "froggocord.firebasestorage.app", messagingSenderId: "138455635458", appId: "1:138455635458:web:a236f0ceca0cb6de22b91b" };
+    const config = { apiKey: "AIzaSyBdcQW56DH7tM37elwMYFQdzfpfCdEkzMs", authDomain: "froggocord.firebaseapp.com", projectId: "froggocord", storageBucket: "froggocord.firebasestorage.app", messagingSenderId: "237791448036", appId: "1:237791448036:web:82886ca5b0ce6dafa6d5f1", measurementId: "G-J7CRQ9D4VD" };
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
     let chan = 'general', user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'channels', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
@@ -34,7 +34,7 @@ const {
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
     const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma', 'alpenglow'];
     const DEFAULT_THEME = 'fulgurite';
-    const THEME_ASSET_VERSION = '20261024-1445';
+    const THEME_ASSET_VERSION = '20261024-1757';
     const THEME_STORAGE_KEY = 'froggocord-theme';
     const themeLink = document.getElementById('theme-stylesheet');
     let activeTheme = DEFAULT_THEME;
