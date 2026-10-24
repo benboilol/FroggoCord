@@ -1,9 +1,16 @@
-# FroggoCord theme: Fulgurite
+/* FroggoCord theme: Fulgurite */
 :root {
-  --bg-p:#101a22; --bg-s:#182832; --bg-t:#14232b; --chat:#1d3039; --chat-hover:#23404a; --hover:#2b4b55; --active:#315a63;
-  --panel:#17262e; --input:#29434c; --txt:#d4e8e9; --bright:#f0ffff; --mut:#8eb0b5; --bl:#53d8d1; --pr:#35aaa5; --danger:#e05f6c; --yellow:#e8c86e;
-  --scroll-thumb:#0b141a; --accent-contrast:#102126; --white:#fff; --shadow-line:rgba(0,0,0,.24); --banner-shade:rgba(0,0,0,.65); --banner-shadow:rgba(0,0,0,.8);
-  --border:#37616a; --code-bg:#14242b; --mention-bg:rgba(83,216,209,.16); --spoiler-bg:#29434c; --spoiler-glow:rgba(230,255,255,.58); --reply-line:#56828a; --highlight-bg:rgba(232,200,110,.08);
-  --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(3,12,17,.74); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#0b141a; --link:#70e3e9;
-  --swatch-a:#101d27; --swatch-b:#1d5261; --swatch-c:#53d8d1;
+  --bg-p:#1e1f22; --bg-s:#2b2d31; --bg-t:#1e1f22; --chat:#313338; --chat-hover:#2e3035; --hover:#35373c; --active:#404249;
+  --panel:#232428; --input:#383a40; --txt:#dbdee1; --bright:#f2f3f5; --mut:#949ba4; --bl:#57f287; --pr:#23a55a; --danger:#da373c; --yellow:#f0b232;
+  --scroll-thumb:#1a1b1e; --accent-contrast:#000; --white:#fff; --shadow-line:rgba(0,0,0,.2); --banner-shade:rgba(0,0,0,.65); --banner-shadow:rgba(0,0,0,.8);
+  --border:#3f4147; --code-bg:#1e1f22; --mention-bg:rgba(87,242,135,.15); --spoiler-bg:#2b2d31; --spoiler-glow:rgba(255,255,255,.6); --reply-line:#4f545c; --highlight-bg:rgba(240,178,50,.06);
+  --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.7); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#111214; --link:#00a8fc;
+  --swatch-a:#1e1f22; --swatch-b:#313338; --swatch-c:#57f287;
 }
+
+.ash-swatch { --swatch-a:#303236; --swatch-b:#77797d; --swatch-c:#c3c5c8; }
+.obsidian-swatch { --swatch-a:#100b18; --swatch-b:#512c70; --swatch-c:#d98bff; }
+.fulgurite-swatch { --swatch-a:#1e1f22; --swatch-b:#313338; --swatch-c:#57f287; }
+.magma-swatch { --swatch-a:#241719; --swatch-b:#6f2925; --swatch-c:#ff8247; }
+.plasma-swatch { --swatch-a:#fff5fb; --swatch-b:#ff45c7; --swatch-c:#6427cf; }
+.alpenglow-swatch { --swatch-a:#ffc999; --swatch-b:#9059ff; --swatch-c:#ff4aa2; }

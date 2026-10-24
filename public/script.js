@@ -12,10 +12,12 @@
     const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit
     const IDLE_MS = 120000;
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
-    const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma'];
+    const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma', 'alpenglow'];
+    const DEFAULT_THEME = 'fulgurite';
+    const THEME_ASSET_VERSION = '20261024-0010';
     const THEME_STORAGE_KEY = 'froggocord-theme';
     const themeLink = document.getElementById('theme-stylesheet');
-    let activeTheme = 'obsidian';
+    let activeTheme = DEFAULT_THEME;
     let themeLoadId = 0;
 
     function setThemeSelection(theme) {
@@ -63,7 +65,7 @@
           if (status) status.textContent = 'Could not load that theme. Your current theme is unchanged.';
           resolve(false);
         };
-        themeLink.href = 'themes/' + theme + '.css';
+        themeLink.href = 'themes/' + theme + '.css?v=' + THEME_ASSET_VERSION;
       });
     }
 
@@ -102,13 +104,17 @@
       if (event.key === 'Escape' && document.getElementById('settings-modal').getAttribute('aria-hidden') === 'false') closeSettings();
     });
 
-    themeLink.dataset.theme = 'obsidian';
-    let savedTheme = 'obsidian';
+    themeLink.dataset.theme = DEFAULT_THEME;
+    let savedTheme = DEFAULT_THEME;
     try {
       const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-      if (THEME_IDS.includes(storedTheme)) savedTheme = storedTheme;
+      if (storedTheme === 'alpenglow-dawn' || storedTheme === 'alpenglow-dusk') {
+        savedTheme = 'alpenglow';
+        localStorage.setItem(THEME_STORAGE_KEY, savedTheme);
+      }
+      else if (THEME_IDS.includes(storedTheme)) savedTheme = storedTheme;
     } catch (e) {}
-    if (savedTheme !== 'obsidian') applyTheme(savedTheme, false);
+    if (savedTheme !== DEFAULT_THEME) applyTheme(savedTheme, false);
     else setThemeSelection(savedTheme);
 
     const prunePending = new Set();
