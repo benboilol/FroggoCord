@@ -1,12 +1,12 @@
 // Load the Firebase SDK, then run the app scripts in dependency order.
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, doc, updateDoc, deleteDoc, setDoc, where, getDocs, getDoc } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js';
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, startAfter, serverTimestamp, doc, updateDoc, deleteDoc, setDoc, where, getDocs, getDoc } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js';
 
 window.froggocordFirebase = {
   initializeApp, getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
   onAuthStateChanged, signOut, getFirestore, collection, addDoc, onSnapshot,
-  query, orderBy, limit, serverTimestamp, doc, updateDoc, deleteDoc, setDoc,
+  query, orderBy, limit, startAfter, serverTimestamp, doc, updateDoc, deleteDoc, setDoc,
   where, getDocs, getDoc
 };
 

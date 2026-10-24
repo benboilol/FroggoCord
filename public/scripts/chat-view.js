@@ -74,6 +74,12 @@
       } catch (e) { return ''; }
     }
     const msgBox = document.getElementById('message-container');
+    const MESSAGE_PAGE_SIZE = 25;
+    let activeMessagesChannel = null;
+    let messagePages = [];
+    let loadingOlderMessages = false;
+    let hasOlderMessages = true;
+    let messageHistoryError = '';
     let msgsPinned = true;
     let isPinning = false;
     let userScrolling = false;
@@ -85,6 +91,7 @@
     msgBox.addEventListener('scroll', () => {
       if (isPinning) return;
       if (userScrolling) msgsPinned = msgBox.scrollHeight - msgBox.scrollTop - msgBox.clientHeight < 80;
+      if (userScrolling && msgBox.scrollTop <= 80) loadOlderMessages();
     }, { passive: true });
     function pinMsgsBottom() {
       msgsPinned = true;
@@ -110,11 +117,204 @@
     }
 
 let pendingFile = null; let pendingPreview = null;
+    function resetMessagePages(channel) {
+      messagePages.forEach(page => page.unsubscribe && page.unsubscribe());
+      messagePages = [];
+      activeMessagesChannel = channel;
+      loadingOlderMessages = false;
+      hasOlderMessages = true;
+      messageHistoryError = '';
+      msgsPinned = true;
+      if (msgBox._ro) { msgBox._ro.disconnect(); msgBox._ro = null; }
+    }
+
+    function renderMessagePages({ forceBottom = false, preserveScroll = false, contentAddedAbove = false } = {}) {
+      const previousHeight = msgBox.scrollHeight;
+      const previousTop = msgBox.scrollTop;
+      const byId = new Map();
+      messagePages.forEach(page => page.messages.forEach((message, id) => byId.set(id, message)));
+      const docs = Array.from(byId.values()).sort((a, b) =>
+        (a.timestamp ? a.timestamp.toMillis() : 0) - (b.timestamp ? b.timestamp.toMillis() : 0)
+      );
+
+      window._unreadCounts = {};
+      docs.forEach(message => {
+        if (!message.channel) return;
+        const lastReadAt = lastRead[message.channel] || 0;
+        if ((message.timestamp ? message.timestamp.toMillis() : 0) > lastReadAt && message.user !== user) {
+          window._unreadCounts[message.channel] = (window._unreadCounts[message.channel] || 0) + 1;
+        }
+      });
+      renderSidebar();
+
+      const historyText = loadingOlderMessages
+        ? 'Loading older messages…'
+        : messageHistoryError || (!hasOlderMessages && docs.length ? 'Beginning of conversation' : (docs.length ? 'Scroll up for older messages' : ''));
+      msgBox.innerHTML = '<div class="msgs-inner"><div class="message-history-status" aria-live="polite">' + escHtml(historyText) + '</div>' + docs.map(m => {
+        const me = m.user === user;
+        const safeUser = escHtml(m.user);
+        const av = (m.pfp && !m.pfp.startsWith('file:///')) ? `style="background-image:url('${escHtml(m.pfp)}');text-indent:-9999px;"` : '';
+        const rep = m.replyTo ? `<div class="msg-reply"><span class="bar"></span><span>Replying to <b>@${escHtml(m.replyTo.user)}</b> ${escHtml(m.replyTo.text)}</span></div>` : '';
+        const textVal = String(m.text ?? '');
+        const isP = textVal.includes('@everyone') || textVal.includes(`@${user}`);
+        const btns = me ? `<span data-action="edit" data-id="${m.id}" data-text="${escHtml(textVal)}" style="color:var(--bl);">Edit</span><span data-action="delete" data-id="${m.id}" style="color:var(--danger);">Delete</span>` : '';
+        const rBtn = `<span data-action="reply" data-id="${m.id}" data-user="${safeUser}" style="color:var(--mut);">Reply</span>`;
+        const reactBtn = `<span data-action="react" data-id="${m.id}" style="color:var(--mut);">😀</span>`;
+        return `
+          <div class="msg ${me ? 'me' : ''} ${isP ? 'mention' : ''}" data-id="${m.id}">
+            <div class="pfp" ${av}>${safeUser ? safeUser[0].toUpperCase() : '?'}</div>
+            <div class="msg-content">
+              <div class="msg-head">
+                <span class="msg-author ${me ? 'self' : ''}">${safeUser}</span>
+                <span class="msg-time">${fmtMsgTime(m.timestamp)}</span>
+                <span class="msg-actions">${reactBtn}${rBtn}${btns}</span>
+              </div>
+              ${rep}
+              ${textVal ? `<div class="msg-bubble">${renderText(textVal)}</div>` : ''}
+              ${m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px;cursor:pointer;${m.imageW && m.imageH ? ' aspect-ratio:' + m.imageW + '/' + m.imageH + ';' : ''}" onclick="openLightbox('${escHtml(m.image)}','Image')">` : ''}
+              ${renderReactions(m)}
+            </div>
+          </div>`;
+      }).join('') + '</div>';
+
+      const inner = msgBox.querySelector('.msgs-inner');
+      if (inner) {
+        if (msgBox._ro) msgBox._ro.disconnect();
+        let previousInnerHeight = inner.scrollHeight;
+        let firstResize = true;
+        const observer = new ResizeObserver(() => {
+          const nextHeight = inner.scrollHeight;
+          const delta = nextHeight - previousInnerHeight;
+          if (!firstResize && delta !== 0) {
+            if (msgsPinned) msgBox.scrollTop = msgBox.scrollHeight;
+            else msgBox.scrollTop += delta;
+          }
+          firstResize = false;
+          previousInnerHeight = nextHeight;
+        });
+        observer.observe(inner);
+        msgBox._ro = observer;
+      }
+      observeChatImages();
+      msgBox.querySelectorAll('img').forEach(img => {
+        if (!img.complete) img.addEventListener('load', () => { if (msgsPinned) pinMsgsBottom(); }, { once: true });
+      });
+
+      if (preserveScroll) {
+        requestAnimationFrame(() => {
+          msgBox.scrollTop = previousTop + (contentAddedAbove ? msgBox.scrollHeight - previousHeight : 0);
+        });
+      }
+      if (forceBottom) {
+        msgsPinned = true;
+        pinMsgsBottom();
+      }
+    }
+
+    function subscribeMessagePage(afterDocument = null) {
+      const channel = activeMessagesChannel;
+      const page = { channel, messages: new Map(), cursor: null, unsubscribe: null, ready: false };
+      messagePages.push(page);
+      const constraints = [
+        collection(db, 'messages'),
+        where('channel', '==', channel),
+        orderBy('timestamp', 'desc')
+      ];
+      if (afterDocument) constraints.push(startAfter(afterDocument));
+      constraints.push(limit(MESSAGE_PAGE_SIZE));
+
+      page.unsubscribe = onSnapshot(query(...constraints), snap => {
+        if (activeMessagesChannel !== channel || !messagePages.includes(page)) return;
+        const wasReady = page.ready;
+        const pageIndex = messagePages.indexOf(page);
+        const shouldPin = pageIndex === 0 && (
+          msgsPinned || snap.docChanges().some(change => change.type === 'added' && change.doc.data().user === user)
+        );
+        if (!wasReady) {
+          page.messages = new Map(snap.docs.map(document => [document.id, { id: document.id, ...document.data() }]));
+          page.cursor = snap.docs.length ? snap.docs[snap.docs.length - 1] : null;
+          page.hasMore = snap.docs.length === MESSAGE_PAGE_SIZE;
+        } else {
+          const changes = snap.docChanges();
+          const added = changes.filter(change => change.type === 'added');
+          changes.forEach(change => {
+            if (change.type === 'added' || change.type === 'modified') {
+              page.messages.set(change.doc.id, { id: change.doc.id, ...change.doc.data() });
+            } else if (change.type === 'removed') {
+              const removedAt = change.doc.data().timestamp?.toMillis?.() || 0;
+              const wasPushedOutByNewerMessage = added.some(addedChange => {
+                const addedAt = addedChange.doc.data().timestamp?.toMillis?.() || 0;
+                return addedAt > removedAt;
+              });
+              if (!wasPushedOutByNewerMessage) page.messages.delete(change.doc.id);
+            }
+          });
+        }
+        page.ready = true;
+        if (pageIndex === messagePages.length - 1) {
+          loadingOlderMessages = false;
+          hasOlderMessages = page.hasMore;
+          messageHistoryError = '';
+        }
+        renderMessagePages({
+          forceBottom: shouldPin,
+          preserveScroll: pageIndex > 0 || (wasReady && !shouldPin),
+          contentAddedAbove: pageIndex > 0
+        });
+
+        if (pageIndex === 0) {
+          snap.docChanges().forEach(change => {
+            if (change.type !== 'added' || !user) return;
+            const message = change.doc.data();
+            const messageTime = message.timestamp ? message.timestamp.toMillis() : Date.now();
+            if (messageTime > appLoadTime && message.user && message.user !== user && document.hidden) {
+              const text = String(message.text ?? '');
+              const isMention = text.includes('@everyone') || text.includes(`@${user}`);
+              const hasImage = text.includes('<img') || !!message.image;
+              new Notification(isMention ? '⚠️ PINGED' : `@${message.user}`, {
+                body: hasImage ? 'Sent an image 📷' : text
+              });
+            }
+          });
+        }
+      }, error => {
+        if (activeMessagesChannel !== channel || !messagePages.includes(page)) return;
+        const pageIndex = messagePages.indexOf(page);
+        page.unsubscribe();
+        if (pageIndex > 0 || !page.ready) {
+          messagePages.splice(pageIndex, 1);
+        }
+        loadingOlderMessages = false;
+        messageHistoryError = pageIndex === 0 && !page.ready
+          ? 'Could not load messages. Scroll up to retry.'
+          : 'Could not load older messages. Scroll up to retry.';
+        renderMessagePages({ preserveScroll: pageIndex > 0 });
+        console.error('Message page listener failed', error);
+      });
+    }
+
+    function loadOlderMessages() {
+      if (loadingOlderMessages || !hasOlderMessages) return;
+      if (!messagePages.length) {
+        loadingOlderMessages = true;
+        messageHistoryError = '';
+        renderMessagePages({ preserveScroll: true });
+        subscribeMessagePage();
+        return;
+      }
+      const lastPage = messagePages[messagePages.length - 1];
+      if (!lastPage.ready || !lastPage.cursor) return;
+      loadingOlderMessages = true;
+      messageHistoryError = '';
+      renderMessagePages({ preserveScroll: true });
+      subscribeMessagePage(lastPage.cursor);
+    }
+
     function listen() {
       if (typingUnsub) { typingUnsub(); typingUnsub = null; }
       setTyping(false);
       if (!chan) {
-        if (unsub) { unsub(); unsub = null; }
+        resetMessagePages(null);
         const container = document.getElementById('message-container');
         container.innerHTML = '<div class="msgs-inner"><div class="msgs-empty">Select a user to start a DM</div></div>';
         return;
@@ -125,7 +325,10 @@ let pendingFile = null; let pendingPreview = null;
         if (snap.exists()) lastRead[chan] = snap.data().lastRead ? snap.data().lastRead.toMillis() : Date.now();
         renderSidebar();
       }).catch(()=>{});
-      if (unsub) unsub();
+      if (activeMessagesChannel !== chan) {
+        resetMessagePages(chan);
+        subscribeMessagePage();
+      }
 
       const typingQuery = query(collection(db,'typing'), where('channel','==',chan));
       let cachedTypingDocs = [];
@@ -153,112 +356,6 @@ let pendingFile = null; let pendingPreview = null;
       if (window._typingRefresh) clearInterval(window._typingRefresh);
       window._typingRefresh = setInterval(renderTyping, 1000);
 
-      // [FIX APPLIED] Added limit(50) and orderBy("timestamp", "desc") to prevent full-collection reads per channel session
-      unsub = onSnapshot(
-        query(
-          collection(db, "messages"),
-          where("channel", "==", chan),
-          orderBy("timestamp", "desc"),
-          limit(50)
-        ),
-        (snap) => {
-          const container = document.getElementById('message-container');
-          const wasPinned = msgsPinned || snap.docChanges().some(c => c.type === "added" && c.doc.data().user === user);
-          
-          // Map and sort oldest-to-newest for chronological chat display
-          const docs = snap.docs
-            .map(d => ({ id: d.id, ...d.data() }))
-            .filter(m => m.channel === chan)
-            .sort((a, b) => (a.timestamp ? a.timestamp.toMillis() : 0) - (b.timestamp ? b.timestamp.toMillis() : 0));
-
-          window._unreadCounts = {};
-          snap.docs.forEach(d => {
-            const m = d.data();
-            if (!m || !m.channel) return;
-            const ch = m.channel;
-            const chLr = lastRead[ch] || 0;
-            if ((m.timestamp ? m.timestamp.toMillis() : 0) > chLr && m.user !== user) {
-              window._unreadCounts[ch] = (window._unreadCounts[ch] || 0) + 1;
-            }
-          });
-          renderSidebar();
-          container.innerHTML = docs.map(m => {
-            const me = m.user === user;
-            const safeUser = escHtml(m.user);
-            const av = (m.pfp && !m.pfp.startsWith('file:///')) ? `style="background-image:url('${escHtml(m.pfp)}');text-indent:-9999px;"` : '';
-            const rep = m.replyTo ? `<div class="msg-reply"><span class="bar"></span><span>Replying to <b>@${escHtml(m.replyTo.user)}</b> ${escHtml(m.replyTo.text)}</span></div>` : '';
-
-            const textVal = String(m.text ?? '');
-            const isP = textVal.includes('@everyone') || textVal.includes(`@${user}`);
-
-            const btns = me ? `<span data-action="edit" data-id="${m.id}" data-text="${escHtml(textVal)}" style="color:var(--bl);">Edit</span><span data-action="delete" data-id="${m.id}" style="color:var(--danger);">Delete</span>` : '';
-            const rBtn = `<span data-action="reply" data-id="${m.id}" data-user="${safeUser}" style="color:var(--mut);">Reply</span>`;
-            const reactBtn = `<span data-action="react" data-id="${m.id}" style="color:var(--mut);">😀</span>`;
-            return `
-              <div class="msg ${me ? 'me' : ''} ${isP ? 'mention' : ''}" data-id="${m.id}">
-                <div class="pfp" ${av}>${safeUser ? safeUser[0].toUpperCase() : '?'}</div>
-                <div class="msg-content">
-                  <div class="msg-head">
-                    <span class="msg-author ${me ? 'self' : ''}">${safeUser}</span>
-                    <span class="msg-time">${fmtMsgTime(m.timestamp)}</span>
-                    <span class="msg-actions">${reactBtn}${rBtn}${btns}</span>
-                  </div>
-                  ${rep}
-                  ${textVal ? `<div class="msg-bubble">${renderText(textVal)}</div>` : ''}
-                  ${m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px;cursor:pointer;${m.imageW && m.imageH ? ' aspect-ratio:' + m.imageW + '/' + m.imageH + ';' : ''}" onclick="openLightbox('${escHtml(m.image)}','Image')">` : ''}
-                  ${renderReactions(m)}
-                </div>
-              </div>`;
-          }).join('');
-          container.innerHTML = '<div class="msgs-inner">' + container.innerHTML + '</div>';
-          const inner = container.querySelector('.msgs-inner');
-          if (inner) {
-            if (container._ro) container._ro.disconnect();
-            let prevH = inner.scrollHeight;
-            let first = true;
-            const ro = new ResizeObserver(() => {
-              const newH = inner.scrollHeight;
-              const delta = newH - prevH;
-              if (!first && delta !== 0) {
-                if (msgsPinned) {
-                  container.scrollTop = container.scrollHeight;
-                } else {
-                  container.scrollTop += delta;
-                }
-              }
-              first = false;
-              prevH = newH;
-            });
-            ro.observe(inner);
-            container._ro = ro;
-          }
-          if (wasPinned) {
-            msgsPinned = true;
-            pinMsgsBottom();
-            let n = 0;
-            const iv = setInterval(() => {
-              if (!msgsPinned || ++n > 10) { clearInterval(iv); return; }
-              pinMsgsBottom();
-            }, 50);
-          }
-          observeChatImages();
-          container.querySelectorAll('img').forEach(img => {
-            if (!img.complete) img.addEventListener('load', () => { if (msgsPinned) pinMsgsBottom(); }, { once: true });
-          });
-          snap.docChanges().forEach(c => {
-            if (c.type === "added" && user) {
-              const m = c.doc.data();
-              const mt = m.timestamp ? m.timestamp.toMillis() : Date.now();
-              if (mt > appLoadTime && m.user && m.user !== user && document.hidden) {
-                const txt = String(m.text ?? '');
-                const isP = txt.includes('@everyone') || txt.includes(`@${user}`);
-                const hasImg = txt.includes('<img') || !!m.image;
-                 new Notification(isP ? `⚠️ PINGED` : `@${m.user}`, { body: hasImg ? 'Sent an image 📷' : txt });
-              }
-            }
-          });
-        }
-      );
     }
 
     const atPopup = document.getElementById('at-popup');

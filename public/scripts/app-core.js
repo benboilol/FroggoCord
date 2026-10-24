@@ -13,6 +13,7 @@ const {
   query,
   orderBy,
   limit,
+  startAfter,
   serverTimestamp,
   doc,
   updateDoc,
@@ -25,7 +26,7 @@ const {
 
     const config = { apiKey: "AIzaSyDicR3VX9ClJoO8SDEu_xMGR4fbbqsrSVE", authDomain: "discordcord-7c0b2.firebaseapp.com", projectId: "discordcord-7c0b2", storageBucket: "discordcord-7c0b2.firebasestorage.app", messagingSenderId: "138455635458", appId: "1:138455635458:web:a236f0ceca0cb6de22b91b" };
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
-    let chan = 'general', user = null, unsub = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'channels', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
+    let chan = 'general', user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'channels', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
     let allUsers = [], backfillUsers = [], userPfpMap = new Map();
     const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit
@@ -33,7 +34,7 @@ const {
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
     const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma', 'alpenglow'];
     const DEFAULT_THEME = 'fulgurite';
-    const THEME_ASSET_VERSION = '20261024-1024';
+    const THEME_ASSET_VERSION = '20261024-1445';
     const THEME_STORAGE_KEY = 'froggocord-theme';
     const themeLink = document.getElementById('theme-stylesheet');
     let activeTheme = DEFAULT_THEME;
