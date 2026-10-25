@@ -32,7 +32,7 @@ const {
     const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit
     const IDLE_MS = 120000;
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
-    const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma', 'alpenglow', 'kris', 'susie', 'noelle'];
+    const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma', 'alpenglow', 'kris', 'susie', 'noelle', 'ralsei'];
     const DEFAULT_THEME = 'fulgurite';
     const THEME_ASSET_VERSION = '20261024-2256';
     const THEME_STORAGE_KEY = 'froggocord-theme';
@@ -280,7 +280,7 @@ const {
     document.getElementById('sa-screen-reader').addEventListener('change', (e) => { settings.accessibility.screenReader = e.target.checked; saveSettings(); });
     document.getElementById('sa-status').addEventListener('change', (e) => { settings.status = e.target.value; applySettings(); });
     // Deltarune character theme toggles (accessibility panel)
-    ['kris', 'susie', 'noelle'].forEach(t => {
+    ['kris', 'susie', 'noelle', 'ralsei'].forEach(t => {
       const btn = document.querySelector('.delta-theme-btn[data-theme="' + t + '"]');
       if (btn) btn.addEventListener('click', () => applyTheme(t, true));
     });

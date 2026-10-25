@@ -211,10 +211,17 @@ textarea.inp2 { resize: vertical; }
 .theme-option[aria-checked="true"] { box-shadow: 0 0 0 1px var(--bl); }
 .theme-swatch { width: 100%; height: 30px; border-radius: 4px; background: linear-gradient(90deg, var(--swatch-a), var(--swatch-b), var(--swatch-c)); }
 .theme-status { min-height: 18px; margin-top: 10px; color: var(--mut); font-size: 12px; }
-/* Deltarune theme swatches */
-.kris-swatch { --swatch-a:#1a0f0f; --swatch-b:#2f1e1e; --swatch-c:#ff4d4d; }
+/* Theme swatches (defined here so they always show correct colors regardless of active theme) */
+.ash-swatch { --swatch-a:#303236; --swatch-b:#77797d; --swatch-c:#c3c5c8; }
+.obsidian-swatch { --swatch-a:#100b18; --swatch-b:#512c70; --swatch-c:#d98bff; }
+.fulgurite-swatch { --swatch-a:#1e1f22; --swatch-b:#313338; --swatch-c:#57f287; }
+.magma-swatch { --swatch-a:#241719; --swatch-b:#6f2925; --swatch-c:#ff8247; }
+.plasma-swatch { --swatch-a:#fff5fb; --swatch-b:#ff45c7; --swatch-c:#6427cf; }
+.alpenglow-swatch { --swatch-a:#ffc999; --swatch-b:#9059ff; --swatch-c:#ff4aa2; }
+.kris-swatch { --swatch-a:#0f1a2a; --swatch-b:#1e2e3e; --swatch-c:#00bcd4; }
 .susie-swatch { --swatch-a:#1a0f2a; --swatch-b:#2f1e3e; --swatch-c:#c04dff; }
 .noelle-swatch { --swatch-a:#0f1a2a; --swatch-b:#1e2e3e; --swatch-c:#4dc0ff; }
+.ralsei-swatch { --swatch-a:#0f1a0f; --swatch-b:#1e2e1e; --swatch-c:#4caf50; }
 /* High contrast mode */
 body.high-contrast { --mut:#fff; --txt:#fff; --bright:#fff; --bl:#fff; --pr:#fff; --danger:#fff; --yellow:#fff; }
 body.high-contrast .mut { color:#fff !important; }
