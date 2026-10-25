@@ -205,11 +205,14 @@
      let ctxServerId = null;
      function showServerCtx(e, sid) {
        e.preventDefault();
+       e.stopPropagation();
        ctxServerId = sid;
        const m = document.getElementById('server-ctx');
+       m.dataset.serverId = sid;
        const s = servers.find(x=>x.id===sid);
        const isOwner = s && s.owner === user;
        const isAdmin = s && (isOwner || (s.admins||[]).includes(user));
+       document.getElementById('ctx-invite').style.display = 'block';
        document.getElementById('ctx-settings').style.display = isAdmin ? 'block' : 'none';
        document.getElementById('ctx-leave').style.display = 'block';
        m.style.display = 'block';
@@ -328,9 +331,9 @@ document.addEventListener('click', (e) => {
        else if (servers.length > 0) { switchServer(servers[0].id); }
        else { document.querySelector('.sb h3').textContent='Channels'; document.getElementById('server-banner').style.display='none'; document.querySelector('.ch').innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`; updateHeader(); listen(); }
      }
-     document.getElementById('ctx-invite').onclick = () => { hideServerCtx(); openInviteModal(ctxServerId); };
-     document.getElementById('ctx-settings').onclick = openServerSettings;
-     document.getElementById('ctx-leave').onclick = leaveServer;
+     document.getElementById('ctx-invite').onclick = (e) => { e.stopPropagation(); const sid = document.getElementById('server-ctx').dataset.serverId; hideServerCtx(); openInviteModal(sid); };
+     document.getElementById('ctx-settings').onclick = (e) => { e.stopPropagation(); const sid = document.getElementById('server-ctx').dataset.serverId; hideServerCtx(); openServerSettings(sid); };
+     document.getElementById('ctx-leave').onclick = (e) => { e.stopPropagation(); hideServerCtx(); leaveServer(); };
      window.openLightbox = (url, label) => {
   const lb = document.getElementById('lightbox');
   const img = document.getElementById('lightbox-img');
