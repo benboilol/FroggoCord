@@ -429,7 +429,7 @@ window.hideServerCtx = hideServerCtx;
 
     // ===== Invite to Server =====
     let inviteServerId = null;
-    window.openInviteModal = (sid) => {
+    window.openInviteModal = async (sid) => {
       if (!sid) return;
       inviteServerId = sid;
       const s = servers.find(x => x.id === sid);
@@ -446,15 +446,31 @@ window.hideServerCtx = hideServerCtx;
       if (s.description) previewHtml += `<div class="invite-card-desc">${escHtml(s.description)}</div>`;
       previewHtml += `</div></div>`;
       preview.innerHTML = previewHtml;
-      // Friends list with checkboxes
-      const friends = knownUsers();
-      if (friends.length === 0) {
-        friendsList.innerHTML = '<div class="rs-empty" style="padding:8px;">No friends to invite yet</div>';
-      } else {
-        friendsList.innerHTML = friends.map(f => {
-          const safe = escHtml(f);
-          return `<div class="invite-friend-row"><label><input type="checkbox" data-friend="${safe}" value="${safe}"> ${safe}</label></div>`;
-        }).join('');
+      // Friends list with checkboxes - only show accepted friends
+      try {
+        const outgoing = await getDocs(query(collection(db,"friends"), where("from","==",user)));
+        const incoming = await getDocs(query(collection(db,"friends"), where("to","==",user)));
+        const friendSet = new Set();
+        outgoing.docs.forEach(d => {
+          const data = d.data();
+          if (data.status === "accepted" && data.to) friendSet.add(data.to);
+        });
+        incoming.docs.forEach(d => {
+          const data = d.data();
+          if (data.status === "accepted" && data.from) friendSet.add(data.from);
+        });
+        const friendList = Array.from(friendSet).sort((a,b) => a.localeCompare(b));
+        if (friendList.length === 0) {
+          friendsList.innerHTML = '<div class="rs-empty" style="padding:8px;">No friends to invite yet</div>';
+        } else {
+          friendsList.innerHTML = friendList.map(f => {
+            const safe = escHtml(f);
+            return `<div class="invite-friend-row"><label><input type="checkbox" data-friend="${safe}" value="${safe}"> ${safe}</label></div>`;
+          }).join('');
+        }
+      } catch (e) {
+        console.error('Failed to load friends:', e);
+        friendsList.innerHTML = '<div class="rs-empty" style="padding:8px;">Error loading friends</div>';
       }
       modal.style.display = 'flex';
       requestAnimationFrame(() => { modal.classList.add('visible'); modal.querySelector('.modal-card').classList.add('visible'); });
@@ -476,8 +492,20 @@ window.hideServerCtx = hideServerCtx;
       const checked = document.querySelectorAll('#invite-friends-list input[type="checkbox"]:checked');
       if (checked.length === 0) { appAlert('Select at least one friend to invite.'); return; }
       const inviteLink = window.location.origin + window.location.pathname + '?join=' + s.inviteCode;
+      // Verify friendship before sending (safety check)
+      const friendSet = new Set();
+      try {
+        const outgoing = await getDocs(query(collection(db,"friends"), where("from","==",user)));
+        const incoming = await getDocs(query(collection(db,"friends"), where("to","==",user)));
+        outgoing.docs.forEach(d => { if (d.data().status === "accepted" && d.data().to) friendSet.add(d.data().to); });
+        incoming.docs.forEach(d => { if (d.data().status === "accepted" && d.data().from) friendSet.add(d.data().from); });
+      } catch (e) { console.error('Failed to verify friends:', e); }
       for (const cb of checked) {
         const friend = cb.value;
+        if (!friendSet.has(friend)) {
+          console.warn('Skipping non-friend:', friend);
+          continue;
+        }
         const inviteCard = `<invite server="${escHtml(s.name)}" icon="${escHtml(s.icon||'')}" banner="${escHtml(s.banner||'')}" desc="${escHtml(s.description||'')}" link="${escHtml(inviteLink)}"></invite>`;
         const chan = 'dm_' + [user, friend].sort().join('_');
         await addDoc(collection(db, "messages"), { text: inviteCard, user, channel: chan, pfp, timestamp: serverTimestamp() });
