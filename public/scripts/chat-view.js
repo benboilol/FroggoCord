@@ -1,7 +1,18 @@
 // Profiles, message rendering, live listeners, composer, and authentication startup.
     window.openProfile = async (u) => {
       const modal = document.getElementById('profile-modal');
-      document.getElementById('prof-avatar').textContent = (u||'?')[0].toUpperCase();
+      const av = document.getElementById('prof-avatar');
+      const upfp = (typeof userPfpMap !== 'undefined') ? userPfpMap.get(u) : null;
+      const hasPfp = upfp && !upfp.startsWith('file:///');
+      if (hasPfp) {
+        av.style.backgroundImage = `url('${escHtml(upfp)}')`;
+        av.textContent = '';
+        av.style.textIndent = '-9999px';
+      } else {
+        av.style.backgroundImage = 'none';
+        av.textContent = (u||'?')[0].toUpperCase();
+        av.style.textIndent = '0';
+      }
       document.getElementById('prof-name').textContent = u;
       const pres = Array.from(document.getElementById('user-list').children).find(el => el.dataset.user === u);
       const dot = pres && pres.querySelector('.status-dot');
