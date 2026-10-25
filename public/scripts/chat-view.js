@@ -225,11 +225,11 @@ let pendingFile = null; let pendingPreview = null;
         }
         return `
           <div class="msg ${me ? 'me' : ''} ${isP ? 'mention' : ''} ${pending ? 'msg-pending' : ''} ${m.status === 'failed' ? 'msg-failed' : ''} ${m.replyTo ? 'has-reply' : ''}" data-id="${msgId}">
-            <div class="pfp" ${av}>${safeUser ? safeUser[0].toUpperCase() : '?'}</div>
+            <div class="pfp" ${av} onclick="openProfile('${safeUser}')">${safeUser ? safeUser[0].toUpperCase() : '?'}</div>
             <div class="msg-content">
               ${rep}
               <div class="msg-head">
-                <span class="msg-author ${me ? 'self' : ''}">${safeUser}</span>
+                <span class="msg-author ${me ? 'self' : ''}" onclick="openProfile('${safeUser}')" style="cursor:pointer;">${safeUser}</span>
                 <span class="msg-time">${pending ? 'just now' : fmtMsgTime(m.timestamp)}</span>
                 <span class="msg-actions">${pending ? '' : reactBtn + rBtn + btns}</span>
               </div>

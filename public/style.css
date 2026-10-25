@@ -65,11 +65,13 @@ img, button, span, input { border: none; outline: none; }
 .interactive-svg { display: block; max-width: 100%; margin-top: 4px; border: 0; border-radius: 8px; background: var(--input); }
 .msg { display: flex; gap: 16px; padding: 3px 16px; margin: 0 -16px; min-width: 0; position: relative; }
 .msg:hover { background: var(--chat-hover); }
-.msg .pfp { width: 40px; height: 40px; font-size: 15px; flex-shrink: 0; margin-top: 2px; }
+.msg .pfp { width: 40px; height: 40px; font-size: 15px; flex-shrink: 0; margin-top: 2px; cursor: pointer; }
+.msg .pfp:hover { filter: brightness(1.1); }
 .msg.has-reply .pfp { margin-top: 22px; }
 .msg-content { min-width: 0; flex: 1; }
 .msg-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.msg-author { font-weight: 600; color: var(--bright); font-size: 15px; }
+.msg-author { font-weight: 600; color: var(--bright); font-size: 15px; cursor: pointer; }
+.msg-author:hover { text-decoration: underline; }
 .msg-author.self { color: var(--bl); }
 .msg-time { font-size: 11px; color: var(--mut); }
 .msg-actions { display: none; gap: 10px; font-size: 11px; margin-left: 4px; }
@@ -132,7 +134,8 @@ body.dm-mode .rs { display: none; }
 .rs h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--mut); letter-spacing: .02em; margin: 8px 8px 4px; }
 .member { display: flex; align-items: center; gap: 12px; padding: 6px 8px; border-radius: 4px; cursor: pointer; min-width: 0; }
 .member:hover { background: var(--hover); }
-.member-avatar { position: relative; width: 32px; height: 32px; border-radius: 50%; background: var(--bl); display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--accent-contrast); background-size: cover; background-position: center; flex-shrink: 0; font-size: 13px; }
+.member-avatar { position: relative; width: 32px; height: 32px; border-radius: 50%; background: var(--bl); display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--accent-contrast); background-size: cover; background-position: center; flex-shrink: 0; font-size: 13px; cursor: pointer; }
+.member-avatar:hover { filter: brightness(1.1); }
 .member-name { font-size: 15px; color: var(--mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .member:hover .member-name { color: var(--txt); }
 .status-dot { position: absolute; right: -2px; bottom: -2px; width: 12px; height: 12px; border-radius: 50%; border: 3px solid var(--bg-s); box-sizing: content-box; }
