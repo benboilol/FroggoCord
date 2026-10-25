@@ -32,7 +32,7 @@ const {
     const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit
     const IDLE_MS = 120000;
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
-    const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma', 'alpenglow'];
+    const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma', 'alpenglow', 'kris', 'susie', 'noelle'];
     const DEFAULT_THEME = 'fulgurite';
     const THEME_ASSET_VERSION = '20261024-2256';
     const THEME_STORAGE_KEY = 'froggocord-theme';
@@ -64,6 +64,7 @@ const {
         themeLink.onload = () => {
           if (requestId !== themeLoadId) return resolve(false);
           activeTheme = theme;
+          settings.theme = theme;
           themeLink.dataset.theme = theme;
           setThemeSelection(theme);
           if (persist) {
@@ -138,7 +139,7 @@ const {
     document.getElementById('settings-modal').addEventListener('click', event => {
       if (event.target.id === 'settings-modal') closeSettings();
     });
-    document.querySelectorAll('.theme-option').forEach(option => {
+    document.querySelectorAll('.theme-option:not(.delta-theme-btn)').forEach(option => {
       option.addEventListener('click', () => applyTheme(option.dataset.theme));
     });
     document.addEventListener('keydown', event => {
@@ -224,6 +225,10 @@ const {
     }
 
     function applySettings() {
+      // Theme
+      if (settings.theme && settings.theme !== activeTheme) {
+        applyTheme(settings.theme, false);
+      }
       // Status
       const statusSel = document.getElementById('status-select');
       if (settings.status && statusSel) {
@@ -238,6 +243,12 @@ const {
         document.documentElement.style.setProperty('--motion', 'none');
       } else {
         document.documentElement.style.removeProperty('--motion');
+      }
+      // High contrast
+      if (settings.accessibility.highContrast) {
+        document.body.classList.add('high-contrast');
+      } else {
+        document.body.classList.remove('high-contrast');
       }
       saveSettings();
     }
@@ -268,6 +279,11 @@ const {
     document.getElementById('sa-reduced-motion').addEventListener('change', (e) => { settings.accessibility.reducedMotion = e.target.checked; applySettings(); });
     document.getElementById('sa-screen-reader').addEventListener('change', (e) => { settings.accessibility.screenReader = e.target.checked; saveSettings(); });
     document.getElementById('sa-status').addEventListener('change', (e) => { settings.status = e.target.value; applySettings(); });
+    // Deltarune character theme toggles (accessibility panel)
+    ['kris', 'susie', 'noelle'].forEach(t => {
+      const btn = document.querySelector('.delta-theme-btn[data-theme="' + t + '"]');
+      if (btn) btn.addEventListener('click', () => applyTheme(t, true));
+    });
     document.getElementById('sa-avatar-file').addEventListener('change', async (e) => {
       const f = e.target.files && e.target.files[0];
       if (!f || !f.type.startsWith('image/')) return;
@@ -319,6 +335,7 @@ const {
     };
 
     loadSettings();
+    applySettings();
 
     const prunePending = new Set();
     function prunePresence(id) {

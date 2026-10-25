@@ -1,0 +1,10 @@
+/* FroggoCord theme: Noelle (Ice) */
+:root {
+  --bg-p:#0f1a2a; --bg-s:#182a3a; --bg-t:#12222a; --chat:#1e2e3e; --chat-hover:#283c4e; --hover:#344e5e; --active:#425e6e;
+  --panel:#152a3a; --input:#243a4a; --txt:#d7f7ff; --bright:#f0ffff; --mut:#a3cfdf; --bl:#4dc0ff; --pr:#39a0c0; --danger:#6bbfff; --yellow:#d1f0ff;
+  --scroll-thumb:#12222a; --accent-contrast:#000; --white:#fff; --shadow-line:rgba(0,0,0,.2); --banner-shade:rgba(0,0,0,.65); --banner-shadow:rgba(0,0,0,.8);
+  --border:#344e5e; --code-bg:#0f1a2a; --mention-bg:rgba(77,192,255,.15); --spoiler-bg:#182a3a; --spoiler-glow:rgba(255,255,255,.6); --reply-line:#426e6e; --highlight-bg:rgba(77,192,255,.06);
+  --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.7); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#0f1a2a; --link:#6bbfff;
+  --swatch-a:#0f1a2a; --swatch-b:#1e2e3e; --swatch-c:#4dc0ff;
+}
+.noelle-swatch { --swatch-a:#0f1a2a; --swatch-b:#1e2e3e; --swatch-c:#4dc0ff; }

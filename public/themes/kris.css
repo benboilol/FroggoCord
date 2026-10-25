@@ -1,0 +1,10 @@
+/* FroggoCord theme: Kris (Determination) */
+:root {
+  --bg-p:#1a0f0f; --bg-s:#2a1818; --bg-t:#221212; --chat:#2f1e1e; --chat-hover:#3c2828; --hover:#4a3434; --active:#5f4242;
+  --panel:#241515; --input:#352424; --txt:#f5d7d7; --bright:#fff0f0; --mut:#cfa3a3; --bl:#ff4d4d; --pr:#c0392b; --danger:#ff6b6b; --yellow:#ffd166;
+  --scroll-thumb:#221212; --accent-contrast:#fff; --white:#fff; --shadow-line:rgba(0,0,0,.2); --banner-shade:rgba(0,0,0,.65); --banner-shadow:rgba(0,0,0,.8);
+  --border:#4a3434; --code-bg:#1a0f0f; --mention-bg:rgba(255,77,77,.15); --spoiler-bg:#2a1818; --spoiler-glow:rgba(255,255,255,.5); --reply-line:#6f4242; --highlight-bg:rgba(255,77,77,.06);
+  --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.7); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#1a0f0f; --link:#ff6b6b;
+  --swatch-a:#1a0f0f; --swatch-b:#2f1e1e; --swatch-c:#ff4d4d;
+}
+.kris-swatch { --swatch-a:#1a0f0f; --swatch-b:#2f1e1e; --swatch-c:#ff4d4d; }
