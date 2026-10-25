@@ -10,6 +10,10 @@
       // Show loading state immediately to avoid perceived freeze
       actions.innerHTML = '<div style="color:var(--mut);font-size:12px;">Loading...</div>';
       modal.style.display = 'flex';
+      requestAnimationFrame(() => {
+        modal.classList.add('visible');
+        modal.querySelector('.modal-card').classList.add('visible');
+      });
 
       let html = '';
       if (u !== user) {
@@ -50,7 +54,13 @@
       }
       actions.innerHTML = html;
     };
-    window.closeProfile = () => { document.getElementById('profile-modal').style.display = 'none'; };
+    window.closeProfile = () => {
+      const modal = document.getElementById('profile-modal');
+      const card = modal.querySelector('.modal-card');
+      modal.classList.remove('visible');
+      if (card) card.classList.remove('visible');
+      setTimeout(() => { modal.style.display = 'none'; }, 180);
+    };
 
     function fmtMsgTime(ts) {
       try {

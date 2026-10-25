@@ -133,9 +133,11 @@
       document.getElementById('sm-code').value = '';
       document.getElementById('sm-result').textContent = '';
       showServerTab('create');
-      document.getElementById('server-modal').style.display = 'flex';
+      const m = document.getElementById('server-modal');
+      m.style.display = 'flex';
+      requestAnimationFrame(() => { m.classList.add('visible'); m.querySelector('.modal-card').classList.add('visible'); });
     }
-    function closeServerModal() { document.getElementById('server-modal').style.display = 'none'; }
+    function closeServerModal() { const m = document.getElementById('server-modal'); m.classList.remove('visible'); const c = m.querySelector('.modal-card'); if (c) c.classList.remove('visible'); setTimeout(() => { m.style.display = 'none'; }, 180); }
     function showServerTab(tab) {
       document.getElementById('sm-create').style.display = tab==='create'?'block':'none';
       document.getElementById('sm-join').style.display = tab==='join'?'block':'none';
@@ -240,7 +242,9 @@ document.addEventListener('click', (e) => {
        ['ss-name','ss-desc','ss-icon-url','ss-banner-url','ss-icon-file','ss-banner-file'].forEach(id => {
          const el = document.getElementById(id); if (el) el.disabled = !canEdit;
        });
-       document.getElementById('server-settings-modal').style.display = 'flex';
+       const ssm = document.getElementById('server-settings-modal');
+      ssm.style.display = 'flex';
+      requestAnimationFrame(() => { ssm.classList.add('visible'); ssm.querySelector('.modal-card').classList.add('visible'); });
      }
      function renderMembersList(s) {
        const el = document.getElementById('ss-members');
@@ -280,7 +284,7 @@ document.addEventListener('click', (e) => {
      }
      window.deleteServer = deleteServer;
      window.toggleAdmin = toggleAdmin;
-     function closeServerSettings() { document.getElementById('server-settings-modal').style.display = 'none'; }
+     function closeServerSettings() { const m = document.getElementById('server-settings-modal'); m.classList.remove('visible'); const c = m.querySelector('.modal-card'); if (c) c.classList.remove('visible'); setTimeout(() => { m.style.display = 'none'; }, 180); }
      async function saveServerSettings() {
        const s = servers.find(x=>x.id===ctxServerId); if (!s) return;
        const isOwner = s.owner === user;
