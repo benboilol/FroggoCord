@@ -1,10 +1,10 @@
-/* FroggoCord theme: Phantom (Purple/Magenta) */
+/* FroggoCord theme: Phantom (Bright Purple/Magenta) */
 :root {
-  --bg-p:#1a0f2a; --bg-s:#2a183a; --bg-t:#22122a; --chat:#2f1e3e; --chat-hover:#3c284e; --hover:#4a345e; --active:#5f426e;
-  --panel:#24152a; --input:#35243a; --txt:#f7d7f7; --bright:#fff0ff; --mut:#cfa3cf; --bl:#c04dff; --pr:#a039c0; --danger:#ff6bff; --yellow:#ffd1ff;
-  --scroll-thumb:#22122a; --accent-contrast:#fff; --white:#fff; --shadow-line:rgba(0,0,0,.2); --banner-shade:rgba(0,0,0,.65); --banner-shadow:rgba(0,0,0,.8);
-  --border:#4a345e; --code-bg:#1a0f2a; --mention-bg:rgba(192,77,255,.15); --spoiler-bg:#2a183a; --spoiler-glow:rgba(255,255,255,.5); --reply-line:#6f426e; --highlight-bg:rgba(192,77,255,.06);
-  --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.7); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#1a0f2a; --link:#ff6bff;
-  --swatch-a:#1a0f2a; --swatch-b:#2f1e3e; --swatch-c:#c04dff;
+  --bg-p:#2a1040; --bg-s:#3a2050; --bg-t:#321848; --chat:#3f2850; --chat-hover:#4c3560; --hover:#5a4270; --active:#6e5280;
+  --panel:#321848; --input:#452858; --txt:#f0d0ff; --bright:#fff0ff; --mut:#d0a0e0; --bl:#e066ff; --pr:#c04dff; --danger:#ff88ff; --yellow:#ffe0ff;
+  --scroll-thumb:#2a1040; --accent-contrast:#fff; --white:#fff; --shadow-line:rgba(0,0,0,.2); --banner-shade:rgba(0,0,0,.65); --banner-shadow:rgba(0,0,0,.8);
+  --border:#5a4270; --code-bg:#2a1040; --mention-bg:rgba(224,102,255,.15); --spoiler-bg:#3a2050; --spoiler-glow:rgba(255,255,255,.5); --reply-line:#7e5290; --highlight-bg:rgba(224,102,255,.06);
+  --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.7); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#2a1040; --link:#ff88ff;
+  --swatch-a:#2a1040; --swatch-b:#3f2850; --swatch-c:#e066ff;
 }
-.phantom-swatch { --swatch-a:#1a0f2a; --swatch-b:#2f1e3e; --swatch-c:#c04dff; }
+.phantom-swatch { --swatch-a:#2a1040; --swatch-b:#3f2850; --swatch-c:#e066ff; }

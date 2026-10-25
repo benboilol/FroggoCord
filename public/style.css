@@ -219,8 +219,8 @@ textarea.inp2 { resize: vertical; }
 .plasma-swatch { --swatch-a:#fff5fb; --swatch-b:#ff45c7; --swatch-c:#6427cf; }
 .alpenglow-swatch { --swatch-a:#ffc999; --swatch-b:#9059ff; --swatch-c:#ff4aa2; }
 .frostbite-swatch { --swatch-a:#0f1a2a; --swatch-b:#1e2e3e; --swatch-c:#00bcd4; }
-.phantom-swatch { --swatch-a:#1a0f2a; --swatch-b:#2f1e3e; --swatch-c:#c04dff; }
-.crystal-swatch { --swatch-a:#0f1a2a; --swatch-b:#1e2e3e; --swatch-c:#4dc0ff; }
+.phantom-swatch { --swatch-a:#2a1040; --swatch-b:#3f2850; --swatch-c:#e066ff; }
+.crystal-swatch { --swatch-a:#050a14; --swatch-b:#0d1a30; --swatch-c:#2a7abf; }
 .verdant-swatch { --swatch-a:#0f1a0f; --swatch-b:#1e2e1e; --swatch-c:#4caf50; }
 .custom-swatch { --swatch-a:#555; --swatch-b:#888; --swatch-c:#aaa; }
 

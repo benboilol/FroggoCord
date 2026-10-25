@@ -1,10 +1,10 @@
-/* FroggoCord theme: Crystal (Ice Blue) */
+/* FroggoCord theme: Crystal (Dark Blue) */
 :root {
-  --bg-p:#0f1a2a; --bg-s:#182a3a; --bg-t:#12222a; --chat:#1e2e3e; --chat-hover:#283c4e; --hover:#344e5e; --active:#425e6e;
-  --panel:#152a3a; --input:#243a4a; --txt:#d7f7ff; --bright:#f0ffff; --mut:#a3cfdf; --bl:#4dc0ff; --pr:#39a0c0; --danger:#6bbfff; --yellow:#d1f0ff;
-  --scroll-thumb:#12222a; --accent-contrast:#000; --white:#fff; --shadow-line:rgba(0,0,0,.2); --banner-shade:rgba(0,0,0,.65); --banner-shadow:rgba(0,0,0,.8);
-  --border:#344e5e; --code-bg:#0f1a2a; --mention-bg:rgba(77,192,255,.15); --spoiler-bg:#182a3a; --spoiler-glow:rgba(255,255,255,.6); --reply-line:#426e6e; --highlight-bg:rgba(77,192,255,.06);
-  --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.7); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#0f1a2a; --link:#6bbfff;
-  --swatch-a:#0f1a2a; --swatch-b:#1e2e3e; --swatch-c:#4dc0ff;
+  --bg-p:#050a14; --bg-s:#0a1525; --bg-t:#081020; --chat:#0d1a30; --chat-hover:#152540; --hover:#1c3050; --active:#253a60;
+  --panel:#081220; --input:#102038; --txt:#b0c8e0; --bright:#d0e0f0; --mut:#7a9ab8; --bl:#2a7abf; --pr:#1a5a9f; --danger:#4a90d0; --yellow:#a0c0e0;
+  --scroll-thumb:#081020; --accent-contrast:#fff; --white:#fff; --shadow-line:rgba(0,0,0,.2); --banner-shade:rgba(0,0,0,.65); --banner-shadow:rgba(0,0,0,.8);
+  --border:#1c3050; --code-bg:#050a14; --mention-bg:rgba(42,122,191,.15); --spoiler-bg:#0a1525; --spoiler-glow:rgba(255,255,255,.6); --reply-line:#253a60; --highlight-bg:rgba(42,122,191,.06);
+  --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.7); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#050a14; --link:#4a90d0;
+  --swatch-a:#050a14; --swatch-b:#0d1a30; --swatch-c:#2a7abf;
 }
-.crystal-swatch { --swatch-a:#0f1a2a; --swatch-b:#1e2e3e; --swatch-c:#4dc0ff; }
+.crystal-swatch { --swatch-a:#050a14; --swatch-b:#0d1a30; --swatch-c:#2a7abf; }
