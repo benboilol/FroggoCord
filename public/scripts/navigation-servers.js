@@ -130,7 +130,8 @@
         h.innerHTML = `<span class="hash">#</span><span class="hname">${escHtml(label)}</span>`;
       }
       document.body.classList.toggle('dm-mode', mode === 'dms');
-      document.getElementById('chat-input').placeholder = (mode === 'dms' && dmWith) ? 'Message @' + dmWith : 'Message #' + (chan || 'general');
+      const placeholderLabel = (mode === 'dms' && dmWith) ? 'Message @' + dmWith : 'Message #' + (chan && chan.startsWith('srv_') ? chan.split('_').slice(2).join('_') : (chan || 'general'));
+  document.getElementById('chat-input').placeholder = placeholderLabel;
     }
     function serverMenu() { openServerModal(); }
     function openServerModal() {
