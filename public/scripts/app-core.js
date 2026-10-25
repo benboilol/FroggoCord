@@ -284,6 +284,40 @@ const {
       } catch (err) { appAlert('Failed to process image.'); }
     });
 
+    window.sendMessage = async () => {
+      const input = document.getElementById('chat-input');
+      const t = input.value.trim();
+      if (!t && !pendingFile) return;
+      if (!user) return;
+      input.value = '';
+      const payload = { text: t, user, channel: chan, pfp, timestamp: serverTimestamp() };
+      if (pendingFile) {
+        if (pendingFile.size > 700000) {
+          appAlert('Image too large (max ~700KB). Larger files need Firebase Storage, which requires billing.');
+          setTyping(false);
+          pendingFile = null; pendingPreview = null;
+          window.cancelFile();
+          input.value = t;
+          return;
+        }
+        payload.image = pendingPreview;
+        try {
+          const dims = await new Promise((resolve) => {
+            const im = new Image();
+            im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
+            im.onerror = () => resolve(null);
+            im.src = pendingPreview;
+          });
+          if (dims && dims.w && dims.h) { payload.imageW = dims.w; payload.imageH = dims.h; }
+        } catch (e) {}
+        pendingFile = null; pendingPreview = null;
+        window.cancelFile();
+      }
+      if (reply) { payload.replyTo = { user: reply.user, text: reply.text }; window.cancelReply(); }
+      setTyping(false);
+      await addDoc(collection(db, "messages"), payload);
+    };
+
     loadSettings();
 
     const prunePending = new Set();

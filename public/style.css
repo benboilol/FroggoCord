@@ -98,6 +98,9 @@ img, button, span, input { border: none; outline: none; }
 .composer input::placeholder { color: var(--mut); }
 .composer .emoji { background: transparent; border: none; font-size: 20px; cursor: pointer; color: var(--mut); padding: 4px; line-height: 1; }
 .composer .emoji:hover { filter: brightness(1.2); }
+.composer .send-btn { background: var(--bl); color: var(--accent-contrast); border-radius: 4px; width: 36px; height: 36px; font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.composer .send-btn:hover { filter: brightness(1.08); }
+.composer .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 #reply-preview { display: none; padding: 8px 16px; background: var(--chat); font-size: 13px; color: var(--txt); flex-shrink: 0; }
 #reply-preview .reply-bar { display: flex; align-items: center; justify-content: space-between; background: var(--spoiler-bg); border-radius: 6px; padding: 6px 10px; }
 #reply-preview .close { cursor: pointer; color: var(--mut); font-weight: 700; }

@@ -99,7 +99,7 @@
         <button class="settings-tab" id="settings-privacy-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-privacy-panel">Privacy</button>
         <button class="settings-tab" id="settings-accessibility-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-accessibility-panel">Accessibility</button>
         </div>
-        <section id="settings-theme-panel" role="tabpanel" aria-labelledby="settings-theme-tab">
+        <section id="settings-theme-panel" class="settings-panel-section visible" role="tabpanel" aria-labelledby="settings-theme-tab">
         <p class="settings-description">Choose a theme. Your selection applies immediately and is saved on this device.</p>
         <div class="theme-options" role="radiogroup" aria-label="Color theme">
             <button class="theme-option" type="button" role="radio" data-theme="ash" aria-checked="false"><span class="theme-swatch ash-swatch"></span><span>Ash</span></button>
@@ -111,7 +111,7 @@
         </div>
         <div id="theme-status" class="theme-status" aria-live="polite"></div>
         </section>
-        <section id="settings-account-panel" role="tabpanel" aria-labelledby="settings-account-tab" style="display:none;">
+        <section id="settings-account-panel" class="settings-panel-section" role="tabpanel" aria-labelledby="settings-account-tab">
         <p class="settings-description">Manage your account details. Changes apply immediately.</p>
         <label class="field-label">Username</label>
         <input id="sa-username" class="inp2" readonly>
@@ -123,9 +123,9 @@
         </select>
         <label class="field-label">Avatar</label>
         <input id="sa-avatar-file" type="file" accept="image/*" style="width:100%;margin:4px 0 8px;color:var(--txt);">
-        <div id="sa-avatar-preview" style="margin:8px 0;width:80px;height:80px;border-radius:50%;background:var(--bg-t);display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--accent-contrast);">U</div>
+        <div id="sa-avatar-preview" style="margin:8px 0;width:80px;height:80px;border-radius:50%;background:var(--bg-t);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--accent-contrast);">U</div>
         </section>
-        <section id="settings-notifications-panel" role="tabpanel" aria-labelledby="settings-notifications-tab" style="display:none;">
+        <section id="settings-notifications-panel" class="settings-panel-section" role="tabpanel" aria-labelledby="settings-notifications-tab">
         <p class="settings-description">Choose how and when you're notified.</p>
         <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
         <input type="checkbox" id="sn-desktop" style="margin:0;">
@@ -144,7 +144,7 @@
         <span>Direct message notifications</span>
         </label>
         </section>
-        <section id="settings-privacy-panel" role="tabpanel" aria-labelledby="settings-privacy-tab" style="display:none;">
+        <section id="settings-privacy-panel" class="settings-panel-section" role="tabpanel" aria-labelledby="settings-privacy-tab">
         <p class="settings-description">Control who can see your information and contact you.</p>
         <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
         <input type="checkbox" id="sp-online-status" style="margin:0;">
@@ -159,7 +159,7 @@
         <span>Show last active time</span>
         </label>
         </section>
-        <section id="settings-accessibility-panel" role="tabpanel" aria-labelledby="settings-accessibility-tab" style="display:none;">
+        <section id="settings-accessibility-panel" class="settings-panel-section" role="tabpanel" aria-labelledby="settings-accessibility-tab">
         <p class="settings-description">Make FroggoCord easier to use.</p>
         <label class="field-label">Font size</label>
         <select id="sa-font-size" class="inp2">
@@ -282,6 +282,7 @@
         <button class="plus" title="GIFs" onclick="document.getElementById('media-picker').style.display='flex';showTab('gifs')">+</button>
         <textarea id="chat-input" placeholder="Message #general" rows="1" onkeydown="handleKeyPress(event)"></textarea>
         <button id="emoji-btn" class="emoji" title="Emoji">😀</button>
+        <button id="send-btn" class="send-btn" title="Send message" onclick="sendMessage()">📤</button>
         </div>
     </div>
     </div>
