@@ -34,7 +34,7 @@ const {
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
     const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma', 'alpenglow', 'frostbite', 'phantom', 'crystal', 'verdant', 'custom'];
     const DEFAULT_THEME = 'fulgurite';
-    const THEME_ASSET_VERSION = '20261024-2256';
+    const THEME_ASSET_VERSION = '20261025-1109';
     const THEME_STORAGE_KEY = 'froggocord-theme';
     const themeLink = document.getElementById('theme-stylesheet');
     let activeTheme = DEFAULT_THEME;

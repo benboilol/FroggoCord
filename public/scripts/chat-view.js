@@ -116,6 +116,42 @@
       '</div>';
     }
 
+    function svgMarkupFromDataUrl(dataUrl) {
+      const match = String(dataUrl).match(/^data:image\/svg\+xml((?:;[^,]*)*),(.*)$/is);
+      if (!match) return null;
+      const metadata = match[1];
+      const payload = match[2];
+      try {
+        if (/(?:^|;)base64(?:;|$)/i.test(metadata)) {
+          const bytes = Uint8Array.from(atob(payload), character => character.charCodeAt(0));
+          return new TextDecoder().decode(bytes);
+        }
+        return decodeURIComponent(payload);
+      } catch (error) {
+        console.warn('Could not decode SVG attachment', error);
+        return null;
+      }
+    }
+
+    function interactiveSvgDocument(markup) {
+      const contentPolicy = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'";
+      return '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="' + contentPolicy + '"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}body{display:grid;place-items:center}svg{display:block;width:100%;height:100%}</style></head><body>' + markup + '</body></html>';
+    }
+
+    function renderMessageImage(message) {
+      if (!message.image) return '';
+      const svgMarkup = svgMarkupFromDataUrl(message.image);
+      if (svgMarkup !== null) {
+        const srcdoc = interactiveSvgDocument(svgMarkup);
+        const imageWidth = Number(message.imageW);
+        const imageHeight = Number(message.imageH);
+        const hasDimensions = Number.isFinite(imageWidth) && imageWidth > 0 && Number.isFinite(imageHeight) && imageHeight > 0;
+        const aspectRatio = hasDimensions ? `${Math.min(imageWidth, 100000)} / ${Math.min(imageHeight, 100000)}` : '4 / 3';
+        return `<iframe class="interactive-svg" sandbox="allow-scripts" referrerpolicy="no-referrer" loading="lazy" title="Interactive SVG attachment" srcdoc="${escHtml(srcdoc)}" style="width:min(320px, 100%);height:auto;min-height:80px;max-height:60vh;aspect-ratio:${aspectRatio};"></iframe>`;
+      }
+      return `<img src="${escHtml(message.image)}" alt="image" style="max-width:min(320px, 100%);border-radius:8px;display:block;margin-top:4px;cursor:pointer;${message.imageW && message.imageH ? ' aspect-ratio:' + Number(message.imageW) + '/' + Number(message.imageH) + ';' : ''}" onclick="openLightbox('${escHtml(message.image)}','Image')">`;
+    }
+
 let pendingFile = null; let pendingPreview = null;
     function resetMessagePages(channel) {
       messagePages.forEach(page => page.unsubscribe && page.unsubscribe());
@@ -171,7 +207,7 @@ let pendingFile = null; let pendingPreview = null;
               </div>
               ${rep}
               ${textVal ? `<div class="msg-bubble">${renderText(textVal)}</div>` : ''}
-              ${m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px;cursor:pointer;${m.imageW && m.imageH ? ' aspect-ratio:' + m.imageW + '/' + m.imageH + ';' : ''}" onclick="openLightbox('${escHtml(m.image)}','Image')">` : ''}
+              ${renderMessageImage(m)}
               ${renderReactions(m)}
             </div>
           </div>`;
