@@ -1,7 +1,14 @@
 // Channel navigation, direct messages, server management, and server settings.
     window.switchChannel = (c) => { mode = 'channels'; dmWith = null; currentServer = null; chan = c; document.getElementById('dm-btn').classList.remove('active'); renderServerList(); renderUserList(); renderSidebar(); updateHeader(); listen(); }
+    // Helper: go to first server if available, otherwise show empty state
+    window.goToServer = () => {
+      if (servers.length > 0) { switchServer(servers[0].id); return; }
+      currentServer = null; mode = 'channels'; dmWith = null; chan = null;
+      document.getElementById('dm-btn').classList.remove('active');
+      renderServerList(); renderUserList(); renderSidebar(); updateHeader(); listen();
+    }
     window.toggleDMView = () => {
-      if (mode === 'dms') { mode = 'channels'; dmWith = null; chan = chan || 'general'; if (!chan || chan.startsWith('dm_')) chan = 'general'; document.getElementById('dm-btn').classList.remove('active'); }
+      if (mode === 'dms') { mode = 'channels'; dmWith = null; if (!chan || chan.startsWith('dm_')) chan = null; document.getElementById('dm-btn').classList.remove('active'); }
       else { mode = 'dms'; dmWith = null; currentServer = null; chan = null; document.getElementById('dm-btn').classList.add('active'); }
       document.getElementById('server-banner').style.display = 'none';
       renderServerList(); renderUserList(); renderSidebar(); updateHeader(); listen();
@@ -50,9 +57,7 @@
         if (srv) {
           ch.innerHTML = `<div class="cat">Text Channels</div>` + (srv.channels||[{name:'general'}]).map(c => `<button class="cb ${chan===('srv_'+currentServer+'_'+c.name)?'active':''}" onclick="switchServerChannel('${srv.id}','${escHtml(c.name)}')"># ${escHtml(c.name)}</button>${unreadBadge('srv_' + currentServer + '_' + c.name)}`).join('');
         } else {
-          ch.innerHTML = `<div class="cat">Text Channels</div>` +
-            `<button class="cb ${chan==='general'?'active':''}" onclick="switchChannel('general')"># general</button>` + unreadBadge('general') +
-            `<button class="cb ${chan==='random'?'active':''}" onclick="switchChannel('random')"># random</button>` + unreadBadge('random');
+          ch.innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`;
         }
       } else {
         h3.textContent = 'Direct Messages';
@@ -276,11 +281,11 @@ document.addEventListener('click', (e) => {
        if (s.owner !== user) { appAlert('Only the owner can delete the server'); return; }
        if (!(await appConfirm('Delete server "' + s.name + '"? This cannot be undone.'))) return;
        await deleteDoc(doc(db,'servers',ctxServerId));
-       if (currentServer === ctxServerId) { currentServer = null; chan = 'general'; mode='channels'; dmWith=null; }
+       if (currentServer === ctxServerId) { currentServer = null; chan = null; mode='channels'; dmWith=null; }
        await loadServers();
        if (currentServer) switchServer(currentServer);
-       else { document.querySelector('.sb h3').textContent='Channels'; document.getElementById('server-banner').style.display='none'; document.querySelector('.ch').innerHTML = `<div class=\"cat\">Text Channels</div><button class=\"cb ${chan==='general'?'active':''}\" onclick=\"switchChannel('general')\"># general</button><button class=\"cb ${chan==='random'?'active':''}\" onclick=\"switchChannel('random')\"># random</button>`; updateHeader(); listen(); }
-       closeServerSettings();
+       else if (servers.length > 0) { switchServer(servers[0].id); }
+       else { document.querySelector('.sb h3').textContent='Channels'; document.getElementById('server-banner').style.display='none'; document.querySelector('.ch').innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`; updateHeader(); listen(); }
      }
      window.deleteServer = deleteServer;
      window.toggleAdmin = toggleAdmin;
@@ -317,10 +322,13 @@ document.addEventListener('click', (e) => {
        const s = servers.find(x=>x.id===ctxServerId); if (!s) return;
        if (!(await appConfirm('Leave ' + s.name + '?'))) return;
        await updateDoc(doc(db,'servers',ctxServerId), { members: (s.members||[]).filter(m=>m!==user) });
-       if (currentServer === ctxServerId) { currentServer = null; chan = 'general'; mode='channels'; dmWith=null; }
+       if (currentServer === ctxServerId) { currentServer = null; chan = null; mode='channels'; dmWith=null; }
        await loadServers();
-       if (currentServer) switchServer(currentServer); else { document.querySelector('.sb h3').textContent='Channels'; document.getElementById('server-banner').style.display='none'; document.querySelector('.ch').innerHTML = `<div class="cat">Text Channels</div><button class="cb ${chan==='general'?'active':''}" onclick="switchChannel('general')"># general</button><button class="cb ${chan==='random'?'active':''}" onclick="switchChannel('random')"># random</button>`; updateHeader(); listen(); }
+       if (currentServer) switchServer(currentServer);
+       else if (servers.length > 0) { switchServer(servers[0].id); }
+       else { document.querySelector('.sb h3').textContent='Channels'; document.getElementById('server-banner').style.display='none'; document.querySelector('.ch').innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`; updateHeader(); listen(); }
      }
+     document.getElementById('ctx-invite').onclick = () => { hideServerCtx(); openInviteModal(ctxServerId); };
      document.getElementById('ctx-settings').onclick = openServerSettings;
      document.getElementById('ctx-leave').onclick = leaveServer;
      window.openLightbox = (url, label) => {
@@ -370,10 +378,10 @@ window.hideServerCtx = hideServerCtx;
           `<button class="cb muted" onclick="createChannel('${s.id}')" style="color:var(--bl);">+ Add Channel</button>` +
           `<button class="cb muted" onclick="shareInvite('${s.id}')">Invite Code: ${escHtml(s.inviteCode)}</button>`;
       } else {
-        chan = 'general'; mode='channels'; dmWith=null;
+         chan = null; mode='channels'; dmWith=null;
         document.querySelector('.sb h3').textContent = 'Channels';
         document.getElementById('server-banner').style.display = 'none';
-         document.querySelector('.ch').innerHTML = `<div class="cat">Text Channels</div><button class="cb ${chan==='general'?'active':''}" onclick="switchChannel('general')"># general</button><button class="cb ${chan==='random'?'active':''}" onclick="switchChannel('random')"># random</button>`;
+         document.querySelector('.ch').innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`;
       }
       renderServerList();
       updateHeader();
@@ -419,3 +427,65 @@ window.hideServerCtx = hideServerCtx;
     window.joinServer = joinServer;
     window.loadServers = loadServers;
 
+    // ===== Invite to Server =====
+    let inviteServerId = null;
+    window.openInviteModal = (sid) => {
+      if (!sid) return;
+      inviteServerId = sid;
+      const s = servers.find(x => x.id === sid);
+      if (!s) return;
+      const modal = document.getElementById('invite-modal');
+      const preview = document.getElementById('invite-server-preview');
+      const friendsList = document.getElementById('invite-friends-list');
+      // Server preview card
+      let previewHtml = '<div class="invite-card">';
+      if (s.banner) previewHtml += `<div class="invite-card-banner" style="background-image:url('${escHtml(s.banner)}');"></div>`;
+      previewHtml += `<div class="invite-card-body">`;
+      if (s.icon) previewHtml += `<img src="${escHtml(s.icon)}" alt="" style="width:40px;height:40px;border-radius:50%;margin-bottom:8px;">`;
+      previewHtml += `<div class="invite-card-name">${escHtml(s.name)}</div>`;
+      if (s.description) previewHtml += `<div class="invite-card-desc">${escHtml(s.description)}</div>`;
+      previewHtml += `</div></div>`;
+      preview.innerHTML = previewHtml;
+      // Friends list with checkboxes
+      const friends = knownUsers();
+      if (friends.length === 0) {
+        friendsList.innerHTML = '<div class="rs-empty" style="padding:8px;">No friends to invite yet</div>';
+      } else {
+        friendsList.innerHTML = friends.map(f => {
+          const safe = escHtml(f);
+          return `<div class="invite-friend-row"><label><input type="checkbox" data-friend="${safe}" value="${safe}"> ${safe}</label></div>`;
+        }).join('');
+      }
+      modal.style.display = 'flex';
+      requestAnimationFrame(() => { modal.classList.add('visible'); modal.querySelector('.modal-card').classList.add('visible'); });
+    };
+
+    window.closeInviteModal = () => {
+      const m = document.getElementById('invite-modal');
+      m.classList.remove('visible');
+      const c = m.querySelector('.modal-card');
+      if (c) c.classList.remove('visible');
+      setTimeout(() => { m.style.display = 'none'; }, 180);
+      inviteServerId = null;
+    };
+
+    window.sendInvites = async () => {
+      if (!inviteServerId) return;
+      const s = servers.find(x => x.id === inviteServerId);
+      if (!s) return;
+      const checked = document.querySelectorAll('#invite-friends-list input[type="checkbox"]:checked');
+      if (checked.length === 0) { appAlert('Select at least one friend to invite.'); return; }
+      const inviteLink = window.location.origin + window.location.pathname + '?join=' + s.inviteCode;
+      for (const cb of checked) {
+        const friend = cb.value;
+        const inviteCard = `<invite server="${escHtml(s.name)}" icon="${escHtml(s.icon||'')}" banner="${escHtml(s.banner||'')}" desc="${escHtml(s.description||'')}" link="${escHtml(inviteLink)}"></invite>`;
+        const chan = 'dm_' + [user, friend].sort().join('_');
+        await addDoc(collection(db, "messages"), { text: inviteCard, user, channel: chan, pfp, timestamp: serverTimestamp() });
+      }
+      closeInviteModal();
+      appAlert('Invites sent to ' + checked.length + ' friend(s)!');
+    };
+
+    window.openInviteModal = openInviteModal;
+    window.closeInviteModal = closeInviteModal;
+    window.sendInvites = sendInvites;
