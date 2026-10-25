@@ -42,10 +42,7 @@ Do not assume that code is correct just because it runs. Preserve existing funct
 Theme IDs, CSS filenames, the settings option's `data-theme`, and the swatch class must match. Keep theme definitions in CSS files and theme registration in the existing HTML and JavaScript files.
 
 To make a theme follow the operating system's light or dark appearance, put one complete palette in `:root` and override the same custom properties inside `@media (prefers-color-scheme: dark)`. Alpenglow is an example of this pattern.
-<<<<<<< Updated upstream
-=======
 
-## Emulator-only permission testing
+## Direct security testing
 
 `public/hacked.html` is a standalone security test client that signs in with a FroggoCord test account and calls the production Firestore API directly, without FroggoCord's UI permission checks. Firebase Authentication and Firestore Security Rules still apply. Its reads, writes, updates, and deletes affect live data, so use only a test account and disposable test records.
->>>>>>> Stashed changes
