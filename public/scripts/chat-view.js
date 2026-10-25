@@ -224,7 +224,7 @@ let pendingFile = null; let pendingPreview = null;
           else statusHtml = '<div class="msg-status failed">⚠️ Failed <button class="retry-btn" onclick="retryMessage(\'' + m.clientId + '\')">Retry</button></div>';
         }
         return `
-          <div class="msg ${me ? 'me' : ''} ${isP ? 'mention' : ''} ${pending ? 'msg-pending' : ''} ${m.status === 'failed' ? 'msg-failed' : ''}" data-id="${msgId}">
+          <div class="msg ${me ? 'me' : ''} ${isP ? 'mention' : ''} ${pending ? 'msg-pending' : ''} ${m.status === 'failed' ? 'msg-failed' : ''} ${m.replyTo ? 'has-reply' : ''}" data-id="${msgId}">
             <div class="pfp" ${av}>${safeUser ? safeUser[0].toUpperCase() : '?'}</div>
             <div class="msg-content">
               ${rep}

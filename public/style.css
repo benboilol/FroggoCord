@@ -66,6 +66,7 @@ img, button, span, input { border: none; outline: none; }
 .msg { display: flex; gap: 16px; padding: 3px 16px; margin: 0 -16px; min-width: 0; position: relative; }
 .msg:hover { background: var(--chat-hover); }
 .msg .pfp { width: 40px; height: 40px; font-size: 15px; flex-shrink: 0; margin-top: 2px; }
+.msg.has-reply .pfp { margin-top: 22px; }
 .msg-content { min-width: 0; flex: 1; }
 .msg-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .msg-author { font-weight: 600; color: var(--bright); font-size: 15px; }
