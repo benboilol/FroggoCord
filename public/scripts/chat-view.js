@@ -227,12 +227,12 @@ let pendingFile = null; let pendingPreview = null;
           <div class="msg ${me ? 'me' : ''} ${isP ? 'mention' : ''} ${pending ? 'msg-pending' : ''} ${m.status === 'failed' ? 'msg-failed' : ''}" data-id="${msgId}">
             <div class="pfp" ${av}>${safeUser ? safeUser[0].toUpperCase() : '?'}</div>
             <div class="msg-content">
+              ${rep}
               <div class="msg-head">
                 <span class="msg-author ${me ? 'self' : ''}">${safeUser}</span>
                 <span class="msg-time">${pending ? 'just now' : fmtMsgTime(m.timestamp)}</span>
                 <span class="msg-actions">${pending ? '' : reactBtn + rBtn + btns}</span>
               </div>
-              ${rep}
               ${textVal ? `<div class="msg-bubble">${renderText(textVal)}</div>` : ''}
               ${pending ? (m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px; opacity:0.7;">` : '') : renderMessageImage(m)}
               ${pending ? '' : renderReactions(m)}
