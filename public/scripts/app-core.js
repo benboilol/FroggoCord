@@ -34,7 +34,7 @@ const {
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
     const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma', 'alpenglow'];
     const DEFAULT_THEME = 'fulgurite';
-    const THEME_ASSET_VERSION = '20261024-1757';
+    const THEME_ASSET_VERSION = '20261024-2256';
     const THEME_STORAGE_KEY = 'froggocord-theme';
     const themeLink = document.getElementById('theme-stylesheet');
     let activeTheme = DEFAULT_THEME;
@@ -112,6 +112,25 @@ const {
     }
 
     document.getElementById('settings-btn').addEventListener('click', openSettings);
+    const mobileNavToggle = document.getElementById('mobile-nav-toggle');
+    const mobileNavBackdrop = document.getElementById('mobile-nav-backdrop');
+    function closeMobileNav() {
+      document.body.classList.remove('mobile-nav-open');
+      mobileNavToggle.setAttribute('aria-expanded', 'false');
+      mobileNavToggle.setAttribute('aria-label', 'Open navigation');
+    }
+    mobileNavToggle.addEventListener('click', () => {
+      const isOpen = document.body.classList.toggle('mobile-nav-open');
+      mobileNavToggle.setAttribute('aria-expanded', String(isOpen));
+      mobileNavToggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
+    });
+    mobileNavBackdrop.addEventListener('click', closeMobileNav);
+    document.querySelectorAll('.sv, .sb').forEach(nav => nav.addEventListener('click', event => {
+      if (event.target.closest('.si, .cb, .sb-header')) closeMobileNav();
+    }));
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeMobileNav();
+    });
     document.getElementById('settings-close').addEventListener('click', closeSettings);
     document.getElementById('settings-done').addEventListener('click', closeSettings);
     document.getElementById('settings-modal').addEventListener('click', event => {
