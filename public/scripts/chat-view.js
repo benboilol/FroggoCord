@@ -7,25 +7,21 @@
       const dot = pres && pres.querySelector('.status-dot');
       document.getElementById('prof-status').textContent = dot ? (dot.getAttribute('title') || 'Online') : 'Offline';
       const actions = document.getElementById('prof-actions');
+      // Show loading state immediately to avoid perceived freeze
+      actions.innerHTML = '<div style="color:var(--mut);font-size:12px;">Loading...</div>';
+      modal.style.display = 'flex';
+
       let html = '';
       if (u !== user) {
         let friendDoc = null;
         try {
-          const a = await getDocs(query(
-            collection(db,"friends"),
-            where("from","==",user),
-            where("to","==",u),
-            where("status","==","accepted")
-          ));
-          if (!a.empty) friendDoc = a.docs[0];
+          const snap = await getDocs(query(collection(db,"friends"), where("from","==",user)));
+          const outgoing = snap.docs.find(d => d.data().to === u && d.data().status === "accepted");
+          if (outgoing) friendDoc = outgoing;
           else {
-            const b = await getDocs(query(
-              collection(db,"friends"),
-              where("from","==",u),
-              where("to","==",user),
-              where("status","==","accepted")
-            ));
-            if (!b.empty) friendDoc = b.docs[0];
+            const snap2 = await getDocs(query(collection(db,"friends"), where("to","==",user)));
+            const incoming = snap2.docs.find(d => d.data().from === u && d.data().status === "accepted");
+            if (incoming) friendDoc = incoming;
           }
         } catch (e) { console.log("friend check failed", e); }
         if (friendDoc) {
@@ -34,23 +30,15 @@
         } else {
           let btnHtml = `<button onclick="sendReq('${escHtml(u)}'); closeProfile();" style="background:var(--bl);color:var(--accent-contrast);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Send Friend Request</button>`;
           try {
-            const existing = await getDocs(query(
-              collection(db,"friends"),
-              where("from","==",user),
-              where("to","==",u),
-              where("status","==","pending")
-            ));
-            if (!existing.empty) {
-              btnHtml = `<button onclick="cancelReq('${existing.docs[0].id}'); closeProfile();" style="background:var(--mut);color:var(--white);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Cancel Request</button>`;
+            const snap = await getDocs(query(collection(db,"friends"), where("from","==",user)));
+            const existing = snap.docs.find(d => d.data().to === u && d.data().status === "pending");
+            if (existing) {
+              btnHtml = `<button onclick="cancelReq('${existing.id}'); closeProfile();" style="background:var(--mut);color:var(--white);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Cancel Request</button>`;
             } else {
-              const incoming = await getDocs(query(
-                collection(db,"friends"),
-                where("from","==",u),
-                where("to","==",user),
-                where("status","==","pending")
-              ));
-              if (!incoming.empty) {
-                btnHtml = `<button onclick="acceptReq('${incoming.docs[0].id}'); closeProfile();" style="background:var(--bl);color:var(--accent-contrast);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Accept Request</button>`;
+              const snap2 = await getDocs(query(collection(db,"friends"), where("to","==",user)));
+              const incoming = snap2.docs.find(d => d.data().from === u && d.data().status === "pending");
+              if (incoming) {
+                btnHtml = `<button onclick="acceptReq('${incoming.id}'); closeProfile();" style="background:var(--bl);color:var(--accent-contrast);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Accept Request</button>`;
               }
             }
           } catch (e) { console.log("friend check failed", e); }
@@ -61,7 +49,6 @@
         html += `<div style="color:var(--mut);font-size:12px;">This is you</div>`;
       }
       actions.innerHTML = html;
-      modal.style.display = 'flex';
     };
     window.closeProfile = () => { document.getElementById('profile-modal').style.display = 'none'; };
 
@@ -544,21 +531,15 @@ let pendingFile = null; let pendingPreview = null;
     };
     window.sendReq = async (u) => {
       if (!u || u === user) return;
-      const existing = await getDocs(query(
-        collection(db,"friends"),
-        where("from","==",user),
-        where("to","==",u),
-        where("status","==","pending")
-      ));
-      if (!existing.empty) return;
-      const incoming = await getDocs(query(
-        collection(db,"friends"),
-        where("from","==",u),
-        where("to","==",user),
-        where("status","==","pending")
-      ));
-      if (!incoming.empty) return;
-      await addDoc(collection(db,"friends"),{from:user,to:u,status:"pending",timestamp:serverTimestamp()});
+      try {
+        const existingSnap = await getDocs(query(collection(db,"friends"), where("from","==",user)));
+        const alreadySent = existingSnap.docs.some(d => d.data().to === u && d.data().status === "pending");
+        if (alreadySent) return;
+        const incomingSnap = await getDocs(query(collection(db,"friends"), where("to","==",user)));
+        const alreadyIncoming = incomingSnap.docs.some(d => d.data().from === u && d.data().status === "pending");
+        if (alreadyIncoming) return;
+        await addDoc(collection(db,"friends"),{from:user,to:u,status:"pending",timestamp:serverTimestamp()});
+      } catch (e) { console.error("sendReq failed", e); }
     };
     window.cancelReq = async (id) => {
       await updateDoc(doc(db,"friends",id),{status:"canceled"});

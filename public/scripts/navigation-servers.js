@@ -12,9 +12,11 @@
       if (privacy.dmAnyone === false) {
         // Check if they're friends
         try {
-          const a = await getDocs(query(collection(db,"friends"),where("from","==",user),where("to","==",u),where("status","==","accepted")));
-          const b = await getDocs(query(collection(db,"friends"),where("from","==",u),where("to","==",user),where("status","==","accepted")));
-          if (a.empty && b.empty) {
+          const snap1 = await getDocs(query(collection(db,"friends"),where("from","==",user)));
+          const snap2 = await getDocs(query(collection(db,"friends"),where("to","==",user)));
+          const isFriend = snap1.docs.some(d => d.data().to === u && d.data().status === "accepted") ||
+                           snap2.docs.some(d => d.data().from === u && d.data().status === "accepted");
+          if (!isFriend) {
             appAlert('This user has disabled direct messages from people they are not friends with.');
             return;
           }
