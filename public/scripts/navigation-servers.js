@@ -325,7 +325,13 @@ document.addEventListener('click', (e) => {
        hideServerCtx();
        const s = servers.find(x=>x.id===ctxServerId); if (!s) return;
        if (!(await appConfirm('Leave ' + s.name + '?'))) return;
-       await updateDoc(doc(db,'servers',ctxServerId), { members: (s.members||[]).filter(m=>m!==user) });
+       const remaining = (s.members||[]).filter(m=>m!==user);
+       if (remaining.length === 0) {
+         // Last member leaving - delete the server entirely
+         await deleteDoc(doc(db,'servers',ctxServerId));
+       } else {
+         await updateDoc(doc(db,'servers',ctxServerId), { members: remaining });
+       }
        if (currentServer === ctxServerId) { currentServer = null; chan = null; mode='channels'; dmWith=null; }
        await loadServers();
        if (currentServer) switchServer(currentServer);
