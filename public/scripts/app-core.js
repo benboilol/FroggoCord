@@ -28,7 +28,7 @@ const {
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
     let chan = 'general', user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'channels', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
-    let allUsers = [], backfillUsers = [], userPfpMap = new Map();
+    let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map();
     const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit
     const IDLE_MS = 120000;
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
@@ -366,11 +366,11 @@ const {
     document.getElementById('sn-sound').addEventListener('change', (e) => { settings.notifications.sound = e.target.checked; saveSettings(); });
     document.getElementById('sn-mentions').addEventListener('change', (e) => { settings.notifications.mentions = e.target.checked; saveSettings(); });
     document.getElementById('sn-dm').addEventListener('change', (e) => { settings.notifications.dm = e.target.checked; saveSettings(); });
-    document.getElementById('sp-online-status').addEventListener('change', (e) => { settings.privacy.onlineStatus = e.target.checked; saveSettings(); });
-    document.getElementById('sp-dm-anyone').addEventListener('change', (e) => { settings.privacy.dmAnyone = e.target.checked; saveSettings(); });
-    document.getElementById('sp-activity').addEventListener('change', (e) => { settings.privacy.activity = e.target.checked; saveSettings(); });
+    document.getElementById('sp-online-status').addEventListener('change', (e) => { settings.privacy.onlineStatus = e.target.checked; saveSettings(); if (user) setDoc(doc(db, 'users', user), { user, privacy: settings.privacy }, { merge: true }).catch(() => {}); });
+    document.getElementById('sp-dm-anyone').addEventListener('change', (e) => { settings.privacy.dmAnyone = e.target.checked; saveSettings(); if (user) setDoc(doc(db, 'users', user), { user, privacy: settings.privacy }, { merge: true }).catch(() => {}); });
+    document.getElementById('sp-activity').addEventListener('change', (e) => { settings.privacy.activity = e.target.checked; saveSettings(); if (user) setDoc(doc(db, 'users', user), { user, privacy: settings.privacy }, { merge: true }).catch(() => {}); });
     document.getElementById('sa-font-size').addEventListener('change', (e) => { settings.accessibility.fontSize = e.target.value; applySettings(); });
-    document.getElementById('sa-high-contrast').addEventListener('change', (e) => { settings.accessibility.highContrast = e.target.checked; saveSettings(); });
+    document.getElementById('sa-high-contrast').addEventListener('change', (e) => { settings.accessibility.highContrast = e.target.checked; applySettings(); });
     document.getElementById('sa-reduced-motion').addEventListener('change', (e) => { settings.accessibility.reducedMotion = e.target.checked; applySettings(); });
     document.getElementById('sa-screen-reader').addEventListener('change', (e) => { settings.accessibility.screenReader = e.target.checked; saveSettings(); });
     document.getElementById('sa-status').addEventListener('change', (e) => { settings.status = e.target.value; applySettings(); });

@@ -6,7 +6,20 @@
       document.getElementById('server-banner').style.display = 'none';
       renderServerList(); renderUserList(); renderSidebar(); updateHeader(); listen();
     };
-    window.openDM = (u) => {
+    window.openDM = async (u) => {
+      // Check privacy: if user has dmAnyone disabled, only allow DMs from friends
+      const privacy = userPrivacyMap.get(u) || {};
+      if (privacy.dmAnyone === false) {
+        // Check if they're friends
+        try {
+          const a = await getDocs(query(collection(db,"friends"),where("from","==",user),where("to","==",u),where("status","==","accepted")));
+          const b = await getDocs(query(collection(db,"friends"),where("from","==",u),where("to","==",user),where("status","==","accepted")));
+          if (a.empty && b.empty) {
+            appAlert('This user has disabled direct messages from people they are not friends with.');
+            return;
+          }
+        } catch (e) {}
+      }
       dmWith = u; mode = 'dms'; currentServer = null; chan = 'dm_' + [user, u].sort().join('_');
       document.getElementById('dm-btn').classList.add('active');
       renderServerList(); renderUserList(); renderSidebar(); updateHeader(); listen();
@@ -64,7 +77,9 @@
          if (!name || seen.has(name)) return;
          seen.add(name);
          const p = presMap.get(name);
-         if (p) online.push({ ...p, status: effStatus(p) });
+         const privacy = name === user ? (settings ? settings.privacy : null) : (userPrivacyMap.get(name) || null);
+         const showOnline = !privacy || privacy.onlineStatus !== false;
+         if (p && showOnline) online.push({ ...p, status: effStatus(p) });
          else if (name === user) online.push({ user: name, status: 'online' });
          else offline.push(name);
        });
@@ -82,7 +97,8 @@
        };
        const ul = document.getElementById('user-list');
        const pfpSig = [...userPfpMap.entries()].map(([k,v]) => k + ':' + v.slice(0,16)).join('|');
-       const sig = 'O:' + online.map(u => u.user + ':' + u.status).join('|') + '#F:' + offline.join('|') + '#P:' + pfpSig + '#' + (currentServer || '') + '/' + (mode || '');
+       const privSig = [...userPrivacyMap.entries()].map(([k,v]) => k + ':' + JSON.stringify(v)).join('|');
+       const sig = 'O:' + online.map(u => u.user + ':' + u.status).join('|') + '#F:' + offline.join('|') + '#P:' + pfpSig + '#V:' + privSig + '#' + (currentServer || '') + '/' + (mode || '');
        if (sig !== userListSig) {
          userListSig = sig;
          let html = online.map(u => row(u.user, u.status)).join('');

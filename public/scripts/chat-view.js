@@ -271,6 +271,13 @@ let pendingFile = null; let pendingPreview = null;
               const text = String(message.text ?? '');
               const isMention = text.includes('@everyone') || text.includes(`@${user}`);
               const hasImage = text.includes('<img') || !!message.image;
+              const isDM = message.channel && message.channel.startsWith('dm_');
+              const desktopEnabled = !settings || settings.notifications.desktop !== false;
+              const mentionsEnabled = !settings || settings.notifications.mentions !== false;
+              const dmEnabled = !settings || settings.notifications.dm !== false;
+              if (!desktopEnabled) return;
+              if (isMention && !mentionsEnabled) return;
+              if (isDM && !dmEnabled) return;
               new Notification(isMention ? '⚠️ PINGED' : `@${message.user}`, {
                 body: hasImage ? 'Sent an image 📷' : text
               });
@@ -443,11 +450,12 @@ let pendingFile = null; let pendingPreview = null;
         await setDoc(doc(db,"presence",user),{user,status:'online',lastActive:serverTimestamp()},{merge:true});
         setDoc(doc(db,"users",user),{user,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
         onSnapshot(collection(db,"users"),(snap)=>{
-          allUsers = []; userPfpMap.clear();
+          allUsers = []; userPfpMap.clear(); userPrivacyMap.clear();
           snap.docs.forEach(d => {
             const data = d.data();
             if (data.user) allUsers.push(data.user);
             if (data.user && data.pfp) userPfpMap.set(data.user, data.pfp);
+            if (data.user && data.privacy) userPrivacyMap.set(data.user, data.privacy);
           });
           renderUserList();
           if (mode === 'dms') renderSidebar();
