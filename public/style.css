@@ -161,6 +161,25 @@ body.dm-mode .rs { display: none; }
 #gif-results { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; align-content: start; grid-auto-rows: min-content; }
 #gif-results img { min-width: 0; max-width: 100%; }
 
+/* ---------- invite modal ---------- */
+.invite-card { background: var(--bg-s); border:1px solid var(--hover); border-radius:8px; padding:12px; margin-bottom:12px; }
+.invite-card-banner { width:100%; height:80px; background-size:cover; background-position:center; border-radius:6px 6px 0 0; }
+.invite-card-body { padding:8px 0; }
+.invite-card-name { font-size:16px; font-weight:700; color:var(--bright); margin-bottom:4px; }
+.invite-card-desc { font-size:13px; color:var(--mut); margin-bottom:8px; }
+.invite-join-btn { background:var(--pr); color:var(--accent-contrast); border:none; border-radius:4px; padding:8px 16px; font-size:14px; font-weight:600; cursor:pointer; width:100%; }
+.invite-join-btn:hover { filter:brightness(1.08); }
+.invite-friend-row { display:flex; align-items:center; gap:8px; padding:6px 4px; }
+.invite-friend-row label { display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--txt); font-size:14px; flex:1; }
+.invite-friend-row input[type="checkbox"] { width:16px; height:16px; cursor:pointer; }
+.invite-msg-card { background:var(--bg-s); border:1px solid var(--hover); border-radius:8px; overflow:hidden; margin-top:8px; max-width:320px; }
+.invite-msg-banner { width:100%; height:60px; background-size:cover; background-position:center; }
+.invite-msg-body { padding:8px 12px; }
+.invite-msg-name { font-size:14px; font-weight:700; color:var(--bright); margin-bottom:2px; }
+.invite-msg-desc { font-size:12px; color:var(--mut); margin-bottom:8px; }
+.invite-msg-join { background:var(--pr); color:var(--accent-contrast); border:none; border-radius:4px; padding:6px 12px; font-size:13px; font-weight:600; cursor:pointer; width:100%; }
+.invite-msg-join:hover { filter:brightness(1.08); }
+
 /* ---------- modals ---------- */
 .modal { position: fixed; inset: 0; background: var(--overlay-bg); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 16px; opacity: 0; transition: opacity 0.18s ease; }
 .modal.visible { opacity: 1; }

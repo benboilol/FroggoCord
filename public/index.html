@@ -34,6 +34,7 @@
     </div>
 
     <div id="server-ctx">
+    <div id="ctx-invite" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='transparent'">Invite to Server</div>
     <div id="ctx-settings" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='transparent'">Server Settings</div>
     <div id="ctx-leave" style="color:var(--danger);" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='transparent'">Leave Server</div>
     </div>
@@ -60,6 +61,19 @@
         <button id="ss-delete-btn" class="btn btn-danger" onclick="deleteServer()" style="display:none;margin-right:auto;">Delete Server</button>
         <button class="btn btn-secondary" onclick="closeServerSettings()">Cancel</button>
         <button class="btn btn-primary" onclick="saveServerSettings()">Save</button>
+        </div>
+    </div>
+    </div>
+
+    <div id="invite-modal" class="modal">
+    <div class="modal-card">
+        <h3>Invite Friends to Server</h3>
+        <div id="invite-server-preview" style="margin-bottom:16px;"></div>
+        <label class="field-label">Select Friends to Invite</label>
+        <div id="invite-friends-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--hover);border-radius:4px;padding:8px;margin-bottom:12px;"></div>
+        <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeInviteModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="sendInvites()">Send Invites</button>
         </div>
     </div>
     </div>
@@ -241,9 +255,8 @@
     </div>
     <div class="sb-scroll">
         <div class="ch">
-        <div class="cat">Text Channels</div>
-        <button class="cb active" onclick="switchChannel('general')"># general</button>
-        <button class="cb" onclick="switchChannel('random')"># random</button>
+        <div class="cat">Servers</div>
+        <div class="rs-empty" style="padding:8px;">Select a server from the rail</div>
         </div>
     </div>
     <div class="user-panel" id="pfp-dropzone">

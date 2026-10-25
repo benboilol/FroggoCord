@@ -387,7 +387,11 @@ let pendingFile = null; let pendingPreview = null;
       if (!chan) {
         resetMessagePages(null);
         const container = document.getElementById('message-container');
-        container.innerHTML = '<div class="msgs-inner"><div class="msgs-empty">Select a user to start a DM</div></div>';
+        if (mode === 'dms') {
+          container.innerHTML = '<div class="msgs-inner"><div class="msgs-empty">Select a user to start a DM</div></div>';
+        } else {
+          container.innerHTML = '<div class="msgs-inner"><div class="msgs-empty">Select a server from the rail to start chatting</div></div>';
+        }
         return;
       }
       markRead(chan);

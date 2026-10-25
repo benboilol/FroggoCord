@@ -605,8 +605,29 @@ const {
         const ar = d ? `aspect-ratio:${d.w}/${d.h};` : 'aspect-ratio:4/3;';
         return `<img data-src="${escHtml(u)}" src="" alt="gif" loading="lazy" style="max-width: min(320px, 100%); border-radius:8px; display:block; background:transparent; min-height:60px; ${ar}">`;
       }
+      // Handle invite cards
+      const inviteMatch = raw.match(/^<invite server="([^"]*)" icon="([^"]*)" banner="([^"]*)" desc="([^"]*)" link="([^"]*)"><\/invite>$/i);
+      if (inviteMatch) {
+        const serverName = inviteMatch[1];
+        const serverIcon = inviteMatch[2];
+        const serverBanner = inviteMatch[3];
+        const serverDesc = inviteMatch[4];
+        const inviteLink = inviteMatch[5];
+        return renderInviteCard(serverName, serverIcon, serverBanner, serverDesc, inviteLink);
+      }
       return renderMarkdown(raw);
     };
+    function renderInviteCard(name, icon, banner, desc, link) {
+      let html = '<div class="invite-msg-card">';
+      if (banner) html += `<div class="invite-msg-banner" style="background-image:url('${escHtml(banner)}');"></div>`;
+      html += '<div class="invite-msg-body">';
+      if (icon) html += `<img src="${escHtml(icon)}" alt="" style="width:32px;height:32px;border-radius:50%;margin-bottom:4px;">`;
+      html += `<div class="invite-msg-name">${escHtml(name)}</div>`;
+      if (desc) html += `<div class="invite-msg-desc">${escHtml(desc)}</div>`;
+      html += `<button class="invite-msg-join" onclick="window.open('${escHtml(link)}','_blank')">Join Server</button>`;
+      html += '</div></div>';
+      return html;
+    }
     const renderMarkdown = (raw) => {
       let s = String(raw ?? '');
       const codeBlocks = [];
