@@ -1,6 +1,6 @@
 Format instructions:
 Start with your id. Then the date and timestamp. Then a list of things you changed
-Note: Fiaguhop137's ID is 1f89a. Codex: 20a6d DragonDog558's ID is 1da20(Ben: if you want you can change this). 
+Note: Fiaguhop137's ID is 1f89a. Fiaguhop137's Codex: 20a6d. DragonDog558's Codex: 1da20. 
 1f89a-2026.10.23-16.16.37: Added changelog
 20a6d-2026.10.23-22.30.59: Added a settings overlay with five persisted, hot-swappable themes (Ash, Obsidian, Magma, Fulgurite, Plasma); moved the full color palette into theme stylesheets and converted shared stylesheet color literals to theme variables. Verified JavaScript syntax and theme variable coverage; no known issues, though visual browser testing remains to be done.
 20a6d-2026.10.23-22.38.10: Fixed invalid theme stylesheet headers that prevented browsers from parsing the :root palettes. Verified the app renders locally with the Obsidian palette and all five theme files are served as CSS; deployed the complete Firebase Hosting public directory.
