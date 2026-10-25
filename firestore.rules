@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users: readable by authenticated users, writable by owner
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Messages: readable by authenticated users, writable by authenticated users
+    match /messages/{messageId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null;
+    }
+
+    // Presence: readable by authenticated users, writable by authenticated users
+    match /presence/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Friends: readable by involved users
+    match /friends/{friendId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+
+    // Servers: readable by members, writable by members
+    match /servers/{serverId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+
+    // Typing: readable by all authenticated, writable by authenticated
+    match /typing/{typingId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Reads: readable/writable by authenticated users
+    match /reads/{readId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

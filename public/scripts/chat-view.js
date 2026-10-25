@@ -525,7 +525,13 @@ let pendingFile = null; let pendingPreview = null;
           renderUserList();
         });
         onSnapshot(query(collection(db,"friends"),where("to","==",user)),(snap)=>{
-          const pending = snap.docs.filter(d => d.data().status === "pending");
+          const pending = snap.docs.filter(d => {
+            if (d.data().status !== "pending") return false;
+            // Don't show pending requests from users who are already friends
+            const from = d.data().from;
+            const hasAccepted = snap.docs.some(d2 => d2.data().from === from && d2.data().status === "accepted");
+            return !hasAccepted;
+          });
           document.getElementById('req-list').innerHTML = pending.map(d=>{
             const data = d.data();
             return `<div>${escHtml(data.from)} sent you a request <button onclick="acceptReq('${d.id}')" style="font-size:10px;padding:2px 6px;background:var(--bl);color:var(--accent-contrast);border:none;border-radius:3px;">Accept</button> <button onclick="declineReq('${d.id}')" style="font-size:10px;padding:2px 6px;background:var(--danger);color:var(--white);border:none;border-radius:3px;">Decline</button></div>`;
@@ -553,13 +559,16 @@ let pendingFile = null; let pendingPreview = null;
     window.sendReq = async (u) => {
       if (!u || u === user) return;
       try {
-        const existingSnap = await getDocs(query(collection(db,"friends"), where("from","==",user)));
-        const alreadySent = existingSnap.docs.some(d => d.data().to === u && d.data().status === "pending");
-        if (alreadySent) return;
-        const incomingSnap = await getDocs(query(collection(db,"friends"), where("to","==",user)));
-        const alreadyIncoming = incomingSnap.docs.some(d => d.data().from === u && d.data().status === "pending");
-        if (alreadyIncoming) return;
-        await addDoc(collection(db,"friends"),{from:user,to:u,status:"pending",timestamp:serverTimestamp()});
+        // Use deterministic doc ID (sorted pair) so there's only one doc per user pair.
+        // This prevents duplicate requests even if the friend uses old client code.
+        const pairId = [user, u].sort().join('__');
+        const existingDoc = await getDoc(doc(db, "friends", pairId));
+        if (existingDoc.exists()) {
+          const status = existingDoc.data().status;
+          // Already friends or already pending - don't create new request
+          if (status === "accepted" || status === "pending") return;
+        }
+        await setDoc(doc(db, "friends", pairId), {from:user,to:u,status:"pending",timestamp:serverTimestamp()});
       } catch (e) { console.error("sendReq failed", e); }
     };
     window.cancelReq = async (id) => {
