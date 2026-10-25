@@ -212,9 +212,9 @@
        m.dataset.serverId = sid;
        const s = servers.find(x=>x.id===sid);
        const isOwner = s && s.owner === user;
-       const isAdmin = s && (isOwner || (s.admins||[]).includes(user));
+       const isAdmin = isOwner;
        document.getElementById('ctx-invite').style.display = 'block';
-       document.getElementById('ctx-settings').style.display = isAdmin ? 'block' : 'none';
+       document.getElementById('ctx-settings').style.display = (s && s.owner === user) ? 'block' : 'none';
        document.getElementById('ctx-leave').style.display = 'block';
        m.style.display = 'block';
        m.style.left = e.clientX + 'px';
@@ -231,7 +231,11 @@ document.addEventListener('click', (e) => {
        hideServerCtx();
        const s = servers.find(x=>x.id===ctxServerId); if (!s) return;
        const isOwner = s.owner === user;
-       const isAdmin = isOwner || (s.admins||[]).includes(user);
+       if (!isOwner) {
+         if (typeof appAlert === 'function') appAlert('Only the server owner can access settings.');
+         return;
+       }
+       const isAdmin = true;
        document.getElementById('ss-name').value = s.name || '';
        document.getElementById('ss-desc').value = s.description || '';
        document.getElementById('ss-icon-url').value = s.icon || '';
