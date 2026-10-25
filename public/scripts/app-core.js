@@ -53,12 +53,18 @@ const {
       accent: '#57f287', primary: '#23a55a', danger: '#da373c', yellow: '#f0b232'
     };
     let customThemeColors = { ...CUSTOM_THEME_DEFAULTS };
+    const CUSTOM_THEME_VARS = ['--bg-p','--bg-s','--bg-t','--chat','--chat-hover','--hover','--active','--panel','--input','--txt','--bright','--mut','--bl','--pr','--danger','--yellow','--swatch-a','--swatch-b','--swatch-c'];
 
     function loadCustomTheme() {
       try {
         const raw = localStorage.getItem(CUSTOM_THEME_KEY);
         if (raw) customThemeColors = { ...CUSTOM_THEME_DEFAULTS, ...JSON.parse(raw) };
       } catch (e) {}
+    }
+
+    function clearCustomThemeVars() {
+      const root = document.documentElement.style;
+      CUSTOM_THEME_VARS.forEach(v => root.removeProperty(v));
     }
 
     function applyCustomTheme(colors) {
@@ -98,6 +104,8 @@ const {
         saveSettings();
         return Promise.resolve(true);
       }
+      // Clear any inline custom theme vars so the CSS file's :root takes over
+      clearCustomThemeVars();
       if (!THEME_IDS.includes(theme) || !themeLink) return Promise.resolve(false);
       if (theme === activeTheme && themeLink.dataset.theme === theme) {
         setThemeSelection(theme);
@@ -351,6 +359,8 @@ const {
     function resetSettingsToDefaults() {
       settings = JSON.parse(JSON.stringify(SETTINGS_DEFAULTS));
       saveSettings();
+      clearCustomThemeVars();
+      document.body.classList.remove('high-contrast');
       populateSettingsForm();
       applySettings();
       appAlert('Settings reset to defaults.');
