@@ -218,10 +218,10 @@ textarea.inp2 { resize: vertical; }
 .magma-swatch { --swatch-a:#241719; --swatch-b:#6f2925; --swatch-c:#ff8247; }
 .plasma-swatch { --swatch-a:#fff5fb; --swatch-b:#ff45c7; --swatch-c:#6427cf; }
 .alpenglow-swatch { --swatch-a:#ffc999; --swatch-b:#9059ff; --swatch-c:#ff4aa2; }
-.kris-swatch { --swatch-a:#0f1a2a; --swatch-b:#1e2e3e; --swatch-c:#00bcd4; }
-.susie-swatch { --swatch-a:#1a0f2a; --swatch-b:#2f1e3e; --swatch-c:#c04dff; }
-.noelle-swatch { --swatch-a:#0f1a2a; --swatch-b:#1e2e3e; --swatch-c:#4dc0ff; }
-.ralsei-swatch { --swatch-a:#0f1a0f; --swatch-b:#1e2e1e; --swatch-c:#4caf50; }
+.frostbite-swatch { --swatch-a:#0f1a2a; --swatch-b:#1e2e3e; --swatch-c:#00bcd4; }
+.phantom-swatch { --swatch-a:#1a0f2a; --swatch-b:#2f1e3e; --swatch-c:#c04dff; }
+.crystal-swatch { --swatch-a:#0f1a2a; --swatch-b:#1e2e3e; --swatch-c:#4dc0ff; }
+.verdant-swatch { --swatch-a:#0f1a0f; --swatch-b:#1e2e1e; --swatch-c:#4caf50; }
 /* High contrast mode */
 body.high-contrast { --mut:#fff; --txt:#fff; --bright:#fff; --bl:#fff; --pr:#fff; --danger:#fff; --yellow:#fff; }
 body.high-contrast .mut { color:#fff !important; }

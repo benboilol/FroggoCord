@@ -1,4 +1,4 @@
-/* FroggoCord theme: Ralsei (Hope) */
+/* FroggoCord theme: Verdant (Green) */
 :root {
   --bg-p:#0f1a0f; --bg-s:#182a18; --bg-t:#122212; --chat:#1e2e1e; --chat-hover:#283c28; --hover:#344e34; --active:#425e42;
   --panel:#152a15; --input:#243a24; --txt:#d7ffd7; --bright:#f0fff0; --mut:#a3cfa3; --bl:#4caf50; --pr:#388e3c; --danger:#6bff6b; --yellow:#d1ffd1;
@@ -7,4 +7,4 @@
   --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.7); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#0f1a0f; --link:#6bff6b;
   --swatch-a:#0f1a0f; --swatch-b:#1e2e1e; --swatch-c:#4caf50;
 }
-.ralsei-swatch { --swatch-a:#0f1a0f; --swatch-b:#1e2e1e; --swatch-c:#4caf50; }
+.verdant-swatch { --swatch-a:#0f1a0f; --swatch-b:#1e2e1e; --swatch-c:#4caf50; }

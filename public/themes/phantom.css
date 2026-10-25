@@ -1,4 +1,4 @@
-/* FroggoCord theme: Susie (Bully) */
+/* FroggoCord theme: Phantom (Purple/Magenta) */
 :root {
   --bg-p:#1a0f2a; --bg-s:#2a183a; --bg-t:#22122a; --chat:#2f1e3e; --chat-hover:#3c284e; --hover:#4a345e; --active:#5f426e;
   --panel:#24152a; --input:#35243a; --txt:#f7d7f7; --bright:#fff0ff; --mut:#cfa3cf; --bl:#c04dff; --pr:#a039c0; --danger:#ff6bff; --yellow:#ffd1ff;
@@ -7,4 +7,4 @@
   --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.7); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#1a0f2a; --link:#ff6bff;
   --swatch-a:#1a0f2a; --swatch-b:#2f1e3e; --swatch-c:#c04dff;
 }
-.susie-swatch { --swatch-a:#1a0f2a; --swatch-b:#2f1e3e; --swatch-c:#c04dff; }
+.phantom-swatch { --swatch-a:#1a0f2a; --swatch-b:#2f1e3e; --swatch-c:#c04dff; }
