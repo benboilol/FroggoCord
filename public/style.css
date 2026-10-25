@@ -245,6 +245,16 @@ textarea.inp2 { resize: vertical; }
   #media-picker { right: 8px; bottom: 72px; max-height: calc(100dvh - 120px); max-width: calc(100vw - 16px); }
   #at-popup { left: 10px; bottom: 72px; max-width: calc(100vw - 20px); }
 }
+/* ---------- settings panels ---------- */
+.settings-panel-section { display: none; }
+.settings-panel-section.visible { display: block; }
+.settings-field { margin: 12px 0; }
+.settings-field label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--mut); margin-bottom: 6px; letter-spacing: 0.02em; }
+.settings-field select.inp2 { max-width: 260px; }
+.settings-reset-hint { color: var(--mut); font-size: 12px; font-style: italic; margin-top: 8px; }
+.btn-reset { background: var(--danger); color: var(--white); border-radius: 4px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; }
+.btn-reset:hover { filter: brightness(1.08); }
+
 @media (max-width: 380px) {
   .msg { gap: 8px; }
   .msg-actions { gap: 4px; }

@@ -17,3 +17,5 @@ Note: Fiaguhop137's ID is 1f89a. Codex: 20a6d DragonDog558's ID is 1da20(Ben: if
 20a6d-2026.10.24-18.05.49: Added the composite Firestore index required by message queries (channel ascending, timestamp descending) after confirming the froggocord database had no composite indexes. Added Firebase CLI index configuration.
 20a6d-2026.10.24-19.17.45: Deployed the messages composite index to the froggocord project after confirming the live database still had no indexes. Firebase accepted the index and returned it in the live index list; it may need time to finish building.
 20a6d-2026.10.24-22.56.20: Added a mobile navigation drawer for server/channel navigation, touch-friendly message actions and composer controls, safe-area spacing, and narrower modal layouts. Deployed to Firebase Hosting; no device browser testing performed.
+
+20a6d-2026.10.25-00.00.00: Added settings tabs (Account, Notifications, Privacy, Accessibility) alongside Theme, each with persisted controls. Added Reset to defaults button. Settings load from localStorage on open and apply on close. Verified JavaScript syntax for all four script files; not yet browser-tested or deployed.

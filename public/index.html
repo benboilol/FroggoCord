@@ -94,6 +94,10 @@
         </div>
         <div class="settings-tabs" role="tablist" aria-label="Settings sections">
         <button class="settings-tab active" id="settings-theme-tab" type="button" role="tab" aria-selected="true" aria-controls="settings-theme-panel">Theme</button>
+        <button class="settings-tab" id="settings-account-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-account-panel">Account</button>
+        <button class="settings-tab" id="settings-notifications-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-notifications-panel">Notifications</button>
+        <button class="settings-tab" id="settings-privacy-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-privacy-panel">Privacy</button>
+        <button class="settings-tab" id="settings-accessibility-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-accessibility-panel">Accessibility</button>
         </div>
         <section id="settings-theme-panel" role="tabpanel" aria-labelledby="settings-theme-tab">
         <p class="settings-description">Choose a theme. Your selection applies immediately and is saved on this device.</p>
@@ -107,7 +111,79 @@
         </div>
         <div id="theme-status" class="theme-status" aria-live="polite"></div>
         </section>
-        <div class="modal-actions"><button id="settings-done" class="btn btn-primary" type="button">Done</button></div>
+        <section id="settings-account-panel" role="tabpanel" aria-labelledby="settings-account-tab" style="display:none;">
+        <p class="settings-description">Manage your account details. Changes apply immediately.</p>
+        <label class="field-label">Username</label>
+        <input id="sa-username" class="inp2" readonly>
+        <label class="field-label">Status</label>
+        <select id="sa-status" class="inp2">
+            <option value="online">Online</option>
+            <option value="idle">Idle</option>
+            <option value="dnd">Do Not Disturb</option>
+        </select>
+        <label class="field-label">Avatar</label>
+        <input id="sa-avatar-file" type="file" accept="image/*" style="width:100%;margin:4px 0 8px;color:var(--txt);">
+        <div id="sa-avatar-preview" style="margin:8px 0;width:80px;height:80px;border-radius:50%;background:var(--bg-t);display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--accent-contrast);">U</div>
+        </section>
+        <section id="settings-notifications-panel" role="tabpanel" aria-labelledby="settings-notifications-tab" style="display:none;">
+        <p class="settings-description">Choose how and when you're notified.</p>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="sn-desktop" style="margin:0;">
+        <span>Desktop notifications</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="sn-sound" style="margin:0;">
+        <span>Message sound</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="sn-mentions" style="margin:0;">
+        <span>Mention notifications (@everyone, @you)</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="sn-dm" style="margin:0;">
+        <span>Direct message notifications</span>
+        </label>
+        </section>
+        <section id="settings-privacy-panel" role="tabpanel" aria-labelledby="settings-privacy-tab" style="display:none;">
+        <p class="settings-description">Control who can see your information and contact you.</p>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="sp-online-status" style="margin:0;">
+        <span>Show online status to others</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="sp-dm-anyone" style="margin:0;">
+        <span>Allow direct messages from anyone</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="sp-activity" style="margin:0;">
+        <span>Show last active time</span>
+        </label>
+        </section>
+        <section id="settings-accessibility-panel" role="tabpanel" aria-labelledby="settings-accessibility-tab" style="display:none;">
+        <p class="settings-description">Make FroggoCord easier to use.</p>
+        <label class="field-label">Font size</label>
+        <select id="sa-font-size" class="inp2">
+            <option value="small">Small</option>
+            <option value="medium" selected>Medium</option>
+            <option value="large">Large</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="sa-high-contrast" style="margin:0;">
+        <span>High contrast mode</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="sa-reduced-motion" style="margin:0;">
+        <span>Reduce motion (disable animations)</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="sa-screen-reader" style="margin:0;">
+        <span>Screen reader announcements</span>
+        </label>
+        </section>
+        <div class="modal-actions" style="justify-content:space-between;">
+        <button id="settings-reset" class="btn btn-danger" type="button" style="margin-left:auto;">Reset to defaults</button>
+        <button id="settings-done" class="btn btn-primary" type="button">Done</button>
+        </div>
     </div>
     </div>
 

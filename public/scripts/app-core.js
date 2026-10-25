@@ -92,6 +92,7 @@ const {
     function openSettings() {
       const modal = document.getElementById('settings-modal');
       if (!modal) return;
+      populateSettingsForm();
       modal.setAttribute('aria-hidden', 'false');
       modal.style.display = 'flex';
       requestAnimationFrame(() => {
@@ -104,6 +105,7 @@ const {
     function closeSettings() {
       const modal = document.getElementById('settings-modal');
       if (!modal) return;
+      applySettings();
       modal.classList.remove('visible');
       modal.querySelector('.modal-card').classList.remove('visible');
       modal.setAttribute('aria-hidden', 'true');
@@ -155,6 +157,134 @@ const {
     } catch (e) {}
     if (savedTheme !== DEFAULT_THEME) applyTheme(savedTheme, false);
     else setThemeSelection(savedTheme);
+
+    /* ---------- settings state ---------- */
+    const SETTINGS_DEFAULTS = {
+      theme: 'fulgurite',
+      status: 'online',
+      notifications: { desktop: true, sound: true, mentions: true, dm: true },
+      privacy: { onlineStatus: true, dmAnyone: true, activity: true },
+      accessibility: { fontSize: 'medium', highContrast: false, reducedMotion: false, screenReader: false }
+    };
+    const SETTINGS_STORAGE_KEY = 'froggocord-settings';
+    let settings = JSON.parse(JSON.stringify(SETTINGS_DEFAULTS));
+
+    function loadSettings() {
+      try {
+        const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          settings = { ...SETTINGS_DEFAULTS, ...parsed };
+          if (parsed.notifications) settings.notifications = { ...SETTINGS_DEFAULTS.notifications, ...parsed.notifications };
+          if (parsed.privacy) settings.privacy = { ...SETTINGS_DEFAULTS.privacy, ...parsed.privacy };
+          if (parsed.accessibility) settings.accessibility = { ...SETTINGS_DEFAULTS.accessibility, ...parsed.accessibility };
+        }
+      } catch (e) { settings = JSON.parse(JSON.stringify(SETTINGS_DEFAULTS)); }
+    }
+
+    function saveSettings() {
+      try { localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings)); } catch (e) {}
+    }
+
+    function populateSettingsForm() {
+      document.getElementById('sa-username').value = user || '';
+      document.getElementById('sa-status').value = settings.status || curStat || 'online';
+      document.getElementById('sn-desktop').checked = settings.notifications.desktop;
+      document.getElementById('sn-sound').checked = settings.notifications.sound;
+      document.getElementById('sn-mentions').checked = settings.notifications.mentions;
+      document.getElementById('sn-dm').checked = settings.notifications.dm;
+      document.getElementById('sp-online-status').checked = settings.privacy.onlineStatus;
+      document.getElementById('sp-dm-anyone').checked = settings.privacy.dmAnyone;
+      document.getElementById('sp-activity').checked = settings.privacy.activity;
+      document.getElementById('sa-font-size').value = settings.accessibility.fontSize;
+      document.getElementById('sa-high-contrast').checked = settings.accessibility.highContrast;
+      document.getElementById('sa-reduced-motion').checked = settings.accessibility.reducedMotion;
+      document.getElementById('sa-screen-reader').checked = settings.accessibility.screenReader;
+      const av = document.getElementById('my-pfp');
+      const prev = document.getElementById('sa-avatar-preview');
+      if (av && av.style.backgroundImage && av.style.backgroundImage !== 'none') {
+        prev.style.backgroundImage = av.style.backgroundImage;
+        prev.textContent = '';
+      } else {
+        prev.style.backgroundImage = 'none';
+        prev.textContent = (user || '?')[0].toUpperCase();
+      }
+    }
+
+    function switchSettingsTab(tabId) {
+      document.querySelectorAll('.settings-tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      document.querySelectorAll('[id$="-panel"]').forEach(p => p.classList.remove('visible'));
+      const tab = document.getElementById(tabId);
+      const panel = document.getElementById(tabId.replace('-tab', '-panel'));
+      if (tab) { tab.classList.add('active'); tab.setAttribute('aria-selected', 'true'); }
+      if (panel) panel.classList.add('visible');
+    }
+
+    function applySettings() {
+      // Status
+      const statusSel = document.getElementById('status-select');
+      if (settings.status && statusSel) {
+        statusSel.value = settings.status;
+        statusSel.dispatchEvent(new Event('change'));
+      }
+      // Font size on body
+      const fs = settings.accessibility.fontSize;
+      document.body.style.fontSize = fs === 'small' ? '14px' : fs === 'large' ? '20px' : '16px';
+      // Reduced motion
+      if (settings.accessibility.reducedMotion) {
+        document.documentElement.style.setProperty('--motion', 'none');
+      } else {
+        document.documentElement.style.removeProperty('--motion');
+      }
+      saveSettings();
+    }
+
+    function resetSettingsToDefaults() {
+      settings = JSON.parse(JSON.stringify(SETTINGS_DEFAULTS));
+      saveSettings();
+      populateSettingsForm();
+      applySettings();
+      appAlert('Settings reset to defaults.');
+    }
+
+    document.getElementById('settings-reset').addEventListener('click', resetSettingsToDefaults);
+
+    document.querySelectorAll('.settings-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchSettingsTab(tab.id));
+    });
+
+    document.getElementById('sn-desktop').addEventListener('change', (e) => { settings.notifications.desktop = e.target.checked; saveSettings(); });
+    document.getElementById('sn-sound').addEventListener('change', (e) => { settings.notifications.sound = e.target.checked; saveSettings(); });
+    document.getElementById('sn-mentions').addEventListener('change', (e) => { settings.notifications.mentions = e.target.checked; saveSettings(); });
+    document.getElementById('sn-dm').addEventListener('change', (e) => { settings.notifications.dm = e.target.checked; saveSettings(); });
+    document.getElementById('sp-online-status').addEventListener('change', (e) => { settings.privacy.onlineStatus = e.target.checked; saveSettings(); });
+    document.getElementById('sp-dm-anyone').addEventListener('change', (e) => { settings.privacy.dmAnyone = e.target.checked; saveSettings(); });
+    document.getElementById('sp-activity').addEventListener('change', (e) => { settings.privacy.activity = e.target.checked; saveSettings(); });
+    document.getElementById('sa-font-size').addEventListener('change', (e) => { settings.accessibility.fontSize = e.target.value; applySettings(); });
+    document.getElementById('sa-high-contrast').addEventListener('change', (e) => { settings.accessibility.highContrast = e.target.checked; saveSettings(); });
+    document.getElementById('sa-reduced-motion').addEventListener('change', (e) => { settings.accessibility.reducedMotion = e.target.checked; applySettings(); });
+    document.getElementById('sa-screen-reader').addEventListener('change', (e) => { settings.accessibility.screenReader = e.target.checked; saveSettings(); });
+    document.getElementById('sa-status').addEventListener('change', (e) => { settings.status = e.target.value; applySettings(); });
+    document.getElementById('sa-avatar-file').addEventListener('change', async (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f || !f.type.startsWith('image/')) return;
+      if (f.size > MAX_PFP_BYTES) { appAlert('Avatar too large (max 500KB).'); e.target.value = ''; return; }
+      try {
+        pfp = await compressImage(f);
+        localStorage.setItem('pfp_' + user, pfp);
+        await setDoc(doc(db, 'users', user), { user, pfp, lastSeen: serverTimestamp() }, { merge: true }).catch(() => {});
+        document.getElementById('my-pfp').style.backgroundImage = `url(${pfp})`;
+        document.getElementById('my-pfp').textContent = '';
+        document.getElementById('sa-avatar-preview').style.backgroundImage = `url(${pfp})`;
+        document.getElementById('sa-avatar-preview').textContent = '';
+        e.target.value = '';
+      } catch (err) { appAlert('Failed to process image.'); }
+    });
+
+    loadSettings();
 
     const prunePending = new Set();
     function prunePresence(id) {
