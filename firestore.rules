@@ -1,17 +1,20 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users: readable by authenticated users, writable by owner
+    // Users: readable by authenticated users, writable by owner only
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow create: if request.auth != null && request.auth.token.email.split('@')[0] == userId;
+      allow update: if request.auth != null && request.auth.token.email.split('@')[0] == userId;
+      allow delete: if request.auth != null && request.auth.token.email.split('@')[0] == userId;
     }
 
     // Messages: readable by authenticated users, writable by authenticated users
     match /messages/{messageId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
+      allow update: if request.auth != null && request.auth.token.email.split('@')[0] == resource.data.user;
+      allow delete: if request.auth != null && request.auth.token.email.split('@')[0] == resource.data.user;
     }
 
     // Presence: readable by authenticated users, writable by authenticated users

@@ -1,6 +1,21 @@
 // Message actions, reactions, attachments, emoji, GIF search, and presence updates.
-    window.editMsg = async (id,txt) => { const t = await appPrompt("Edit:", txt); if (t) await updateDoc(doc(db,"messages",id),{text:t}); }
-    window.deleteMsg = async (id) => { if (await appConfirm("Delete?")) await deleteDoc(doc(db,"messages",id)); }
+    window.editMsg = async (id,txt) => { 
+      const t = await appPrompt("Edit:", txt); 
+      if (!t || t === txt) return; 
+      try {
+        await updateDoc(doc(db,"messages",id),{text:t}); 
+      } catch (e) {
+        // Ignore permission errors
+      }
+    }
+    window.deleteMsg = async (id) => { 
+      if (!(await appConfirm("Delete this message?"))) return;
+      try {
+        await deleteDoc(doc(db,"messages",id));
+      } catch (e) {
+        // If delete fails due to permissions, ignore
+      }
+    }
     window.setReply = (id,u,t) => { reply = { id, user: u, text: t }; document.getElementById('reply-preview').style.display = 'block'; document.getElementById('reply-user').textContent = u; }
     window.cancelReply = () => { reply = null; document.getElementById('reply-preview').style.display = 'none'; }
 let pendingReactMsgId = null;
