@@ -32,7 +32,7 @@ const {
     const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit
     const IDLE_MS = 120000;
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
-    const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma', 'alpenglow', 'frostbite', 'phantom', 'crystal', 'verdant'];
+    const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma', 'alpenglow', 'frostbite', 'phantom', 'crystal', 'verdant', 'custom'];
     const DEFAULT_THEME = 'fulgurite';
     const THEME_ASSET_VERSION = '20261024-2256';
     const THEME_STORAGE_KEY = 'froggocord-theme';
@@ -47,7 +47,57 @@ const {
       });
     }
 
+    const CUSTOM_THEME_KEY = 'froggocord-custom-theme';
+    const CUSTOM_THEME_DEFAULTS = {
+      bgP: '#1e1f22', bgS: '#2b2d31', txt: '#dbdee1', bright: '#f2f3f5',
+      accent: '#57f287', primary: '#23a55a', danger: '#da373c', yellow: '#f0b232'
+    };
+    let customThemeColors = { ...CUSTOM_THEME_DEFAULTS };
+
+    function loadCustomTheme() {
+      try {
+        const raw = localStorage.getItem(CUSTOM_THEME_KEY);
+        if (raw) customThemeColors = { ...CUSTOM_THEME_DEFAULTS, ...JSON.parse(raw) };
+      } catch (e) {}
+    }
+
+    function applyCustomTheme(colors) {
+      const c = colors || customThemeColors;
+      const root = document.documentElement.style;
+      root.setProperty('--bg-p', c.bgP);
+      root.setProperty('--bg-s', c.bgS);
+      root.setProperty('--bg-t', c.bgP);
+      root.setProperty('--chat', c.bgP);
+      root.setProperty('--chat-hover', c.bgS);
+      root.setProperty('--hover', c.bgS);
+      root.setProperty('--active', c.bgS);
+      root.setProperty('--panel', c.bgP);
+      root.setProperty('--input', c.bgS);
+      root.setProperty('--txt', c.txt);
+      root.setProperty('--bright', c.bright);
+      root.setProperty('--mut', c.txt);
+      root.setProperty('--bl', c.accent);
+      root.setProperty('--pr', c.primary);
+      root.setProperty('--danger', c.danger);
+      root.setProperty('--yellow', c.yellow);
+      root.setProperty('--swatch-a', c.bgP);
+      root.setProperty('--swatch-b', c.bgS);
+      root.setProperty('--swatch-c', c.accent);
+      activeTheme = 'custom';
+      settings.theme = 'custom';
+      themeLink.dataset.theme = 'custom';
+      setThemeSelection('custom');
+    }
+
     function applyTheme(theme, persist = true) {
+      if (theme === 'custom') {
+        applyCustomTheme(customThemeColors);
+        if (persist) {
+          try { localStorage.setItem(THEME_STORAGE_KEY, 'custom'); } catch (e) {}
+        }
+        saveSettings();
+        return Promise.resolve(true);
+      }
       if (!THEME_IDS.includes(theme) || !themeLink) return Promise.resolve(false);
       if (theme === activeTheme && themeLink.dataset.theme === theme) {
         setThemeSelection(theme);
@@ -190,6 +240,7 @@ const {
     function populateSettingsForm() {
       document.getElementById('sa-username').value = user || '';
       document.getElementById('sa-status').value = settings.status || curStat || 'online';
+      setThemeSelection(settings.theme || activeTheme);
       document.getElementById('sn-desktop').checked = settings.notifications.desktop;
       document.getElementById('sn-sound').checked = settings.notifications.sound;
       document.getElementById('sn-mentions').checked = settings.notifications.mentions;
@@ -252,6 +303,50 @@ const {
       }
       saveSettings();
     }
+
+    function openCustomTheme() {
+      const builder = document.getElementById('custom-theme-builder');
+      if (!builder) return;
+      // populate with current colors
+      const c = customThemeColors;
+      document.getElementById('ct-bg-p').value = c.bgP;
+      document.getElementById('ct-bg-s').value = c.bgS;
+      document.getElementById('ct-txt').value = c.txt;
+      document.getElementById('ct-bright').value = c.bright;
+      document.getElementById('ct-accent').value = c.accent;
+      document.getElementById('ct-primary').value = c.primary;
+      document.getElementById('ct-danger').value = c.danger;
+      document.getElementById('ct-yellow').value = c.yellow;
+      builder.style.display = 'block';
+    }
+
+    function closeCustomTheme() {
+      const builder = document.getElementById('custom-theme-builder');
+      if (builder) builder.style.display = 'none';
+    }
+
+    function saveCustomTheme() {
+      customThemeColors = {
+        bgP: document.getElementById('ct-bg-p').value,
+        bgS: document.getElementById('ct-bg-s').value,
+        txt: document.getElementById('ct-txt').value,
+        bright: document.getElementById('ct-bright').value,
+        accent: document.getElementById('ct-accent').value,
+        primary: document.getElementById('ct-primary').value,
+        danger: document.getElementById('ct-danger').value,
+        yellow: document.getElementById('ct-yellow').value
+      };
+      try { localStorage.setItem(CUSTOM_THEME_KEY, JSON.stringify(customThemeColors)); } catch (e) {}
+      settings.theme = 'custom';
+      saveSettings();
+      applyCustomTheme(customThemeColors);
+      applyTheme('custom', false);
+      appAlert('Custom theme applied!');
+    }
+
+    window.openCustomTheme = openCustomTheme;
+    window.closeCustomTheme = closeCustomTheme;
+    window.saveCustomTheme = saveCustomTheme;
 
     function resetSettingsToDefaults() {
       settings = JSON.parse(JSON.stringify(SETTINGS_DEFAULTS));
@@ -330,6 +425,7 @@ const {
       await addDoc(collection(db, "messages"), payload);
     };
 
+    loadCustomTheme();
     loadSettings();
     applySettings();
 

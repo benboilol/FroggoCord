@@ -112,6 +112,24 @@
             <button class="theme-option" type="button" role="radio" data-theme="phantom" aria-checked="false"><span class="theme-swatch phantom-swatch"></span><span>Phantom</span></button>
             <button class="theme-option" type="button" role="radio" data-theme="crystal" aria-checked="false"><span class="theme-swatch crystal-swatch"></span><span>Crystal</span></button>
             <button class="theme-option" type="button" role="radio" data-theme="verdant" aria-checked="false"><span class="theme-swatch verdant-swatch"></span><span>Verdant</span></button>
+            <button class="theme-option" type="button" role="radio" data-theme="custom" aria-checked="false" onclick="openCustomTheme()"><span class="theme-swatch custom-swatch"></span><span>Custom</span></button>
+        </div>
+        <div id="custom-theme-builder" style="display:none;margin-top:12px;padding:12px;background:var(--bg-t);border-radius:6px;">
+        <p class="settings-description" style="margin-bottom:8px;">Build your own color theme:</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--txt);">Background <input type="color" id="ct-bg-p" value="#1e1f22" style="width:40px;height:28px;border:none;border-radius:4px;cursor:pointer;"></label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--txt);">Sidebar <input type="color" id="ct-bg-s" value="#2b2d31" style="width:40px;height:28px;border:none;border-radius:4px;cursor:pointer;"></label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--txt);">Text <input type="color" id="ct-txt" value="#dbdee1" style="width:40px;height:28px;border:none;border-radius:4px;cursor:pointer;"></label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--txt);">Bright text <input type="color" id="ct-bright" value="#f2f3f5" style="width:40px;height:28px;border:none;border-radius:4px;cursor:pointer;"></label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--txt);">Accent <input type="color" id="ct-accent" value="#57f287" style="width:40px;height:28px;border:none;border-radius:4px;cursor:pointer;"></label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--txt);">Primary <input type="color" id="ct-primary" value="#23a55a" style="width:40px;height:28px;border:none;border-radius:4px;cursor:pointer;"></label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--txt);">Danger <input type="color" id="ct-danger" value="#da373c" style="width:40px;height:28px;border:none;border-radius:4px;cursor:pointer;"></label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--txt);">Yellow <input type="color" id="ct-yellow" value="#f0b232" style="width:40px;height:28px;border:none;border-radius:4px;cursor:pointer;"></label>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="closeCustomTheme()">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="saveCustomTheme()">Apply &amp; Save</button>
+        </div>
         </div>
         <div id="theme-status" class="theme-status" aria-live="polite"></div>
         </section>
