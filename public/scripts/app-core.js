@@ -26,7 +26,7 @@ const {
 
     const config = { apiKey: "AIzaSyBdcQW56DH7tM37elwMYFQdzfpfCdEkzMs", authDomain: "froggocord.firebaseapp.com", projectId: "froggocord", storageBucket: "froggocord.firebasestorage.app", messagingSenderId: "237791448036", appId: "1:237791448036:web:82886ca5b0ce6dafa6d5f1", measurementId: "G-J7CRQ9D4VD" };
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
-    let chan = 'general', user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'channels', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
+    let chan = null, user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'dms', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
     let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map();
     const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit

@@ -545,6 +545,11 @@ let pendingFile = null; let pendingPreview = null;
         if (pfp.startsWith('file:///')) { pfp = ''; localStorage.removeItem('pfp_'+user); }
         if (pfp) { document.getElementById('my-pfp').style.backgroundImage = `url(${pfp})`; document.getElementById('my-pfp').textContent = ''; }
         await setDoc(doc(db,"users",user),{user,pfp,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+        // Load into DMs by default
+        document.getElementById('dm-btn').classList.add('active');
+        renderSidebar();
+        renderUserList();
+        updateHeader();
         listen();
         loadServers().then(() => {
           const params = new URLSearchParams(window.location.search);

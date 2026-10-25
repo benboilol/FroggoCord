@@ -62,7 +62,7 @@
       } else {
         h3.textContent = 'Direct Messages';
         const users = knownUsers();
-        let html = `<div class="cat">Direct Messages</div><button class="cb muted" onclick="toggleDMView()">← Back to channels</button>`;
+        let html = `<div class="cat">Direct Messages</div>`;
         if (users.length === 0) html += `<div class="rs-empty" style="padding:8px;">No users yet</div>`;
         users.forEach(u => {
           const safe = escHtml(u);
