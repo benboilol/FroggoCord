@@ -169,9 +169,19 @@ let pendingFile = null; let pendingPreview = null;
       const previousTop = msgBox.scrollTop;
       const byId = new Map();
       messagePages.forEach(page => page.messages.forEach((message, id) => byId.set(id, message)));
-      const docs = Array.from(byId.values()).sort((a, b) =>
-        (a.timestamp ? a.timestamp.toMillis() : 0) - (b.timestamp ? b.timestamp.toMillis() : 0)
+      // Collect clientMsgIds from real messages for deduplication
+      const realClientIds = new Set();
+      byId.forEach(m => { if (m.clientMsgId) realClientIds.add(m.clientMsgId); });
+      // Add pending messages for current channel (skip if already sent as real message)
+      const pendingForChannel = (typeof pendingMessages !== 'undefined' ? pendingMessages : []).filter(m =>
+        m.channel === activeMessagesChannel && !realClientIds.has(m.clientId)
       );
+      const allMessages = [...byId.values(), ...pendingForChannel];
+      const docs = allMessages.sort((a, b) => {
+        const aTime = a.timestamp ? (typeof a.timestamp.toMillis === 'function' ? a.timestamp.toMillis() : (a._clientTimestamp || 0)) : (a._clientTimestamp || 0);
+        const bTime = b.timestamp ? (typeof b.timestamp.toMillis === 'function' ? b.timestamp.toMillis() : (b._clientTimestamp || 0)) : (b._clientTimestamp || 0);
+        return aTime - bTime;
+      });
 
       window._unreadCounts = {};
       docs.forEach(message => {
@@ -186,29 +196,39 @@ let pendingFile = null; let pendingPreview = null;
       const historyText = loadingOlderMessages
         ? 'Loading older messages…'
         : messageHistoryError || (!hasOlderMessages && docs.length ? 'Beginning of conversation' : (docs.length ? 'Scroll up for older messages' : ''));
+      const isPendingMsg = (m) => m && m.clientId && String(m.clientId).startsWith('pending_');
       msgBox.innerHTML = '<div class="msgs-inner"><div class="message-history-status" aria-live="polite">' + escHtml(historyText) + '</div>' + docs.map(m => {
-        const me = m.user === user;
+        const pending = isPendingMsg(m);
+        const me = pending ? true : (m.user === user);
         const safeUser = escHtml(m.user);
         const av = (m.pfp && !m.pfp.startsWith('file:///')) ? `style="background-image:url('${escHtml(m.pfp)}');text-indent:-9999px;"` : '';
         const rep = m.replyTo ? `<div class="msg-reply"><span class="bar"></span><span>Replying to <b>@${escHtml(m.replyTo.user)}</b> ${escHtml(m.replyTo.text)}</span></div>` : '';
         const textVal = String(m.text ?? '');
         const isP = textVal.includes('@everyone') || textVal.includes(`@${user}`);
-        const btns = me ? `<span data-action="edit" data-id="${m.id}" data-text="${escHtml(textVal)}" style="color:var(--bl);">Edit</span><span data-action="delete" data-id="${m.id}" style="color:var(--danger);">Delete</span>` : '';
+        const msgId = pending ? m.clientId : m.id;
+        const btns = (me && !pending) ? `<span data-action="edit" data-id="${m.id}" data-text="${escHtml(textVal)}" style="color:var(--bl);">Edit</span><span data-action="delete" data-id="${m.id}" style="color:var(--danger);">Delete</span>` : '';
         const rBtn = `<span data-action="reply" data-id="${m.id}" data-user="${safeUser}" style="color:var(--mut);">Reply</span>`;
         const reactBtn = `<span data-action="react" data-id="${m.id}" style="color:var(--mut);">😀</span>`;
+        let statusHtml = '';
+        if (pending) {
+          if (m.status === 'sending') statusHtml = '<div class="msg-status sending">⏳ Sending…</div>';
+          else if (m.status === 'sent') statusHtml = '<div class="msg-status sent">✓ Sent</div>';
+          else statusHtml = '<div class="msg-status failed">⚠️ Failed <button class="retry-btn" onclick="retryMessage(\'' + m.clientId + '\')">Retry</button></div>';
+        }
         return `
-          <div class="msg ${me ? 'me' : ''} ${isP ? 'mention' : ''}" data-id="${m.id}">
+          <div class="msg ${me ? 'me' : ''} ${isP ? 'mention' : ''} ${pending ? 'msg-pending' : ''} ${m.status === 'failed' ? 'msg-failed' : ''}" data-id="${msgId}">
             <div class="pfp" ${av}>${safeUser ? safeUser[0].toUpperCase() : '?'}</div>
             <div class="msg-content">
               <div class="msg-head">
                 <span class="msg-author ${me ? 'self' : ''}">${safeUser}</span>
-                <span class="msg-time">${fmtMsgTime(m.timestamp)}</span>
-                <span class="msg-actions">${reactBtn}${rBtn}${btns}</span>
+                <span class="msg-time">${pending ? 'just now' : fmtMsgTime(m.timestamp)}</span>
+                <span class="msg-actions">${pending ? '' : reactBtn + rBtn + btns}</span>
               </div>
               ${rep}
               ${textVal ? `<div class="msg-bubble">${renderText(textVal)}</div>` : ''}
-              ${renderMessageImage(m)}
-              ${renderReactions(m)}
+              ${pending ? (m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px; opacity:0.7;">` : '') : renderMessageImage(m)}
+              ${pending ? '' : renderReactions(m)}
+              ${statusHtml}
             </div>
           </div>`;
       }).join('') + '</div>';
@@ -421,36 +441,8 @@ let pendingFile = null; let pendingPreview = null;
     window.handleKeyPress = async (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        if ((e.target.value.trim() || pendingFile) && user) {
-        const t = e.target.value.trim(); e.target.value = '';
-        const payload = { text: t, user, channel: chan, pfp, timestamp: serverTimestamp() };
-        if (pendingFile) {
-          if (pendingFile.size > 700000) {
-            appAlert('Image too large (max ~700KB). Larger files need Firebase Storage, which requires billing.');
-            setTyping(false);
-            pendingFile = null; pendingPreview = null;
-            window.cancelFile();
-            document.getElementById('chat-input').value = t;
-            return;
-          }
-          payload.image = pendingPreview;
-          try {
-            const dims = await new Promise((resolve) => {
-              const im = new Image();
-              im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
-              im.onerror = () => resolve(null);
-              im.src = pendingPreview;
-            });
-            if (dims && dims.w && dims.h) { payload.imageW = dims.w; payload.imageH = dims.h; }
-          } catch (e) {}
-          pendingFile = null; pendingPreview = null;
-          window.cancelFile();
-        }
-        if (reply) { payload.replyTo = { user: reply.user, text: reply.text }; window.cancelReply(); }
-        setTyping(false);
-        await addDoc(collection(db, "messages"), payload);
+        window.sendMessage();
       }
-    }
     }
 
     document.getElementById('auth-submit-btn').addEventListener('click', () => {

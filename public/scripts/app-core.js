@@ -401,23 +401,55 @@ const {
       } catch (err) { appAlert('Failed to process image.'); }
     });
 
+    // Pending message tracking for sending/sent/failed states
+    let pendingMessages = [];
+
+    function notifyPendingChanged() {
+      if (typeof renderMessagePages === 'function') {
+        renderMessagePages({ preserveScroll: true });
+      }
+    }
+
     window.sendMessage = async () => {
       const input = document.getElementById('chat-input');
       const t = input.value.trim();
       if (!t && !pendingFile) return;
       if (!user) return;
+
+      const clientId = 'pending_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      const pending = {
+        clientId: clientId,
+        text: t,
+        image: pendingFile ? pendingPreview : null,
+        imageW: null,
+        imageH: null,
+        user: user,
+        channel: chan,
+        pfp: pfp,
+        replyTo: reply ? { user: reply.user, text: reply.text } : null,
+        status: 'sending',
+        _clientTimestamp: Date.now()
+      };
+
       input.value = '';
-      const payload = { text: t, user, channel: chan, pfp, timestamp: serverTimestamp() };
+      if (reply) { window.cancelReply(); }
+      setTyping(false);
+
+      // Add to pending messages for optimistic rendering
+      pendingMessages.push(pending);
+      notifyPendingChanged();
+
+      // Handle image dimensions
       if (pendingFile) {
         if (pendingFile.size > 700000) {
-          appAlert('Image too large (max ~700KB). Larger files need Firebase Storage, which requires billing.');
-          setTyping(false);
-          pendingFile = null; pendingPreview = null;
-          window.cancelFile();
+          pending.status = 'failed';
+          pending.error = 'Image too large (max ~700KB)';
+          pendingMessages = pendingMessages.filter(m => m.clientId !== clientId);
+          pendingMessages.push(pending);
+          notifyPendingChanged();
           input.value = t;
           return;
         }
-        payload.image = pendingPreview;
         try {
           const dims = await new Promise((resolve) => {
             const im = new Image();
@@ -425,14 +457,68 @@ const {
             im.onerror = () => resolve(null);
             im.src = pendingPreview;
           });
-          if (dims && dims.w && dims.h) { payload.imageW = dims.w; payload.imageH = dims.h; }
+          if (dims && dims.w && dims.h) { pending.imageW = dims.w; pending.imageH = dims.h; }
         } catch (e) {}
-        pendingFile = null; pendingPreview = null;
-        window.cancelFile();
       }
-      if (reply) { payload.replyTo = { user: reply.user, text: reply.text }; window.cancelReply(); }
-      setTyping(false);
-      await addDoc(collection(db, "messages"), payload);
+
+      // Send to Firestore
+      try {
+        const payload = { text: t, user, channel: chan, pfp, timestamp: serverTimestamp(), clientMsgId: clientId };
+        if (pending.image) payload.image = pending.image;
+        if (pending.imageW) { payload.imageW = pending.imageW; payload.imageH = pending.imageH; }
+        if (pending.replyTo) payload.replyTo = pending.replyTo;
+
+        await addDoc(collection(db, "messages"), payload);
+        pending.status = 'sent';
+        notifyPendingChanged();
+
+        // Remove pending message after delay (real message from snapshot will take over)
+        setTimeout(() => {
+          const idx = pendingMessages.findIndex(m => m.clientId === clientId);
+          if (idx >= 0) {
+            pendingMessages.splice(idx, 1);
+            notifyPendingChanged();
+          }
+        }, 3000);
+      } catch (err) {
+        pending.status = 'failed';
+        pending.error = err.message || 'Send failed';
+        notifyPendingChanged();
+      }
+
+      // Clean up
+      pendingFile = null; pendingPreview = null;
+      window.cancelFile();
+    };
+
+    window.retryMessage = async (clientId) => {
+      const pending = pendingMessages.find(m => m.clientId === clientId);
+      if (!pending) return;
+      pending.status = 'sending';
+      notifyPendingChanged();
+
+      try {
+        const payload = { text: pending.text, user: pending.user, channel: pending.channel, pfp: pending.pfp, timestamp: serverTimestamp(), clientMsgId: clientId };
+        if (pending.image) payload.image = pending.image;
+        if (pending.imageW) { payload.imageW = pending.imageW; payload.imageH = pending.imageH; }
+        if (pending.replyTo) payload.replyTo = pending.replyTo;
+
+        await addDoc(collection(db, "messages"), payload);
+        pending.status = 'sent';
+        notifyPendingChanged();
+
+        setTimeout(() => {
+          const idx = pendingMessages.findIndex(m => m.clientId === clientId);
+          if (idx >= 0) {
+            pendingMessages.splice(idx, 1);
+            notifyPendingChanged();
+          }
+        }, 3000);
+      } catch (err) {
+        pending.status = 'failed';
+        pending.error = err.message || 'Send failed';
+        notifyPendingChanged();
+      }
     };
 
     loadCustomTheme();

@@ -81,6 +81,24 @@ img, button, span, input { border: none; outline: none; }
 .msg-bubble .mention { background: var(--mention-bg); color: var(--bl); padding: 0 2px; border-radius: 3px; font-weight: 500; }
 .msg-bubble .spoiler { background: var(--spoiler-bg); color: transparent; text-shadow: 0 0 6px var(--spoiler-glow); cursor: pointer; border-radius: 3px; padding: 0 2px; user-select: none; }
 .msg-bubble .spoiler.revealed { background: transparent; color: inherit; text-shadow: none; user-select: text; }
+/* ---------- message sending states ---------- */
+.msg-pending { opacity: 0.7; }
+.msg-failed { background: rgba(218,55,60,0.08); border-left: 2px solid var(--danger); padding-left: 14px; margin-left: -2px; }
+.msg-status { font-size: 11px; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+.msg-status.sending { color: var(--mut); }
+.msg-status.sent { color: var(--pr); }
+.msg-status.failed { color: var(--danger); }
+.retry-btn { background: var(--danger); color: var(--white); border: none; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; cursor: pointer; }
+.retry-btn:hover { filter: brightness(1.08); }
+/* ---------- message sending states ---------- */
+.msg-pending { opacity: 0.7; }
+.msg-failed { background: rgba(218,55,60,0.08); border-left: 2px solid var(--danger); padding-left: 14px; margin-left: -2px; }
+.msg-status { font-size: 11px; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+.msg-status.sending { color: var(--mut); }
+.msg-status.sent { color: var(--pr); }
+.msg-status.failed { color: var(--danger); }
+.retry-btn { background: var(--danger); color: var(--white); border: none; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; cursor: pointer; }
+.retry-btn:hover { filter: brightness(1.08); }
 .msg-reply { font-size: 12px; color: var(--mut); margin: 2px 0; display: flex; align-items: center; gap: 6px; min-width: 0; }
 .msg-reply .bar { width: 14px; height: 10px; border-left: 2px solid var(--reply-line); border-top: 2px solid var(--reply-line); border-radius: 4px 0 0 0; flex-shrink: 0; }
 .msg-reply b { color: var(--txt); font-weight: 500; }
