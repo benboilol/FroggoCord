@@ -65,22 +65,72 @@ window.pickReaction = async (emoji) => {
 
 const fileInputEl = document.getElementById('file-input');
 if (fileInputEl) {
-  fileInputEl.addEventListener('change', (e) => {
+  const hasAnimation = async (file) => {
+    if (file.type === 'image/gif' || file.type === 'image/apng' || file.type === 'image/svg+xml') return true;
+    if (file.type === 'image/webp') {
+      const bytes = new Uint8Array(await file.slice(0, 64).arrayBuffer());
+      for (let i = 12; i + 9 < bytes.length;) {
+        const chunk = String.fromCharCode(...bytes.slice(i, i + 4));
+        const size = bytes[i + 4] | (bytes[i + 5] << 8) | (bytes[i + 6] << 16) | (bytes[i + 7] << 24);
+        if (chunk === 'VP8X') return (bytes[i + 8] & 0x02) !== 0;
+        if (size < 0) break;
+        i += 8 + size + (size & 1);
+      }
+    }
+    if (file.type === 'image/png') {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      for (let i = 8; i + 12 <= bytes.length;) {
+        const length = (bytes[i] * 0x1000000) + (bytes[i + 1] << 16) + (bytes[i + 2] << 8) + bytes[i + 3];
+        const chunk = String.fromCharCode(bytes[i + 4], bytes[i + 5], bytes[i + 6], bytes[i + 7]);
+        if (chunk === 'acTL') return true;
+        if (length < 0 || i + 12 + length > bytes.length) break;
+        i += 12 + length;
+      }
+    }
+    return false;
+  };
+  const preferAvif = async (file) => {
+    if (file.type === 'image/avif' || await hasAnimation(file)) return file;
+    let bitmap;
+    try {
+      bitmap = await createImageBitmap(file);
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const context = canvas.getContext('2d');
+      if (!context) return file;
+      context.drawImage(bitmap, 0, 0);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/avif', 0.85));
+      if (!blob || blob.type !== 'image/avif' || blob.size > 700000) return file;
+      return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.avif', { type: 'image/avif' });
+    } catch (error) {
+      return file;
+    } finally {
+      if (bitmap) bitmap.close();
+    }
+  };
+  fileInputEl.addEventListener('change', async (e) => {
     const f = e.target.files && e.target.files[0];
     if (!f) return;
     if (!f.type.startsWith('image/')) { appAlert('Only images and GIFs can be uploaded.'); fileInputEl.value = ''; return; }
     if (f.size > 700000) { appAlert('Image too large (max ~700KB).'); fileInputEl.value = ''; return; }
-    pendingFile = f;
-    const r = new FileReader();
-    r.onload = () => {
-      pendingPreview = r.result;
-      document.getElementById('file-preview-img').src = pendingPreview;
-      document.getElementById('file-preview-name').textContent = f.name + ' (' + (f.size/1024).toFixed(0) + 'KB)';
-      document.getElementById('file-preview').style.display = 'block';
-    };
-    r.onerror = () => { appAlert('Failed to read file.'); pendingFile = null; };
-    r.readAsDataURL(f);
     fileInputEl.value = '';
+    try {
+      pendingFile = await preferAvif(f);
+      pendingPreview = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(pendingFile);
+      });
+      document.getElementById('file-preview-img').src = pendingPreview;
+      document.getElementById('file-preview-name').textContent = pendingFile.name + ' (' + (pendingFile.size/1024).toFixed(0) + 'KB)';
+      document.getElementById('file-preview').style.display = 'block';
+    } catch (error) {
+      appAlert('Failed to read file.');
+      pendingFile = null;
+      pendingPreview = null;
+    }
   });
 }
 window.cancelFile = () => {

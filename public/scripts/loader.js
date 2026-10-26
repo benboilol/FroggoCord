@@ -17,12 +17,43 @@ const appScripts = [
   'chat-view.js'
 ];
 
+const assetVersion = '20261026-restore1';
+
 for (const file of appScripts) {
   await new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = new URL(file, import.meta.url);
+    const scriptUrl = new URL(file, import.meta.url);
+    scriptUrl.searchParams.set('v', assetVersion);
+    script.src = scriptUrl;
     script.onload = resolve;
     script.onerror = () => reject(new Error(`Could not load ${file}`));
     document.head.append(script);
   });
 }
+
+function showUpdateNotice() {
+  if (document.getElementById('app-update-notice')) return;
+  const notice = document.createElement('aside');
+  notice.id = 'app-update-notice';
+  notice.setAttribute('role', 'status');
+  notice.setAttribute('aria-live', 'polite');
+  notice.innerHTML = '<span>A newer version of FroggoCord is available.</span><button type="button">Reload to update</button>';
+  notice.querySelector('button').addEventListener('click', () => window.location.reload());
+  document.body.append(notice);
+}
+
+async function checkForAppUpdate() {
+  try {
+    const versionUrl = new URL('../version.json', import.meta.url);
+    versionUrl.searchParams.set('check', Date.now().toString());
+    const response = await fetch(versionUrl, { cache: 'no-store' });
+    if (!response.ok) return;
+    const deployment = await response.json();
+    if (deployment.version && deployment.version !== assetVersion) showUpdateNotice();
+  } catch (error) {
+    // A temporary network failure should not interrupt the running app.
+  }
+}
+
+checkForAppUpdate();
+window.setInterval(checkForAppUpdate, 60_000);

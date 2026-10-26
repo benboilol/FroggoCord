@@ -34,7 +34,7 @@ const {
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
     const THEME_IDS = ['ash', 'obsidian', 'magma', 'fulgurite', 'plasma', 'alpenglow', 'frostbite', 'phantom', 'crystal', 'verdant', 'custom'];
     const DEFAULT_THEME = 'fulgurite';
-    const THEME_ASSET_VERSION = '20261025-1109';
+    const THEME_ASSET_VERSION = '20261026-restore1';
     const THEME_STORAGE_KEY = 'froggocord-theme';
     const themeLink = document.getElementById('theme-stylesheet');
     let activeTheme = DEFAULT_THEME;
@@ -223,7 +223,7 @@ const {
       status: 'online',
       notifications: { desktop: true, sound: true, mentions: true, dm: true },
       privacy: { onlineStatus: true, dmAnyone: true, activity: true },
-      accessibility: { fontSize: 'medium', highContrast: false, reducedMotion: false, screenReader: false }
+      accessibility: { fontSize: 'medium', timeFormat: 'system', highContrast: false, reducedMotion: false, screenReader: false }
     };
     const SETTINGS_STORAGE_KEY = 'froggocord-settings';
     let settings = JSON.parse(JSON.stringify(SETTINGS_DEFAULTS));
@@ -257,6 +257,7 @@ const {
       document.getElementById('sp-dm-anyone').checked = settings.privacy.dmAnyone;
       document.getElementById('sp-activity').checked = settings.privacy.activity;
       document.getElementById('sa-font-size').value = settings.accessibility.fontSize;
+      document.getElementById('sa-time-format').value = settings.accessibility.timeFormat || 'system';
       document.getElementById('sa-high-contrast').checked = settings.accessibility.highContrast;
       document.getElementById('sa-reduced-motion').checked = settings.accessibility.reducedMotion;
       document.getElementById('sa-screen-reader').checked = settings.accessibility.screenReader;
@@ -380,6 +381,11 @@ const {
     document.getElementById('sp-dm-anyone').addEventListener('change', (e) => { settings.privacy.dmAnyone = e.target.checked; saveSettings(); if (user) setDoc(doc(db, 'users', user), { user, privacy: settings.privacy }, { merge: true }).catch(() => {}); });
     document.getElementById('sp-activity').addEventListener('change', (e) => { settings.privacy.activity = e.target.checked; saveSettings(); if (user) setDoc(doc(db, 'users', user), { user, privacy: settings.privacy }, { merge: true }).catch(() => {}); });
     document.getElementById('sa-font-size').addEventListener('change', (e) => { settings.accessibility.fontSize = e.target.value; applySettings(); });
+    document.getElementById('sa-time-format').addEventListener('change', (e) => {
+      settings.accessibility.timeFormat = e.target.value;
+      saveSettings();
+      if (typeof window.refreshMessageTimestamps === 'function') window.refreshMessageTimestamps();
+    });
     document.getElementById('sa-high-contrast').addEventListener('change', (e) => { settings.accessibility.highContrast = e.target.checked; applySettings(); });
     document.getElementById('sa-reduced-motion').addEventListener('change', (e) => { settings.accessibility.reducedMotion = e.target.checked; applySettings(); });
     document.getElementById('sa-screen-reader').addEventListener('change', (e) => { settings.accessibility.screenReader = e.target.checked; saveSettings(); });
