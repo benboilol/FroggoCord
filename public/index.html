@@ -92,6 +92,7 @@
 
     <div id="profile-modal" class="modal">
     <div class="modal-card">
+        <div id="prof-banner" style="height:80px;border-radius:8px 8px 0 0;background:var(--bg-t);background-size:cover;background-position:center;margin:-16px -16px 12px -16px;"></div>
         <div id="prof-avatar" class="pfp"></div>
         <h3 id="prof-name"></h3>
         <div id="prof-status"></div>
@@ -222,6 +223,11 @@
         <input type="checkbox" id="sa-screen-reader" style="margin:0;">
         <span>Screen reader announcements</span>
         </label>
+        <label class="field-label" for="sa-chat-density">Chat density</label>
+        <select id="sa-chat-density" class="inp2">
+            <option value="cozy">Cozy (default)</option>
+            <option value="compact">Compact</option>
+        </select>
         <p class="settings-description" style="margin-top:12px;">Source code can be found at <a href="https://github.com/benboilol/FroggoCord" target="_blank" rel="noopener noreferrer" style="color:var(--bl);text-decoration:underline;">https://github.com/benboilol/FroggoCord</a></p>
         <hr style="border:none;border-top:1px solid var(--bg-s);margin:16px 0;">
         <label class="field-label">Auto-switch theme by time of day</label>
@@ -260,6 +266,9 @@
             <option value="135deg">135 deg</option>
         </select>
         <div id="sp-profile-preview" style="margin-top:12px;padding:12px;border-radius:8px;color:#fff;font-weight:600;">Preview Name</div>
+        <label class="field-label" for="sp-profile-banner-file">Profile banner image</label>
+        <input type="file" id="sp-profile-banner-file" accept="image/*" style="margin:8px 0;">
+        <div id="sp-profile-banner-preview" style="margin-top:8px;height:60px;border-radius:8px;background:var(--bg-t);background-size:cover;background-position:center;"></div>
         </section>
         <div class="modal-actions" style="justify-content:space-between;">
         <button id="settings-reset" class="btn btn-danger" type="button" style="margin-left:auto;">Reset to defaults</button>

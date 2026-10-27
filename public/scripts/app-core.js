@@ -28,7 +28,7 @@ const {
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
     let chan = null, user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'dms', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
-    let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map();
+    let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map();
     const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit
     const IDLE_MS = 120000;
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
@@ -198,8 +198,8 @@ const {
       status: 'online',
       notifications: { desktop: true, sound: true, mentions: true, dm: true },
       privacy: { onlineStatus: true, dmAnyone: true, activity: true },
-      profile: { color: '#57f287', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
-      accessibility: { fontSize: 'medium', timeFormat: 'system', highContrast: false, reducedMotion: false, screenReader: false, autoTheme: { enabled: false, timezone: 'auto', dayTheme: 'fulgurite', nightTheme: 'obsidian', dayStart: 7, nightStart: 19 } }
+      profile: { color: '#57f287', banner: '', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
+      accessibility: { fontSize: 'medium', timeFormat: 'system', highContrast: false, reducedMotion: false, screenReader: false, chatDensity: 'cozy', autoTheme: { enabled: false, timezone: 'auto', dayTheme: 'fulgurite', nightTheme: 'obsidian', dayStart: 7, nightStart: 19 } }
     };
     const SETTINGS_STORAGE_KEY = 'froggocord-settings';
     let settings = JSON.parse(JSON.stringify(SETTINGS_DEFAULTS));
@@ -241,6 +241,8 @@ const {
       document.getElementById('sa-high-contrast').checked = settings.accessibility.highContrast;
       document.getElementById('sa-reduced-motion').checked = settings.accessibility.reducedMotion;
       document.getElementById('sa-screen-reader').checked = settings.accessibility.screenReader;
+      const cd = document.getElementById('sa-chat-density');
+      if (cd) cd.value = settings.accessibility.chatDensity || 'cozy';
       const prof = settings.profile || SETTINGS_DEFAULTS.profile;
       const pc = document.getElementById('sp-profile-color');
       if (pc) pc.value = prof.color || '#57f287';
@@ -252,6 +254,8 @@ const {
       if (pgt) pgt.value = (prof.gradient && prof.gradient.to) || '#23a55a';
       const pgd = document.getElementById('sp-profile-grad-dir');
       if (pgd) pgd.value = (prof.gradient && prof.gradient.direction) || 'to right';
+      const pbp = document.getElementById('sp-profile-banner-preview');
+      if (pbp) { const b = prof.banner; if (b) { pbp.style.backgroundImage = 'url('+b+')'; } else { pbp.style.backgroundImage = 'none'; } }
       updateProfilePreview();
       // Auto theme population
       const at = settings.accessibility.autoTheme || SETTINGS_DEFAULTS.accessibility.autoTheme;
@@ -327,6 +331,7 @@ const {
       } else {
         document.body.classList.remove('high-contrast');
       }
+      document.body.classList.toggle('compact', settings.accessibility.chatDensity === 'compact');
       applyAutoTheme();
       saveSettings();
     }
@@ -433,6 +438,8 @@ const {
     document.getElementById('sa-high-contrast').addEventListener('change', (e) => { settings.accessibility.highContrast = e.target.checked; applySettings(); });
     document.getElementById('sa-reduced-motion').addEventListener('change', (e) => { settings.accessibility.reducedMotion = e.target.checked; applySettings(); });
     document.getElementById('sa-screen-reader').addEventListener('change', (e) => { settings.accessibility.screenReader = e.target.checked; saveSettings(); });
+    const cdEl = document.getElementById('sa-chat-density');
+    if (cdEl) cdEl.addEventListener('change', (e) => { settings.accessibility.chatDensity = e.target.value; applySettings(); });
     function updateProfilePreview() {
       const prev = document.getElementById('sp-profile-preview');
       if (!prev) return;
@@ -475,6 +482,22 @@ const {
     ['sa-timezone','sa-day-theme','sa-night-theme','sa-day-start','sa-night-start'].forEach(id => { const el = document.getElementById(id); if (!el) return; el.addEventListener('change', () => { const at = settings.accessibility.autoTheme = settings.accessibility.autoTheme || Object.assign({}, SETTINGS_DEFAULTS.accessibility.autoTheme); at.timezone = document.getElementById('sa-timezone').value; at.dayTheme = document.getElementById('sa-day-theme').value; at.nightTheme = document.getElementById('sa-night-theme').value; at.dayStart = parseInt(document.getElementById('sa-day-start').value, 10); at.nightStart = parseInt(document.getElementById('sa-night-start').value, 10); saveSettings(); applyAutoTheme(); }); });
     document.getElementById('sa-status').addEventListener('change', (e) => { settings.status = e.target.value; applySettings(); });
     // No accessibility theme toggles - themes are selected from the Theme tab
+    const bannerFile = document.getElementById('sp-profile-banner-file');
+    if (bannerFile) bannerFile.addEventListener('change', async (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f || !f.type.startsWith('image/')) return;
+      if (f.size > 2 * 1024 * 1024) { appAlert('Banner too large (max 2MB).'); e.target.value=''; return; }
+      try {
+        const data = await compressImage(f, 1200);
+        const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+        prof.banner = data;
+        saveSettings();
+        const pbp = document.getElementById('sp-profile-banner-preview');
+        if (pbp) pbp.style.backgroundImage = 'url('+data+')';
+        if (user) setDoc(doc(db,'users',user),{user,banner:data,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+      } catch (err) { appAlert('Failed to process banner.'); }
+      e.target.value = '';
+    });
     document.getElementById('sa-avatar-file').addEventListener('change', async (e) => {
       const f = e.target.files && e.target.files[0];
       if (!f || !f.type.startsWith('image/')) return;
