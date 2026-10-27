@@ -222,14 +222,6 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
               if (typeof msgsPinned !== 'undefined' && msgsPinned) pinMsgsBottom();
             }, { once: true });
           }
-        } else {
-          const s = img.getAttribute('src');
-          if (s) {
-            img.dataset.src = s;
-            if (img.naturalWidth && img.naturalHeight && !img.style.aspectRatio) img.style.aspectRatio = img.naturalWidth + '/' + img.naturalHeight;
-            if (!img.style.aspectRatio && chatGifDims[s]) { const d = chatGifDims[s]; img.style.aspectRatio = d.w + '/' + d.h; }
-            img.removeAttribute('src');
-          }
         }
       });
     }, { root: document.getElementById('message-container'), threshold: 0.1 });
