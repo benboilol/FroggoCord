@@ -715,7 +715,7 @@ const {
         const u = gif[1];
         const d = (typeof chatGifDims !== 'undefined' && chatGifDims[u]) ? chatGifDims[u] : null;
         const ar = d ? `aspect-ratio:${d.w}/${d.h};` : 'aspect-ratio:4/3;';
-﻿        const isFav = (typeof isGifFavorite === 'function') ? isGifFavorite(u) : false;
+        const isFav = (typeof isGifFavorite === 'function') ? isGifFavorite(u) : false;
         const isBlk = (typeof isGifBlocked === 'function') ? isGifBlocked(u) : false;
         const blur = isBlk ? 'filter:blur(8px);' : '';
         return `<div class="gif-wrap" data-gif-url="${escHtml(u)}" style="position:relative; display:inline-block; max-width:min(320px,100%);">
