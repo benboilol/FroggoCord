@@ -214,9 +214,6 @@ const {
       }
       else if (THEME_IDS.includes(storedTheme)) savedTheme = storedTheme;
     } catch (e) {}
-    if (savedTheme !== DEFAULT_THEME) applyTheme(savedTheme, false);
-    else setThemeSelection(savedTheme);
-
     /* ---------- settings state ---------- */
     const SETTINGS_DEFAULTS = {
       theme: 'fulgurite',
@@ -228,6 +225,9 @@ const {
     };
     const SETTINGS_STORAGE_KEY = 'froggocord-settings';
     let settings = JSON.parse(JSON.stringify(SETTINGS_DEFAULTS));
+
+    if (savedTheme !== DEFAULT_THEME) applyTheme(savedTheme, false);
+    else setThemeSelection(savedTheme);
 
     function loadSettings() {
       try {
