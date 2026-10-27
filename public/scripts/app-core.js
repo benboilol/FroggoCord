@@ -223,7 +223,7 @@ const {
       status: 'online',
       notifications: { desktop: true, sound: true, mentions: true, dm: true },
       privacy: { onlineStatus: true, dmAnyone: true, activity: true },
-      accessibility: { fontSize: 'medium', timeFormat: 'system', highContrast: false, reducedMotion: false, screenReader: false }
+      accessibility: { fontSize: 'medium', timeFormat: 'system', highContrast: false, reducedMotion: false, screenReader: false, autoTheme: { enabled: false, timezone: 'auto', dayTheme: 'fulgurite', nightTheme: 'obsidian', dayStart: 7, nightStart: 19 } }
     };
     const SETTINGS_STORAGE_KEY = 'froggocord-settings';
     let settings = JSON.parse(JSON.stringify(SETTINGS_DEFAULTS));
@@ -236,7 +236,7 @@ const {
           settings = { ...SETTINGS_DEFAULTS, ...parsed };
           if (parsed.notifications) settings.notifications = { ...SETTINGS_DEFAULTS.notifications, ...parsed.notifications };
           if (parsed.privacy) settings.privacy = { ...SETTINGS_DEFAULTS.privacy, ...parsed.privacy };
-          if (parsed.accessibility) settings.accessibility = { ...SETTINGS_DEFAULTS.accessibility, ...parsed.accessibility };
+          if (parsed.accessibility) { settings.accessibility = { ...SETTINGS_DEFAULTS.accessibility, ...parsed.accessibility }; if (parsed.accessibility.autoTheme) settings.accessibility.autoTheme = { ...SETTINGS_DEFAULTS.accessibility.autoTheme, ...parsed.accessibility.autoTheme }; }
         }
       } catch (e) { settings = JSON.parse(JSON.stringify(SETTINGS_DEFAULTS)); }
     }
@@ -261,6 +261,31 @@ const {
       document.getElementById('sa-high-contrast').checked = settings.accessibility.highContrast;
       document.getElementById('sa-reduced-motion').checked = settings.accessibility.reducedMotion;
       document.getElementById('sa-screen-reader').checked = settings.accessibility.screenReader;
+      // Auto theme population
+      const at = settings.accessibility.autoTheme || SETTINGS_DEFAULTS.accessibility.autoTheme;
+      const autoCb = document.getElementById('sa-auto-theme');
+      if (autoCb) autoCb.checked = !!at.enabled;
+      const daySel = document.getElementById('sa-day-theme');
+      const nightSel = document.getElementById('sa-night-theme');
+      if (daySel && daySel.options.length === 0) {
+        THEME_IDS.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t[0].toUpperCase() + t.slice(1); daySel.appendChild(o); nightSel.appendChild(o.cloneNode(true)); });
+      }
+      if (daySel) daySel.value = at.dayTheme || 'fulgurite';
+      if (nightSel) nightSel.value = at.nightTheme || 'obsidian';
+      const tzSel = document.getElementById('sa-timezone');
+      if (tzSel && tzSel.options.length === 0) {
+        ['auto', 'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Kolkata', 'Australia/Sydney'].forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t === 'auto' ? 'Auto (browser)' : t; tzSel.appendChild(o); });
+      }
+      if (tzSel) tzSel.value = at.timezone || 'auto';
+      const dayStartSel = document.getElementById('sa-day-start');
+      const nightStartSel = document.getElementById('sa-night-start');
+      if (dayStartSel && dayStartSel.options.length === 0) {
+        for (let h = 0; h < 24; h++) {
+          const o = document.createElement('option'); o.value = h; o.textContent = (h % 12 === 0 ? 12 : h % 12) + ':00 ' + (h < 12 ? 'AM' : 'PM'); dayStartSel.appendChild(o); nightStartSel.appendChild(o.cloneNode(true));
+        }
+      }
+      if (dayStartSel) dayStartSel.value = at.dayStart ?? 7;
+      if (nightStartSel) nightStartSel.value = at.nightStart ?? 19;
       const av = document.getElementById('my-pfp');
       const prev = document.getElementById('sa-avatar-preview');
       if (av && av.style.backgroundImage && av.style.backgroundImage !== 'none') {
@@ -310,8 +335,35 @@ const {
       } else {
         document.body.classList.remove('high-contrast');
       }
+      applyAutoTheme();
       saveSettings();
     }
+    function applyAutoTheme() {
+      const at = settings.accessibility && settings.accessibility.autoTheme;
+      if (!at || !at.enabled) return;
+      let now;
+      try {
+        if (at.timezone && at.timezone !== 'auto') {
+          now = new Date(new Date().toLocaleString('en-US', { timeZone: at.timezone }));
+        } else {
+          now = new Date();
+        }
+      } catch (e) { now = new Date(); }
+      const hour = now.getHours();
+      const dayStart = (at.dayStart == null) ? 7 : at.dayStart;
+      const nightStart = (at.nightStart == null) ? 19 : at.nightStart;
+      let isDay;
+      if (dayStart < nightStart) {
+        isDay = hour >= dayStart && hour < nightStart;
+      } else {
+        isDay = hour >= dayStart || hour < nightStart;
+      }
+      const target = isDay ? (at.dayTheme || settings.theme) : (at.nightTheme || settings.theme);
+      if (target && target !== activeTheme) {
+        applyTheme(target, false);
+      }
+    }
+
 
     function openCustomTheme() {
       const builder = document.getElementById('custom-theme-builder');
@@ -389,6 +441,9 @@ const {
     document.getElementById('sa-high-contrast').addEventListener('change', (e) => { settings.accessibility.highContrast = e.target.checked; applySettings(); });
     document.getElementById('sa-reduced-motion').addEventListener('change', (e) => { settings.accessibility.reducedMotion = e.target.checked; applySettings(); });
     document.getElementById('sa-screen-reader').addEventListener('change', (e) => { settings.accessibility.screenReader = e.target.checked; saveSettings(); });
+    const autoThemeCb = document.getElementById('sa-auto-theme');
+    if (autoThemeCb) autoThemeCb.addEventListener('change', (e) => { settings.accessibility.autoTheme = settings.accessibility.autoTheme || Object.assign({}, SETTINGS_DEFAULTS.accessibility.autoTheme); settings.accessibility.autoTheme.enabled = e.target.checked; saveSettings(); applyAutoTheme(); });
+    ['sa-timezone','sa-day-theme','sa-night-theme','sa-day-start','sa-night-start'].forEach(id => { const el = document.getElementById(id); if (!el) return; el.addEventListener('change', () => { const at = settings.accessibility.autoTheme = settings.accessibility.autoTheme || Object.assign({}, SETTINGS_DEFAULTS.accessibility.autoTheme); at.timezone = document.getElementById('sa-timezone').value; at.dayTheme = document.getElementById('sa-day-theme').value; at.nightTheme = document.getElementById('sa-night-theme').value; at.dayStart = parseInt(document.getElementById('sa-day-start').value, 10); at.nightStart = parseInt(document.getElementById('sa-night-start').value, 10); saveSettings(); applyAutoTheme(); }); });
     document.getElementById('sa-status').addEventListener('change', (e) => { settings.status = e.target.value; applySettings(); });
     // No accessibility theme toggles - themes are selected from the Theme tab
     document.getElementById('sa-avatar-file').addEventListener('change', async (e) => {
@@ -722,3 +777,6 @@ const {
       } catch (err) { appAlert('Failed to process image.'); }
     };
 
+
+    // Periodically re-evaluate auto theme
+    setInterval(() => { try { applyAutoTheme(); } catch (e) {} }, 60000);
