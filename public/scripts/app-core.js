@@ -519,7 +519,7 @@ const {
       if (!f || !f.type.startsWith('image/')) return;
       if (f.size > 2 * 1024 * 1024) { appAlert('Banner too large (max 2MB).'); e.target.value=''; return; }
       try {
-        const data = await compressImage(f, 1200);
+        const data = await compressImage(f, 1200, true);
         const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
         prof.banner = data;
         saveSettings();
@@ -827,7 +827,16 @@ const {
     window.addEventListener('touchstart', rst, { passive: true });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) rst(); });
 
-    const compressImage = async (file, maxSize = 512) => {
+    const compressImage = async (file, maxSize = 512, animated = false) => {
+      // Preserve animated images (GIF/APNG/WebP animation) without canvas conversion.
+      if (animated && /image\/(gif|apng|webp)/i.test(file.type || '')) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
       return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
@@ -858,7 +867,7 @@ const {
       if (!f || !f.type.startsWith('image/')) return;
       if (f.size > MAX_PFP_BYTES) { appAlert('PFP too large (max 500KB).'); return; }
       try {
-        pfp = await compressImage(f);
+        pfp = await compressImage(f, 512, true);
         localStorage.setItem('pfp_'+user, pfp);
         await setDoc(doc(db,"users",user),{user,pfp,uid:(auth.currentUser&&auth.currentUser.uid)||null,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
         document.getElementById('my-pfp').style.backgroundImage = `url(${pfp})`;
@@ -871,7 +880,7 @@ const {
       if (!f) return;
       if (f.size > MAX_PFP_BYTES) { appAlert('PFP too large (max 500KB).'); e.target.value = ''; return; }
       try {
-        pfp = await compressImage(f);
+        pfp = await compressImage(f, 512, true);
         localStorage.setItem('pfp_'+user, pfp);
         await setDoc(doc(db,"users",user),{user,pfp,uid:(auth.currentUser&&auth.currentUser.uid)||null,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
         document.getElementById('my-pfp').style.backgroundImage = `url(${pfp})`;

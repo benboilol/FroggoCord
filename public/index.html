@@ -228,28 +228,7 @@
         <input type="checkbox" id="sa-screen-reader" style="margin:0;">
         <span>Screen reader announcements</span>
         </label>
-        <label class="field-label" for="sa-chat-density">Chat density</label>
-        <select id="sa-chat-density" class="inp2">
-            <option value="cozy">Cozy (default)</option>
-            <option value="compact">Compact</option>
-        </select>
         <p class="settings-description" style="margin-top:12px;">Source code can be found at <a href="https://github.com/benboilol/FroggoCord" target="_blank" rel="noopener noreferrer" style="color:var(--bl);text-decoration:underline;">https://github.com/benboilol/FroggoCord</a></p>
-        <hr style="border:none;border-top:1px solid var(--bg-s);margin:16px 0;">
-        <label class="field-label">Auto-switch theme by time of day</label>
-        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
-        <input type="checkbox" id="sa-auto-theme" style="margin:0;">
-        <span>Enable automatic theme switching</span>
-        </label>
-        <label class="field-label" for="sa-timezone">Timezone</label>
-        <select id="sa-timezone" class="inp2"></select>
-        <label class="field-label" for="sa-day-theme">Day theme</label>
-        <select id="sa-day-theme" class="inp2"></select>
-        <label class="field-label" for="sa-night-theme">Night theme</label>
-        <select id="sa-night-theme" class="inp2"></select>
-        <label class="field-label" for="sa-day-start">Day starts at (hour)</label>
-        <select id="sa-day-start" class="inp2"></select>
-        <label class="field-label" for="sa-night-start">Night starts at (hour)</label>
-        <select id="sa-night-start" class="inp2"></select>
         </section>
         <section id="settings-profiles-panel" class="settings-panel-section" role="tabpanel" aria-labelledby="settings-profiles-tab">
         <p class="settings-description">Customize your profile appearance.</p>
@@ -284,6 +263,27 @@
         <input type="color" id="sp-profile-accent" value="#57f287" style="width:60px;height:36px;border:none;background:none;cursor:pointer;">
         <label class="field-label" for="sp-profile-decoration">Profile decoration URL</label>
         <input id="sp-profile-decoration" class="inp2" placeholder="https://.../decoration.png">
+        <hr style="border:none;border-top:1px solid var(--bg-s);margin:16px 0;">
+        <label class="field-label">Chat density</label>
+        <select id="sa-chat-density" class="inp2">
+            <option value="cozy">Cozy (default)</option>
+            <option value="compact">Compact</option>
+        </select>
+        <label class="field-label">Auto-switch theme by time of day</label>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="sa-auto-theme" style="margin:0;">
+        <span>Enable automatic theme switching</span>
+        </label>
+        <label class="field-label" for="sa-timezone">Timezone</label>
+        <select id="sa-timezone" class="inp2"></select>
+        <label class="field-label" for="sa-day-theme">Day theme</label>
+        <select id="sa-day-theme" class="inp2"></select>
+        <label class="field-label" for="sa-night-theme">Night theme</label>
+        <select id="sa-night-theme" class="inp2"></select>
+        <label class="field-label" for="sa-day-start">Day starts at (hour)</label>
+        <select id="sa-day-start" class="inp2"></select>
+        <label class="field-label" for="sa-night-start">Night starts at (hour)</label>
+        <select id="sa-night-start" class="inp2"></select>
         </section>
         <div class="modal-actions" style="justify-content:space-between;">
         <button id="settings-reset" class="btn btn-danger" type="button" style="margin-left:auto;">Reset to defaults</button>
