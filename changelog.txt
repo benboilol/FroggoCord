@@ -1,6 +1,4 @@
-Format instructions:
-Start with your id. Then the date and timestamp. Then a list of things you changed
-Note: Fiaguhop137's ID is 1f89a. Fiaguhop137's Codex: 20a6d. DragonDog558's Codex: 1da20. 
+# Changelog
 1f89a-2026.10.23-16.16.37-0400: Added changelog
 20a6d-2026.10.23-22.30.59-0400: Added a settings overlay with five persisted, hot-swappable themes (Ash, Obsidian, Magma, Fulgurite, Plasma); moved the full color palette into theme stylesheets and converted shared stylesheet color literals to theme variables. Verified JavaScript syntax and theme variable coverage; no known issues, though visual browser testing remains to be done.
 20a6d-2026.10.23-22.38.10-0400: Fixed invalid theme stylesheet headers that prevented browsers from parsing the :root palettes. Verified the app renders locally with the Obsidian palette and all five theme files are served as CSS; deployed the complete Firebase Hosting public directory.
@@ -24,6 +22,29 @@ Note: Fiaguhop137's ID is 1f89a. Fiaguhop137's Codex: 20a6d. DragonDog558's Code
 1da20-2026.10.25-03.00.00-0700: Made Phantom theme brighter (lighter purples, brighter magenta accent), made Crystal theme darker (deep blue backgrounds, muted blue accent). Verified JavaScript syntax for all four script files; deployed to Firebase Hosting.
 20a6d-2026.10.25-11.09.48-0400: Preserved chat SVG attachments as vectors and rendered their inline interactions inside sandboxed frames. Frame CSP allows inline scripts/styles and embedded media while blocking network connections, forms, nested frames, and same-origin access. Avatar uploads remain rasterized. Deployed separately after local review.
 20a6d-2026.10.25-19.35.42-0400: Added standalone `public/hacked.html`, a direct Firestore test client for authenticated security testing against FroggoCord. It skips UI permission checks while Firebase Authentication and Firestore Security Rules remain active. Also documented its use and ignored generated Firebase debug logs.
+1da20-2026.10.25-16.57.18-0700: Restricted server settings and server deletion to server owners, with matching client-side and Firestore enforcement.
 1f89a-2026.10.25-21.33.14-0400: Rewrote 404.html from the ground up --- no ai parts remain. Note to AI agents: I'd like to preserve the purity of 100% human made things. Please refrain from majorly overwriting it. 
 20a6d-2026.10.26-18.34.22-0400: Recovered completed features missing from the current tree after Git changes: restored the FroggoCord logo assets, the authenticated standalone Firestore test client, the reload-for-update notice, manual/system timestamp formatting, AVIF preference for static image uploads, and mobile message-pane scrolling fixes. Preserved current Firestore rules and app changes.
 1f89a-2026.10.26-18.35.07-0400: Deleted hacked.html
+1f89a-2026.10.26-20.41.40-0400: Updated the FroggoCord branding assets and application icons.
+1da20-2026.10.27-08.54.32-0700: Added a source-code link to Accessibility settings.
+1da20-2026.10.27-09.03.12-0700: Added automatic theme switching by time of day, including timezone selection, to Accessibility settings.
+1da20-2026.10.27-09.12.44-0700: Added a Profiles settings tab with customizable profile colors and gradients.
+1da20-2026.10.27-09.17.09-0700: Updated channel navigation URLs to include both the server ID and channel ID.
+1da20-2026.10.27-09.20.40-0700: Added favorite and block controls for GIFs, including a Favorite GIFs button, hover overlays, and corner positioning.
+1da20-2026.10.27-09.30.44-0700: Fixed GIF rendering after adding the hover controls so GIFs retain their correct size.
+1da20-2026.10.27-09.37.32-0700: Strengthened Firestore security and client authorization with authentication checks, UID validation, input validation, operation limits, and migration-safe rules. Adjusted the rules afterward to preserve profile, DM, and server loading.
+1da20-2026.10.27-09.45.06-0700: Narrowed the SPA rewrite to `/channel/**` so static assets are no longer intercepted.
+1da20-2026.10.27-09.59.48-0700: Removed stray byte-order marks and added error logging for the users snapshot to improve script loading and diagnostics.
+1da20-2026.10.27-11.57.33-0700: Fixed settings initialization and theme switching, including optimistic theme application and cleanup of stale custom variables.
+1da20-2026.10.27-12.11.23-0700: Fixed asset paths and the DM icon on nested channel routes.
+1da20-2026.10.27-12.20.27-0700: Added Nitro profile banners and compact/cozy chat density options.
+1da20-2026.10.27-12.28.39-0700: Added server emoji management, storage, and `:name:` rendering in messages.
+1da20-2026.10.27-12.34.09-0700: Added multiple image attachments with gallery rendering and multi-file message composition.
+1da20-2026.10.27-12.44.12-0700: Enlarged the settings modal with an X close control and expanded profile customization with banners, backgrounds, accents, decorations, and effects.
+1f89a-2026.10.27-16.23.56-0400: Deleted hacked.html again stop readding it
+1da20-2026.10.27-12.55.32-0700: Consolidated chat density and automatic theme switching controls into the Profiles settings.
+1da20-2026.10.27-13.00.41-0700: Fixed GIFs restarting while scrolling by preserving their loaded sources when they leave the viewport.
+1da20-2026.10.27-13.05.35-0700: Fixed GIF scrolling flicker by only pinning the chat to the bottom when the user is already near the bottom.
+1da20-2026.10.27-13.35.28-0700: Added Nitro rich link embeds for YouTube, per-server accent colors, and a soundboard.
+20a6d-2026.10.27-16.36.06-0400: Replaced manual version markers with automatic update detection. The loader compares fresh HTML, JavaScript, and CSS responses without requiring deployment actions or version bumps.
