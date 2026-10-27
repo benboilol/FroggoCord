@@ -400,6 +400,11 @@ window.hideServerCtx = hideServerCtx;
       renderServerList();
       updateHeader();
       renderUserList();
+      if (chan && currentServer) {
+        const cname = chan.split('_').slice(2).join('_');
+        if (window.__skipPush) { try { history.replaceState({chan:chan}, '', '/channel/' + currentServer + '/' + cname); } catch(e){} }
+        else { try { history.pushState({chan:chan}, '', '/channel/' + currentServer + '/' + cname); } catch(e){} }
+      }
       listen();
     }
     window.switchServerChannel = (sid, cname) => {
@@ -416,6 +421,11 @@ window.hideServerCtx = hideServerCtx;
       renderServerList();
       updateHeader();
       renderUserList();
+      if (chan) {
+        const cname2 = chan.split('_').slice(2).join('_');
+        if (window.__skipPush) { try { history.replaceState({chan:chan}, '', '/channel/' + sid + '/' + cname2); } catch(e){} }
+        else { try { history.pushState({chan:chan}, '', '/channel/' + sid + '/' + cname2); } catch(e){} }
+      }
       listen();
     };
     async function createChannel(sid) {

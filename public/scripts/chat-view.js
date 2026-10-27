@@ -582,6 +582,16 @@ let pendingFile = null; let pendingPreview = null;
           const params = new URLSearchParams(window.location.search);
           const joinCode = params.get('join');
           if (joinCode) { joinServer(joinCode); }
+          // Handle channel route /channel/server_id/channel_id
+          try {
+            const parts = window.location.pathname.split('/').filter(Boolean);
+            if (parts[0] === 'channel' && parts[1] && parts[2]) {
+              window.__skipPush = true;
+              const sid = parts[1];
+              const cname = decodeURIComponent(parts[2]);
+              setTimeout(() => { if (typeof switchServerChannel === 'function') switchServerChannel(sid, cname); else if (typeof switchServer === 'function') switchServer(sid); window.__skipPush = false; }, 0);
+            }
+          } catch (e) { window.__skipPush = false; }
         });
       } else { if (heartbeat) { clearInterval(heartbeat); heartbeat = null; } if (user) setDoc(doc(db,"presence",user),{status:'offline'},{merge:true}); document.getElementById('auth-overlay').style.display = 'flex'; }
     });
@@ -613,3 +623,17 @@ let pendingFile = null; let pendingPreview = null;
     window.unfriendReq = async (id) => {
       await updateDoc(doc(db,"friends",id),{status:"unfriended"});
     };
+
+
+    window.addEventListener('popstate', () => {
+      try {
+        const parts = window.location.pathname.split('/').filter(Boolean);
+        if (parts[0] === 'channel' && parts[1] && parts[2]) {
+          window.__skipPush = true;
+          const sid = parts[1];
+          const cname = decodeURIComponent(parts[2]);
+          if (typeof switchServerChannel === 'function') switchServerChannel(sid, cname);
+          window.__skipPush = false;
+        }
+      } catch (e) { window.__skipPush = false; }
+    });
