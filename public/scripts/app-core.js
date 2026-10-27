@@ -720,10 +720,8 @@ const {
         const blur = isBlk ? 'filter:blur(8px);' : '';
         return `<div class="gif-wrap" data-gif-url="${escHtml(u)}" style="position:relative; display:inline-block; max-width:min(320px,100%); ${ar}">
           <img data-src="${escHtml(u)}" src="" alt="gif" loading="lazy" style="max-width:100%; border-radius:8px; display:block; background:transparent; min-height:60px; ${ar} ${blur}">
-          <div class="gif-actions" style="position:absolute; top:6px; right:6px; display:flex; gap:4px; opacity:0; transition:opacity .15s;">
-            <button class="gif-star" onclick="toggleGifFavorite('${escHtml(u)}')" title="Favorite" style="background:rgba(0,0,0,.5); border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; color:${isFav?'#f0b232':'#fff'};">${isFav?'★':'☆'}</button>
-            <button class="gif-block" onclick="toggleGifBlock('${escHtml(u)}')" title="Block" style="background:rgba(0,0,0,.5); border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; color:${isBlk?'#da373c':'#fff'};">${isBlk?'●':'○'}</button>
-          </div>
+          <button class="gif-star" onclick="toggleGifFavorite('${escHtml(u)}')" title="Favorite" style="position:absolute; top:6px; left:6px; background:rgba(0,0,0,.5); border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; color:${isFav?'#f0b232':'#fff'}; opacity:0; transition:opacity .15s;">${isFav?'★':'☆'}</button>
+          <button class="gif-block" onclick="toggleGifBlock('${escHtml(u)}')" title="Block" style="position:absolute; top:6px; right:6px; background:rgba(0,0,0,.5); border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; color:${isBlk?'#da373c':'#fff'}; opacity:0; transition:opacity .15s;">${isBlk?'●':'○'}</button>
         </div>`;
       }
       // Handle invite cards

@@ -338,5 +338,5 @@ body.high-contrast button { border:1px solid #fff; }
 @media (max-width: 480px) { #app-update-notice { align-items: stretch; flex-direction: column; gap: 8px; } }
 
 
-.gif-wrap:hover .gif-actions { opacity: 1 !important; }
+.gif-wrap:hover .gif-star, .gif-wrap:hover .gif-block { opacity: 1 !important; }
 .gif-actions button:hover { filter: brightness(1.2); }
