@@ -110,31 +110,38 @@ if (fileInputEl) {
     }
   };
   fileInputEl.addEventListener('change', async (e) => {
-    const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    if (!f.type.startsWith('image/')) { appAlert('Only images and GIFs can be uploaded.'); fileInputEl.value = ''; return; }
-    if (f.size > 700000) { appAlert('Image too large (max ~700KB).'); fileInputEl.value = ''; return; }
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const imgs = files.filter(f => f.type.startsWith('image/'));
+    if (imgs.length !== files.length) { appAlert('Only images and GIFs can be uploaded.'); }
+    if (!imgs.length) { fileInputEl.value = ''; return; }
     fileInputEl.value = '';
     try {
-      pendingFile = await preferAvif(f);
-      pendingPreview = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(pendingFile);
-      });
-      document.getElementById('file-preview-img').src = pendingPreview;
-      document.getElementById('file-preview-name').textContent = pendingFile.name + ' (' + (pendingFile.size/1024).toFixed(0) + 'KB)';
+      const results = [];
+      for (const f of imgs) {
+        if (f.size > 700000) { appAlert('Image too large (max ~700KB): ' + f.name); continue; }
+        const pf = await preferAvif(f);
+        const preview = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(pf);
+        });
+        results.push({ file: pf, preview });
+      }
+      if (!results.length) return;
+      pendingFiles = results;
+      document.getElementById('file-preview-img').src = results[0].preview;
+      document.getElementById('file-preview-name').textContent = results.length + ' image(s) selected';
       document.getElementById('file-preview').style.display = 'block';
     } catch (error) {
       appAlert('Failed to read file.');
-      pendingFile = null;
-      pendingPreview = null;
+      pendingFiles = [];
     }
   });
 }
 window.cancelFile = () => {
-  pendingFile = null; pendingPreview = null;
+  pendingFiles = [];
   const fp = document.getElementById('file-preview');
   if (fp) fp.style.display = 'none';
   const img = document.getElementById('file-preview-img');

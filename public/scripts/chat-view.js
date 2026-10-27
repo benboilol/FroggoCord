@@ -42,6 +42,17 @@
       const pres = Array.from(document.getElementById('user-list').children).find(el => el.dataset.user === u);
       const dot = pres && pres.querySelector('.status-dot');
       document.getElementById('prof-status').textContent = dot ? (dot.getAttribute('title') || 'Online') : 'Offline';
+      const badgesEl = document.getElementById('prof-badges');
+      if (badgesEl) {
+        const badges = [];
+        try {
+          if (typeof servers !== 'undefined') {
+            if (servers.some(srv => srv.owner === u)) badges.push('Server Owner');
+            if (servers.some(srv => (srv.admins||[]).includes(u))) badges.push('Admin');
+          }
+        } catch (e) {}
+        badgesEl.innerHTML = badges.map(b => '<span style="background:var(--bg-t);color:var(--bright);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;border:1px solid var(--hover);">' + escHtml(b) + '</span>').join('');
+      }
       const actions = document.getElementById('prof-actions');
       // Show loading state immediately to avoid perceived freeze
       actions.innerHTML = '<div style="color:var(--mut);font-size:12px;">Loading...</div>';
@@ -176,8 +187,15 @@
     }
 
     function renderMessageImage(message) {
-      if (!message.image) return '';
-      const svgMarkup = svgMarkupFromDataUrl(message.image);
+      const imgs = Array.isArray(message.images) ? message.images : (message.image ? [message.image] : []);
+      if (!imgs.length) return '';
+      if (imgs.length > 1) {
+        return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:4px;margin-top:4px;">' +
+          imgs.map(u => '<img src="' + escHtml(u) + '" alt="image" style="width:100%;border-radius:8px;display:block;cursor:pointer;aspect-ratio:1/1;object-fit:cover;" onclick="openLightbox(\'' + escHtml(u) + '\',\'Image\')">').join('') +
+          '</div>';
+      }
+      const img = imgs[0];
+      const svgMarkup = svgMarkupFromDataUrl(img);
       if (svgMarkup !== null) {
         const srcdoc = interactiveSvgDocument(svgMarkup);
         const imageWidth = Number(message.imageW);
@@ -186,10 +204,18 @@
         const aspectRatio = hasDimensions ? `${Math.min(imageWidth, 100000)} / ${Math.min(imageHeight, 100000)}` : '4 / 3';
         return `<iframe class="interactive-svg" sandbox="allow-scripts" referrerpolicy="no-referrer" loading="lazy" title="Interactive SVG attachment" srcdoc="${escHtml(srcdoc)}" style="width:min(320px, 100%);height:auto;min-height:80px;max-height:60vh;aspect-ratio:${aspectRatio};"></iframe>`;
       }
-      return `<img src="${escHtml(message.image)}" alt="image" style="max-width:min(320px, 100%);border-radius:8px;display:block;margin-top:4px;cursor:pointer;${message.imageW && message.imageH ? ' aspect-ratio:' + Number(message.imageW) + '/' + Number(message.imageH) + ';' : ''}" onclick="openLightbox('${escHtml(message.image)}','Image')">`;
+      if (svgMarkup !== null) {
+        const srcdoc = interactiveSvgDocument(svgMarkup);
+        const imageWidth = Number(message.imageW);
+        const imageHeight = Number(message.imageH);
+        const hasDimensions = Number.isFinite(imageWidth) && imageWidth > 0 && Number.isFinite(imageHeight) && imageHeight > 0;
+        const aspectRatio = hasDimensions ? `${Math.min(imageWidth, 100000)} / ${Math.min(imageHeight, 100000)}` : '4 / 3';
+        return `<iframe class="interactive-svg" sandbox="allow-scripts" referrerpolicy="no-referrer" loading="lazy" title="Interactive SVG attachment" srcdoc="${escHtml(srcdoc)}" style="width:min(320px, 100%);height:auto;min-height:80px;max-height:60vh;aspect-ratio:${aspectRatio};"></iframe>`;
+      }
+      return `<img src="${escHtml(img)}" alt="image" style="max-width:min(320px, 100%);border-radius:8px;display:block;margin-top:4px;cursor:pointer;${message.imageW && message.imageH ? ' aspect-ratio:' + Number(message.imageW) + '/' + Number(message.imageH) + ';' : ''}" onclick="openLightbox('${escHtml(img)}','Image')">`;
     }
 
-let pendingFile = null; let pendingPreview = null;
+let pendingFiles = []; // array of {file, preview}
     function resetMessagePages(channel) {
       messagePages.forEach(page => page.unsubscribe && page.unsubscribe());
       messagePages = [];
@@ -263,7 +289,7 @@ let pendingFile = null; let pendingPreview = null;
                 <span class="msg-actions">${pending ? '' : reactBtn + rBtn + btns}</span>
               </div>
               ${textVal ? `<div class="msg-bubble">${renderText(textVal)}</div>` : ''}
-              ${pending ? (m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px; opacity:0.7;">` : '') : renderMessageImage(m)}
+              ${pending ? (m.images && m.images.length ? m.images.map(u => `<img src="${escHtml(u)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px; opacity:0.7;">`).join('') : (m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px; opacity:0.7;">` : '')) : renderMessageImage(m)}
               ${pending ? '' : renderReactions(m)}
               ${statusHtml}
             </div>

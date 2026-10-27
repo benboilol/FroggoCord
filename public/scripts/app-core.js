@@ -526,14 +526,14 @@ const {
     window.sendMessage = async () => {
       const input = document.getElementById('chat-input');
       const t = input.value.trim();
-      if (!t && !pendingFile) return;
+      if (!t && pendingFiles.length === 0) return;
       if (!user) return;
 
       const clientId = 'pending_' + Date.now() + '_' + Math.random().toString(36).slice(2);
       const pending = {
         clientId: clientId,
         text: t,
-        image: pendingFile ? pendingPreview : null,
+        images: pendingFiles.map(p => p.preview),
         imageW: null,
         imageH: null,
         user: user,
@@ -553,22 +553,25 @@ const {
       notifyPendingChanged();
 
       // Handle image dimensions
-      if (pendingFile) {
-        if (pendingFile.size > 700000) {
-          pending.status = 'failed';
-          pending.error = 'Image too large (max ~700KB)';
-          pendingMessages = pendingMessages.filter(m => m.clientId !== clientId);
-          pendingMessages.push(pending);
-          notifyPendingChanged();
-          input.value = t;
-          return;
+      if (pendingFiles.length) {
+        for (const pf of pendingFiles) {
+          if (pf.file && pf.file.size > 700000) {
+            pending.status = 'failed';
+            pending.error = 'Image too large (max ~700KB)';
+            pendingMessages = pendingMessages.filter(m => m.clientId !== clientId);
+            pendingMessages.push(pending);
+            notifyPendingChanged();
+            input.value = t;
+            return;
+          }
         }
         try {
+          const im = new Image();
+          const first = pendingFiles[0].preview;
           const dims = await new Promise((resolve) => {
-            const im = new Image();
             im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
             im.onerror = () => resolve(null);
-            im.src = pendingPreview;
+            im.src = first;
           });
           if (dims && dims.w && dims.h) { pending.imageW = dims.w; pending.imageH = dims.h; }
         } catch (e) {}
@@ -577,7 +580,7 @@ const {
       // Send to Firestore
       try {
         const payload = { text: t, user, uid: (auth.currentUser && auth.currentUser.uid) || null, channel: chan, pfp, timestamp: serverTimestamp(), clientMsgId: clientId };
-        if (pending.image) payload.image = pending.image;
+        if (pending.images && pending.images.length) payload.images = pending.images;
         if (pending.imageW) { payload.imageW = pending.imageW; payload.imageH = pending.imageH; }
         if (pending.replyTo) payload.replyTo = pending.replyTo;
 
@@ -600,7 +603,7 @@ const {
       }
 
       // Clean up
-      pendingFile = null; pendingPreview = null;
+      pendingFiles = [];
       window.cancelFile();
     };
 
@@ -612,7 +615,7 @@ const {
 
       try {
         const payload = { text: pending.text, user: pending.user, uid: (auth.currentUser && auth.currentUser.uid) || null, channel: pending.channel, pfp: pending.pfp, timestamp: serverTimestamp(), clientMsgId: clientId };
-        if (pending.image) payload.image = pending.image;
+        if (pending.images && pending.images.length) payload.images = pending.images;
         if (pending.imageW) { payload.imageW = pending.imageW; payload.imageH = pending.imageH; }
         if (pending.replyTo) payload.replyTo = pending.replyTo;
 
