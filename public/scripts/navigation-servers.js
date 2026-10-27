@@ -152,44 +152,84 @@
       document.getElementById('sm-join-tab').style.background = tab==='join'?'var(--bl)':'var(--bg-t)';
       document.getElementById('sm-join-tab').style.color = tab==='join'?'var(--accent-contrast)':'var(--white)';
     }
+
     async function createServerFromModal() {
       const name = document.getElementById('sm-name').value.trim(); if (!name) { appAlert('Enter a server name'); return; }
       const code = Math.random().toString(36).substring(2,8).toUpperCase();
-      const ref = await addDoc(collection(db,'servers'), { name, owner: user, ownerUid: (auth.currentUser&&auth.currentUser.uid)||null, inviteCode: code, members: [user], memberUids: [(auth.currentUser&&auth.currentUser.uid)||null], admins: [], channels: [{name:'general', id:'general'}], createdAt: serverTimestamp() });
+      const ref = await addDoc(collection(db,'servers'), {
+        name,
+        owner: user,
+        ownerUid: (auth.currentUser && auth.currentUser.uid) || null,
+        inviteCode: code,
+        members: [user],
+        memberUids: [(auth.currentUser && auth.currentUser.uid) || null],
+        admins: [],
+        channels: [{name:'general', id:'general'}],
+        createdAt: serverTimestamp()
+      });
       document.getElementById('sm-result').textContent = 'Created! Invite code: ' + code;
       await loadServers();
       switchServer(ref.id);
     }
+
     async function joinServerFromModal() {
       const code = document.getElementById('sm-code').value.trim(); if (!code) { appAlert('Enter an invite code'); return; }
       await joinServer(code);
       closeServerModal();
     }
+
     window.openServerModal = openServerModal;
     window.closeServerModal = closeServerModal;
     window.showServerTab = showServerTab;
     window.createServerFromModal = createServerFromModal;
     window.joinServerFromModal = joinServerFromModal;
+
     async function createServer() {
       const name = await appPrompt('Server name:'); if (!name) return;
       const code = Math.random().toString(36).substring(2,8).toUpperCase();
-      const ref = await addDoc(collection(db,'servers'), { name, owner: user, ownerUid: (auth.currentUser&&auth.currentUser.uid)||null, inviteCode: code, members: [user], memberUids: [(auth.currentUser&&auth.currentUser.uid)||null], admins: [], channels: [{name:'general', id:'general'}], createdAt: serverTimestamp() });
+      const ref = await addDoc(collection(db,'servers'), {
+        name,
+        owner: user,
+        ownerUid: (auth.currentUser && auth.currentUser.uid) || null,
+        inviteCode: code,
+        members: [user],
+        memberUids: [(auth.currentUser && auth.currentUser.uid) || null],
+        admins: [],
+        channels: [{name:'general', id:'general'}],
+        createdAt: serverTimestamp()
+      });
       appAlert('Server created! Invite code: ' + code);
       await loadServers();
       switchServer(ref.id);
     }
+
     async function joinServer(codeParam) {
-      const code = codeParam || await appPrompt('Invite code:'); if (!code) return;
-      const snap = await getDocs(query(collection(db,'servers'), where('inviteCode','==', code.trim().toUpperCase())));
+      const code = (codeParam || await appPrompt('Invite code:') || '').trim();
+      if (!code) return;
+
+      const snap = await getDocs(query(collection(db,'servers'), where('inviteCode','==', code.toUpperCase())));
       if (snap.empty) { appAlert('Invalid code'); return; }
+
       const s = snap.docs[0];
       const data = s.data();
-      if ((data.members||[]).includes(user)) { switchServer(s.id); return; }
-      await updateDoc(doc(db,'servers',s.id), { members: [...(data.members||[]), user] });
+
+      const members = Array.isArray(data.members) ? data.members : [];
+      if (members.includes(user)) {
+        switchServer(s.id);
+        return;
+      }
+
+      // Hardened self-join only: do not allow arbitrary user injection from the client.
+      await updateDoc(doc(db, 'servers', s.id), {
+        members: [...members, user],
+        memberUids: Array.from(new Set([...(Array.isArray(data.memberUids) ? data.memberUids : []), (auth.currentUser && auth.currentUser.uid) || null].filter(Boolean)))
+      });
+
       appAlert('Joined ' + data.name);
       await loadServers();
       switchServer(s.id);
     }
+
     async function loadServers() {
       const snap = await getDocs(query(collection(db,'servers'), where('members','array-contains', user)));
       servers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -197,6 +237,7 @@
       servers.forEach(s => { window.serverEmojis[s.id] = Array.isArray(s.emojis) ? s.emojis : []; });
       renderServerList();
     }
+
     function renderServerList() {
       const el = document.getElementById('server-list');
       el.innerHTML = servers.map(s => {
@@ -206,49 +247,79 @@
         return `<div class="si ${active?'active':''}" onclick="switchServer('${s.id}')" oncontextmenu="showServerCtx(event,'${s.id}')" title="${escHtml(s.name)}" style="${iconStyle}${accentStyle}">${s.icon?'':escHtml(s.name)[0].toUpperCase()}</div>`;
       }).join('');
      }
+
      let ctxServerId = null;
+
+     function getServerRole(server) {
+       const admins = Array.isArray(server && server.admins) ? server.admins : [];
+       const isOwner = !!server && server.owner === user;
+       const isAdmin = isOwner || admins.includes(user);
+       return { isOwner, isAdmin };
+     }
+
+     function getServerById(id) {
+       if (!id || !Array.isArray(servers)) return null;
+       return servers.find(s => s.id === id) || null;
+     }
+
+     function canManageServer(server) {
+       if (!server || !user) return false;
+       const { isOwner, isAdmin } = getServerRole(server);
+       return isOwner || isAdmin;
+     }
+
      function showServerCtx(e, sid) {
        e.preventDefault();
        e.stopPropagation();
        ctxServerId = sid;
        const m = document.getElementById('server-ctx');
        m.dataset.serverId = sid;
-       const s = servers.find(x=>x.id===sid);
-       const isOwner = s && s.owner === user;
-       const isAdmin = isOwner;
+       const s = getServerById(sid);
+       const canManage = s && canManageServer(s);
+
        document.getElementById('ctx-invite').style.display = 'block';
-       document.getElementById('ctx-settings').style.display = (s && s.owner === user) ? 'block' : 'none';
+       document.getElementById('ctx-settings').style.display = canManage ? 'block' : 'none';
        document.getElementById('ctx-leave').style.display = 'block';
        m.style.display = 'block';
        m.style.left = e.clientX + 'px';
        m.style.top = e.clientY + 'px';
      }
      function hideServerCtx() { document.getElementById('server-ctx').style.display = 'none'; }
+
      document.addEventListener('click', hideServerCtx);
-document.addEventListener('click', (e) => {
-  const p = document.getElementById('reaction-picker');
-  if (p && p.style.display !== 'none' && !p.contains(e.target) && !e.target.closest('[data-action="react"]')) hideReactionPicker();
-});
+     document.addEventListener('click', (e) => {
+       const p = document.getElementById('reaction-picker');
+       if (p && p.style.display !== 'none' && !p.contains(e.target) && !e.target.closest('[data-action="react"]')) hideReactionPicker();
+     });
+
      function openServerSettings(sid) {
        if (sid) ctxServerId = sid;
        hideServerCtx();
-       const s = servers.find(x=>x.id===ctxServerId); if (!s) return;
-       const isOwner = s.owner === user;
-       if (!isOwner) {
-         if (typeof appAlert === 'function') appAlert('Only the server owner can access settings.');
+       const s = getServerById(ctxServerId || sid);
+       if (!s) return;
+
+       const { isOwner, isAdmin } = getServerRole(s);
+       if (!isAdmin) {
+         if (typeof appAlert === 'function') appAlert('Only the server owner or admins can access settings.');
          return;
        }
-       const isAdmin = true;
+
        document.getElementById('ss-name').value = s.name || '';
        document.getElementById('ss-desc').value = s.description || '';
        document.getElementById('ss-icon-url').value = s.icon || '';
        document.getElementById('ss-banner-url').value = s.banner || '';
        document.getElementById('ss-accent').value = s.accent || '#57f287';
+
        const ssEmojis = document.getElementById('ss-emojis');
-       if (ssEmojis) ssEmojis.value = (s.emojis||[]).map(e => e.name + ':' + e.url).join('\n');
-       document.getElementById('ss-preview').innerHTML = s.banner ? `<img src="${escHtml(s.banner)}" style="width:100%;height:60px;object-fit:cover;border-radius:6px;">` : '';
+       if (ssEmojis) ssEmojis.value = (s.emojis || []).map(e => e.name + ':' + e.url).join('\n');
+
+       document.getElementById('ss-preview').innerHTML = s.banner
+         ? `<img src="${escHtml(s.banner)}" style="width:100%;height:60px;object-fit:cover;border-radius:6px;">`
+         : '';
+
        const adminsSection = document.getElementById('ss-admins-section');
        const deleteBtn = document.getElementById('ss-delete-btn');
+
        if (isOwner) {
          adminsSection.style.display = 'block';
          deleteBtn.style.display = 'inline-block';
@@ -257,43 +328,87 @@ document.addEventListener('click', (e) => {
          adminsSection.style.display = 'none';
          deleteBtn.style.display = 'none';
        }
-       const canEdit = isAdmin;
+
        ['ss-name','ss-desc','ss-icon-url','ss-banner-url','ss-icon-file','ss-banner-file'].forEach(id => {
-         const el = document.getElementById(id); if (el) el.disabled = !canEdit;
+         const el = document.getElementById(id);
+         if (el) el.disabled = false;
        });
+
        const ssm = document.getElementById('server-settings-modal');
-      ssm.style.display = 'flex';
-      requestAnimationFrame(() => { ssm.classList.add('visible'); ssm.querySelector('.modal-card').classList.add('visible'); });
+       if (ssm) {
+         ssm.style.display = 'flex';
+         requestAnimationFrame(() => {
+           ssm.classList.add('visible');
+           const card = ssm.querySelector('.modal-card');
+           if (card) card.classList.add('visible');
+         });
+       }
      }
+
      function renderMembersList(s) {
        const el = document.getElementById('ss-members');
-       const admins = s.admins || [];
-       el.innerHTML = (s.members||[]).map(m => {
-         const isAdmin = admins.includes(m);
+       if (!el || !s) return;
+
+       const admins = new Set(Array.isArray(s.admins) ? s.admins : []);
+       const members = Array.isArray(s.members) ? s.members : [];
+
+       el.innerHTML = members.map(m => {
          const isOwner = (m === s.owner);
+         const isAdmin = admins.has(m);
          let badge = isOwner ? ' (Owner)' : (isAdmin ? ' (Admin)' : '');
          let btn = '';
-         if (!isOwner && s.owner === user) {
+
+         if (s.owner === user && !isOwner) {
            btn = isAdmin
-             ? `<button onclick="toggleAdmin('${escHtml(m)}',false)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Remove Admin</button>`
-             : `<button onclick="toggleAdmin('${escHtml(m)}',true)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--bl);color:var(--accent-contrast);cursor:pointer;">Make Admin</button>`;
+             ? `<button onclick="toggleAdmin('${escHtml(m)}', false)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Remove Admin</button>`
+             : `<button onclick="toggleAdmin('${escHtml(m)}', true)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--bl);color:var(--accent-contrast);cursor:pointer;">Make Admin</button>`;
          }
+
          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bg-t);font-size:12px;color:var(--txt);"><span>${escHtml(m)}${badge}</span>${btn}</div>`;
        }).join('');
      }
+
      async function toggleAdmin(member, makeAdmin) {
-       const s = servers.find(x=>x.id===ctxServerId); if (!s) return;
-       const admins = new Set(s.admins || []);
-       if (makeAdmin) admins.add(member); else admins.delete(member);
-       await updateDoc(doc(db,'servers',ctxServerId), { admins: Array.from(admins) });
+       const s = getServerById(ctxServerId);
+       if (!s) return;
+
+       if (s.owner !== user) {
+         appAlert('Only the server owner can manage admin roles.');
+         return;
+       }
+
+       if (member === s.owner) {
+         appAlert('The owner cannot be changed through admin roles.');
+         return;
+       }
+
+       if (!Array.isArray(s.members) || !s.members.includes(member)) {
+         appAlert('That user is not a member of this server.');
+         return;
+       }
+
+       const admins = new Set(Array.isArray(s.admins) ? s.admins : []);
+       if (makeAdmin) admins.add(member);
+       else admins.delete(member);
+
+       await updateDoc(doc(db, 'servers', ctxServerId), { admins: Array.from(admins) });
        await loadServers();
-       const updated = servers.find(x=>x.id===ctxServerId);
+
+       const updated = getServerById(ctxServerId);
        if (updated) renderMembersList(updated);
      }
+
      async function deleteServer() {
-       const s = servers.find(x=>x.id===ctxServerId); if (!s) return;
-       if (s.owner !== user) { appAlert('Only the owner can delete the server'); return; }
+       const s = getServerById(ctxServerId);
+       if (!s) return;
+
+       if (s.owner !== user) {
+         appAlert('Only the owner can delete the server');
+         return;
+       }
+
        if (!(await appConfirm('Delete server "' + s.name + '"? This cannot be undone.'))) return;
+
        await deleteDoc(doc(db,'servers',ctxServerId));
        if (currentServer === ctxServerId) { currentServer = null; chan = null; mode='channels'; dmWith=null; }
        await loadServers();
@@ -301,37 +416,65 @@ document.addEventListener('click', (e) => {
        else if (servers.length > 0) { switchServer(servers[0].id); }
        else { document.querySelector('.sb h3').textContent='Channels'; document.getElementById('server-banner').style.display='none'; document.querySelector('.ch').innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`; updateHeader(); listen(); }
      }
+
      window.deleteServer = deleteServer;
      window.toggleAdmin = toggleAdmin;
-     function closeServerSettings() { const m = document.getElementById('server-settings-modal'); m.classList.remove('visible'); const c = m.querySelector('.modal-card'); if (c) c.classList.remove('visible'); setTimeout(() => { m.style.display = 'none'; }, 180); }
+
+     function closeServerSettings() {
+       const m = document.getElementById('server-settings-modal');
+       m.classList.remove('visible');
+       const c = m.querySelector('.modal-card');
+       if (c) c.classList.remove('visible');
+       setTimeout(() => { m.style.display = 'none'; }, 180);
+     }
+
      async function saveServerSettings() {
-       const s = servers.find(x=>x.id===ctxServerId); if (!s) return;
-       const isOwner = s.owner === user;
-       const isAdmin = isOwner || (s.admins||[]).includes(user);
-       if (!isAdmin) { appAlert('No permission'); return; }
+       const s = getServerById(ctxServerId);
+       if (!s) return;
+
+       const { isOwner, isAdmin } = getServerRole(s);
+       if (!isOwner && !isAdmin) {
+         appAlert('You do not have permission to save server settings.');
+         return;
+       }
+
        const name = document.getElementById('ss-name').value.trim() || s.name;
        const description = document.getElementById('ss-desc').value.trim();
        let icon = document.getElementById('ss-icon-url').value.trim();
        let banner = document.getElementById('ss-banner-url').value.trim();
-      const accent = document.getElementById('ss-accent').value.trim() || '#57f287';
+       const accent = document.getElementById('ss-accent').value.trim() || '#57f287';
+
        const iconFile = document.getElementById('ss-icon-file').files[0];
        const bannerFile = document.getElementById('ss-banner-file').files[0];
        if (iconFile) icon = await fileToDataUrl(iconFile);
        if (bannerFile) banner = await fileToDataUrl(bannerFile);
+
        const emojisRaw = (document.getElementById('ss-emojis').value || '').trim();
-       const emojis = emojisRaw.split('\n').map(line => {
-         const idx = line.indexOf(':');
-         if (idx < 0) return null;
-         const name = line.slice(0, idx).trim();
-         const url = line.slice(idx+1).trim();
-         if (!name || !url) return null;
-         return { name, url };
-       }).filter(Boolean);
-      await updateDoc(doc(db,'servers',ctxServerId), { name, description, icon, banner, accent, emojis });
+       const emojis = emojisRaw
+         ? emojisRaw.split('\n').map(line => {
+             const idx = line.indexOf(':');
+             if (idx < 0) return null;
+             const name = line.slice(0, idx).trim();
+             const url = line.slice(idx + 1).trim();
+             if (!name || !url) return null;
+             return { name, url };
+           }).filter(Boolean)
+         : [];
+
+       await updateDoc(doc(db,'servers',ctxServerId), {
+         name,
+         description,
+         icon,
+         banner,
+         accent,
+         emojis
+       });
+
        await loadServers();
        if (currentServer === ctxServerId) switchServer(ctxServerId);
        closeServerSettings();
      }
+
      function fileToDataUrl(file) {
        return new Promise((resolve, reject) => {
          if (file.size > 250000) { reject(new Error('Image too large (max 250KB)')); return; }
@@ -341,45 +484,61 @@ document.addEventListener('click', (e) => {
          r.readAsDataURL(file);
        });
      }
+
      async function leaveServer() {
        hideServerCtx();
-       const s = servers.find(x=>x.id===ctxServerId); if (!s) return;
+       const s = getServerById(ctxServerId);
+       if (!s) return;
+
+       if (s.owner === user) {
+         appAlert('The owner must delete the server instead of leaving it.');
+         return;
+       }
+
        if (!(await appConfirm('Leave ' + s.name + '?'))) return;
-       const remaining = (s.members||[]).filter(m=>m!==user);
+
+       const remaining = (s.members || []).filter(m => m !== user);
+       const admins = (s.admins || []).filter(m => m !== user);
+
        if (remaining.length === 0) {
-         // Last member leaving - delete the server entirely
          await deleteDoc(doc(db,'servers',ctxServerId));
        } else {
-         await updateDoc(doc(db,'servers',ctxServerId), { members: remaining });
+         await updateDoc(doc(db,'servers',ctxServerId), {
+           members: remaining,
+           admins
+         });
        }
+
        if (currentServer === ctxServerId) { currentServer = null; chan = null; mode='channels'; dmWith=null; }
        await loadServers();
        if (currentServer) switchServer(currentServer);
        else if (servers.length > 0) { switchServer(servers[0].id); }
        else { document.querySelector('.sb h3').textContent='Channels'; document.getElementById('server-banner').style.display='none'; document.querySelector('.ch').innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`; updateHeader(); listen(); }
      }
+
      document.getElementById('ctx-invite').onclick = (e) => { e.stopPropagation(); const sid = document.getElementById('server-ctx').dataset.serverId; hideServerCtx(); openInviteModal(sid); };
      document.getElementById('ctx-settings').onclick = (e) => { e.stopPropagation(); const sid = document.getElementById('server-ctx').dataset.serverId; hideServerCtx(); openServerSettings(sid); };
      document.getElementById('ctx-leave').onclick = (e) => { e.stopPropagation(); hideServerCtx(); leaveServer(); };
+
      window.openLightbox = (url, label) => {
-  const lb = document.getElementById('lightbox');
-  const img = document.getElementById('lightbox-img');
-  const info = document.getElementById('lightbox-info');
-  if (!lb || !img) return;
-  img.src = url;
-  info.textContent = label || '';
-  lb.classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
-};
-window.closeLightbox = () => {
-  const lb = document.getElementById('lightbox');
-  const img = document.getElementById('lightbox-img');
-  if (!lb) return;
-  lb.classList.add('hidden');
-  if (img) img.src = '';
-  document.body.style.overflow = '';
-};
-window.hideServerCtx = hideServerCtx;
+       const lb = document.getElementById('lightbox');
+       const img = document.getElementById('lightbox-img');
+       const info = document.getElementById('lightbox-info');
+       if (!lb || !img) return;
+       img.src = url;
+       info.textContent = label || '';
+       lb.classList.remove('hidden');
+       document.body.style.overflow = 'hidden';
+     };
+     window.closeLightbox = () => {
+       const lb = document.getElementById('lightbox');
+       const img = document.getElementById('lightbox-img');
+       if (!lb) return;
+       lb.classList.add('hidden');
+       if (img) img.src = '';
+       document.body.style.overflow = '';
+     };
+     window.hideServerCtx = hideServerCtx;
      window.showServerCtx = showServerCtx;
      window.openServerSettings = openServerSettings;
      window.closeServerSettings = closeServerSettings;
@@ -424,6 +583,7 @@ window.hideServerCtx = hideServerCtx;
       }
       listen();
     }
+
     window.switchServerChannel = (sid, cname) => {
       const s = servers.find(x=>x.id===sid);
       if (!s) return;
@@ -445,9 +605,17 @@ window.hideServerCtx = hideServerCtx;
       }
       listen();
     };
+
     async function createChannel(sid) {
       const name = await appPrompt('Channel name:'); if (!name) return;
       const s = servers.find(x=>x.id===sid); if (!s) return;
+
+      const { isOwner, isAdmin } = getServerRole(s);
+      if (!isOwner && !isAdmin) {
+        appAlert('Only the owner or admins can create channels.');
+        return;
+      }
+
       const channels = s.channels || [{name:'general',id:'general'}];
       if (channels.some(c=>c.name===name)) { appAlert('Channel already exists'); return; }
       channels.push({name, id: name});
@@ -455,12 +623,14 @@ window.hideServerCtx = hideServerCtx;
       await loadServers();
       switchServerChannel(sid, name);
     }
+
     async function shareInvite(sid) {
       const s = servers.find(x=>x.id===sid); if (!s) return;
       const link = window.location.origin + window.location.pathname + '?join=' + s.inviteCode;
       try { await navigator.clipboard.writeText(link); appAlert('Invite link copied:\n' + link); }
       catch(e) { appAlert('Invite link (copy manually):\n' + link); }
     }
+
     window.createChannel = createChannel;
     window.shareInvite = shareInvite;
     window.serverMenu = serverMenu;
@@ -533,7 +703,6 @@ window.hideServerCtx = hideServerCtx;
       const checked = document.querySelectorAll('#invite-friends-list input[type="checkbox"]:checked');
       if (checked.length === 0) { appAlert('Select at least one friend to invite.'); return; }
       const inviteLink = window.location.origin + window.location.pathname + '?join=' + s.inviteCode;
-      // Verify friendship before sending (safety check)
       const friendSet = new Set();
       try {
         const outgoing = await getDocs(query(collection(db,"friends"), where("from","==",user)));
@@ -541,6 +710,7 @@ window.hideServerCtx = hideServerCtx;
         outgoing.docs.forEach(d => { if (d.data().status === "accepted" && d.data().to) friendSet.add(d.data().to); });
         incoming.docs.forEach(d => { if (d.data().status === "accepted" && d.data().from) friendSet.add(d.data().from); });
       } catch (e) { console.error('Failed to verify friends:', e); }
+
       for (const cb of checked) {
         const friend = cb.value;
         if (!friendSet.has(friend)) {
