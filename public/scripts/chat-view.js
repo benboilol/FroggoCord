@@ -325,8 +325,14 @@ let pendingFiles = []; // array of {file, preview}
         msgBox._ro = observer;
       }
       observeChatImages();
+      const msgContainer = document.getElementById('message-container');
       msgBox.querySelectorAll('img').forEach(img => {
-        if (!img.complete) img.addEventListener('load', () => { if (msgsPinned) pinMsgsBottom(); }, { once: true });
+        if (!img.complete) img.addEventListener('load', () => {
+          if (msgContainer && typeof msgsPinned !== 'undefined' && msgsPinned &&
+              msgContainer.scrollHeight - msgContainer.scrollTop - msgContainer.clientHeight < 80) {
+            pinMsgsBottom();
+          }
+        }, { once: true });
       });
 
       if (preserveScroll) {

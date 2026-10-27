@@ -214,12 +214,18 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
         if (en.isIntersecting) {
           if (img.dataset.src && !img.getAttribute('src')) {
             img.src = img.dataset.src;
+            const msgContainer = document.getElementById('message-container');
             img.addEventListener('load', () => {
               if (img.naturalWidth && img.naturalHeight) {
                 chatGifDims[img.dataset.src] = { w: img.naturalWidth, h: img.naturalHeight };
                 img.style.aspectRatio = img.naturalWidth + '/' + img.naturalHeight;
               }
-              if (typeof msgsPinned !== 'undefined' && msgsPinned) pinMsgsBottom();
+              // Only re-pin to bottom if the user is actually near the bottom;
+              // otherwise a loading GIF mid-scroll would yank them to the bottom.
+              if (msgContainer && typeof msgsPinned !== 'undefined' && msgsPinned &&
+                  msgContainer.scrollHeight - msgContainer.scrollTop - msgContainer.clientHeight < 80) {
+                pinMsgsBottom();
+              }
             }, { once: true });
           }
         }
