@@ -296,3 +296,30 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
       }
     });
 
+window.showFavoriteGifs = () => {
+  const tip = document.getElementById('fav-gifs-tooltip');
+  if (!tip) return;
+  if (tip.style.display === 'flex') { tip.style.display = 'none'; return; }
+  const favs = [...(window.gifFavorites || new Set())];
+  if (!favs.length) {
+    tip.innerHTML = '<div style="color:var(--mut); text-align:center; padding:20px;">No favorite GIFs yet. Hover a GIF and click the star.</div>';
+  } else {
+    tip.innerHTML = '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:6px;">' +
+      favs.map(u => `<img data-src="${escHtml(u)}" src="" alt="gif" loading="lazy" style="width:100%; border-radius:6px; cursor:pointer; aspect-ratio:4/3;" onclick="sendGif('${escHtml(u)}'); document.getElementById('fav-gifs-tooltip').style.display='none';">`).join('') +
+      '</div>';
+    // lazy load
+    tip.querySelectorAll('img[data-src]').forEach(img => {
+      const s = img.dataset.src;
+      if (s) { img.src = s; }
+    });
+  }
+  tip.style.display = 'flex';
+  tip.style.flexDirection = 'column';
+};
+document.addEventListener('click', (e) => {
+  const tip = document.getElementById('fav-gifs-tooltip');
+  const btn = document.getElementById('fav-gifs-btn');
+  if (tip && tip.style.display !== 'none' && !tip.contains(e.target) && e.target !== btn) {
+    tip.style.display = 'none';
+  }
+});
