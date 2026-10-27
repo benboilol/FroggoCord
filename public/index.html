@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>FroggoCord</title>
-    <link rel="stylesheet" href="style.css?v=20261025-1109">
-    <link id="theme-stylesheet" rel="stylesheet" href="themes/fulgurite.css?v=20261025-1109">
-    <link rel="icon" href="favicon.ico?v=2" type="image/x-icon">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="stylesheet" href="style.css?v=20261026-restore1">
+    <link id="theme-stylesheet" rel="stylesheet" href="themes/fulgurite.css?v=20261026-restore1">
+    <link rel="icon" href="favicon.ico?v=20261026-restore1" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20261026-restore1">
 </head>
 <body>
 
@@ -203,6 +203,12 @@
             <option value="medium" selected>Medium</option>
             <option value="large">Large</option>
         </select>
+        <label class="field-label" for="sa-time-format">Timestamp format</label>
+        <select id="sa-time-format" class="inp2">
+            <option value="system">System default</option>
+            <option value="12-hour">12-hour</option>
+            <option value="24-hour">24-hour</option>
+        </select>
         <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
         <input type="checkbox" id="sa-high-contrast" style="margin:0;">
         <span>High contrast mode</span>
@@ -215,6 +221,7 @@
         <input type="checkbox" id="sa-screen-reader" style="margin:0;">
         <span>Screen reader announcements</span>
         </label>
+        <p class="settings-description" style="margin-top:12px;">Source code can be found at <a href="https://github.com/benboilol/FroggoCord" target="_blank" rel="noopener noreferrer" style="color:var(--bl);text-decoration:underline;">https://github.com/benboilol/FroggoCord</a></p>
         </section>
         <div class="modal-actions" style="justify-content:space-between;">
         <button id="settings-reset" class="btn btn-danger" type="button" style="margin-left:auto;">Reset to defaults</button>
@@ -238,7 +245,7 @@
 
     <div id="mobile-nav-backdrop" aria-hidden="true"></div>
     <div class="sv" id="server-bar">
-    <div class="si" id="dm-btn" onclick="toggleDMView()" title="Direct Messages" style="font-size:22px;"><img src="froggocord_icon.svg" alt="Direct Messages" style="width: 22px; height: 22px;"></div>
+    <div class="si" id="dm-btn" onclick="toggleDMView()" title="Direct Messages" style="font-size:22px;"><img src="froggocord_logo.svg" alt="Direct Messages" style="width: 22px; height: 22px;"></div>
     <div class="rail-divider"></div>
     <div id="server-list"></div>
     <div class="si add" id="add-server-btn" onclick="openServerModal()" title="Add a Server">+</div>
@@ -328,6 +335,6 @@
     <h3 style="margin-top: 16px;">Requests</h3>
     <div id="req-list"></div>
     </div>
-<script type="module" src="scripts/loader.js?v=20261025-1109"></script>
+<script type="module" src="scripts/loader.js?v=20261026-restore1"></script>
 </body>
 </html>

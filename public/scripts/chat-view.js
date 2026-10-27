@@ -78,7 +78,11 @@
         const d = ts && ts.toDate ? ts.toDate() : null;
         if (!d) return '';
         const same = d.toDateString() === new Date().toDateString();
-        return (same ? 'Today at ' : d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' at ') + d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+        const format = settings?.accessibility?.timeFormat || 'system';
+        const timeOptions = { hour: 'numeric', minute: '2-digit' };
+        if (format === '12-hour') timeOptions.hourCycle = 'h12';
+        else if (format === '24-hour') timeOptions.hourCycle = 'h23';
+        return (same ? 'Today at ' : d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' at ') + d.toLocaleTimeString([], timeOptions);
       } catch (e) { return ''; }
     }
     const msgBox = document.getElementById('message-container');
@@ -274,6 +278,7 @@ let pendingFile = null; let pendingPreview = null;
         pinMsgsBottom();
       }
     }
+    window.refreshMessageTimestamps = () => renderMessagePages();
 
     function subscribeMessagePage(afterDocument = null) {
       const channel = activeMessagesChannel;

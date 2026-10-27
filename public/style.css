@@ -53,12 +53,12 @@ img, button, span, input { border: none; outline: none; }
 .up-btn:hover { background: var(--hover); }
 
 /* ---------- chat ---------- */
-.ca { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; background: var(--chat); }
+.ca { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; min-height: 0; background: var(--chat); }
 .chat-header { height: 48px; display: flex; align-items: center; gap: 8px; padding: 0 16px; box-shadow: 0 1px 0 var(--shadow-line); flex-shrink: 0; background: var(--chat); z-index: 2; min-width: 0; }
 .chat-header .hash { color: var(--mut); font-size: 22px; font-weight: 500; }
 .chat-header .hname { color: var(--bright); font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chat-header .topic { color: var(--mut); font-size: 13px; font-weight: 400; border-left: 1px solid var(--border); padding-left: 8px; margin-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.msgs { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0; display: flex; flex-direction: column; min-width: 0; }
+.msgs { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; padding: 0; display: flex; flex-direction: column; min-width: 0; }
 .msgs-inner { padding: 16px 16px 8px; display: flex; flex-direction: column; min-width: 0; }
 .msgs-empty { color: var(--mut); text-align: center; padding: 40px 16px; }
 .message-history-status { color: var(--mut); text-align: center; font-size: 12px; padding: 6px; min-height: 18px; }
@@ -330,3 +330,9 @@ body.high-contrast button { border:1px solid #fff; }
   .composer .attach, .composer .emoji { min-width: 32px; padding: 2px; }
   .composer .plus { width: 23px; height: 23px; }
 }
+
+/* ---------- app update notice ---------- */
+#app-update-notice { position: fixed; z-index: 3000; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); width: min(560px, calc(100vw - 24px)); display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--txt); box-shadow: 0 8px 28px var(--overlay-shadow); font-size: 14px; }
+#app-update-notice button { flex: 0 0 auto; border-radius: 5px; padding: 8px 12px; background: var(--bl); color: var(--accent-contrast); font-weight: 600; cursor: pointer; }
+#app-update-notice button:hover { filter: brightness(1.08); }
+@media (max-width: 480px) { #app-update-notice { align-items: stretch; flex-direction: column; gap: 8px; } }
