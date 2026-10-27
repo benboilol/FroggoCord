@@ -514,7 +514,7 @@ let pendingFile = null; let pendingPreview = null;
         document.getElementById('my-pfp').textContent = user[0].toUpperCase();
         document.getElementById('up-name').textContent = user;
         if (Notification.permission !== "granted") Notification.requestPermission();
-        await setDoc(doc(db,"presence",user),{user,status:'online',lastActive:serverTimestamp()},{merge:true});
+        await setDoc(doc(db,"presence",user),{user,uid:(auth.currentUser&&auth.currentUser.uid)||null,status:'online',lastActive:serverTimestamp()},{merge:true}).catch((e)=>{ console.error('presence write failed', e); });
         setDoc(doc(db,"users",user),{user,uid:(auth.currentUser&&auth.currentUser.uid)||null,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
         onSnapshot(collection(db,"users"),(snap)=>{
           allUsers = []; userPfpMap.clear(); userPrivacyMap.clear();

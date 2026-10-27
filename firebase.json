@@ -32,7 +32,7 @@
     ],
     "rewrites": [
       {
-        "source": "**",
+        "source": "/channel/**",
         "destination": "/index.html"
       }
     ]
