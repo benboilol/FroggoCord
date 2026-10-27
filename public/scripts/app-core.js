@@ -95,7 +95,7 @@ const {
       setThemeSelection('custom');
     }
 
-    function applyTheme(theme, persist = true) {
+﻿    function applyTheme(theme, persist = true) {
       if (theme === 'custom') {
         applyCustomTheme(customThemeColors);
         if (persist) {
@@ -111,41 +111,19 @@ const {
         setThemeSelection(theme);
         return Promise.resolve(true);
       }
-
-      const requestId = ++themeLoadId;
-      const previousHref = themeLink.href;
-      const previousTheme = activeTheme;
+      // Apply optimistically; the stylesheet load is async and unreliable to await.
+      activeTheme = theme;
+      settings.theme = theme;
+      themeLink.dataset.theme = theme;
+      setThemeSelection(theme);
+      themeLink.href = 'themes/' + theme + '.css?v=' + THEME_ASSET_VERSION;
+      if (persist) {
+        try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch (e) {}
+        saveSettings();
+      }
       const status = document.getElementById('theme-status');
-      if (status) status.textContent = 'Applying ' + theme[0].toUpperCase() + theme.slice(1) + '…';
-
-      return new Promise(resolve => {
-        themeLink.onload = () => {
-          if (requestId !== themeLoadId) return resolve(false);
-          activeTheme = theme;
-          settings.theme = theme;
-          themeLink.dataset.theme = theme;
-          setThemeSelection(theme);
-          if (persist) {
-            try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch (e) {}
-          }
-          if (status) status.textContent = '';
-          resolve(true);
-        };
-        themeLink.onerror = () => {
-          if (requestId !== themeLoadId) return resolve(false);
-          themeLink.onload = null;
-          themeLink.onerror = null;
-          themeLink.href = previousHref;
-          activeTheme = previousTheme;
-          setThemeSelection(previousTheme);
-          if (!persist) {
-            try { localStorage.removeItem(THEME_STORAGE_KEY); } catch (e) {}
-          }
-          if (status) status.textContent = 'Could not load that theme. Your current theme is unchanged.';
-          resolve(false);
-        };
-        themeLink.href = 'themes/' + theme + '.css?v=' + THEME_ASSET_VERSION;
-      });
+      if (status) status.textContent = '';
+      return Promise.resolve(true);
     }
 
     function openSettings() {
