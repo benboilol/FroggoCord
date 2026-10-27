@@ -13,6 +13,7 @@ window.froggocordFirebase = {
 const appScripts = [
   'app-core.js',
   'navigation-servers.js',
+  'server-permissions.js',
   'message-actions.js',
   'chat-view.js'
 ];
