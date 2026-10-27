@@ -15,9 +15,9 @@ service cloud.firestore {
         && request.resource.data.user.size() > 0
         && request.resource.data.user.size() <= 32;
       allow update: if isAuth()
-        && (resource.data.uid == request.auth.uid || !('uid' in resource.data))
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.user == resource.data.user;
+        && (resource.data.uid == request.auth.uid || !('uid' in resource.data) || resource.data.user == username())
+        && request.resource.data.user == resource.data.user
+        && (!('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid);
       allow delete: if isAuth() && resource.data.uid == request.auth.uid;
     }
 
@@ -26,8 +26,7 @@ service cloud.firestore {
       allow read: if isAuth();
       allow write: if isAuth()
         && userId == username()
-        && request.resource.data.uid == request.auth.uid
-        && (resource == null || !('uid' in resource.data) || resource.data.uid == request.auth.uid);
+        && (!('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid);
     }
 
     // Messages: create requires uid matches auth; update/delete owner only; size limits.
@@ -42,10 +41,10 @@ service cloud.firestore {
         && request.resource.data.channel.size() <= 128;
       allow update: if isAuth()
         && (resource.data.uid == request.auth.uid || (!('uid' in resource.data) && resource.data.user == username()))
-        && request.resource.data.uid == request.auth.uid
         && request.resource.data.user == resource.data.user
         && request.resource.data.text is string
-        && request.resource.data.text.size() <= 4000;
+        && request.resource.data.text.size() <= 4000
+        && (!('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid);
       allow delete: if isAuth() && (resource.data.uid == request.auth.uid || (!('uid' in resource.data) && resource.data.user == username()));
     }
 
@@ -67,7 +66,7 @@ service cloud.firestore {
 
     // Servers: readable by members; create by owner; update by members (owner immutable); delete by owner.
     match /servers/{serverId} {
-      allow read: if isAuth() && username() in resource.data.members;
+      allow read: if isAuth() && (resource.data.members == null || username() in resource.data.members);
       allow create: if isAuth()
         && request.resource.data.owner == username()
         && request.resource.data.ownerUid == request.auth.uid
@@ -78,9 +77,9 @@ service cloud.firestore {
       allow update: if isAuth()
         && username() in resource.data.members
         && request.resource.data.owner == resource.data.owner
-        && (request.resource.data.ownerUid == resource.data.ownerUid || !('ownerUid' in resource.data))
         && request.resource.data.members is list
-        && request.resource.data.members.size() <= 500;
+        && request.resource.data.members.size() <= 500
+        && (!('ownerUid' in request.resource.data) || request.resource.data.ownerUid == resource.data.ownerUid || !('ownerUid' in resource.data));
       allow delete: if isAuth() && resource.data.owner == username();
     }
 
