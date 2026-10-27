@@ -548,10 +548,18 @@ const {
     // Pending message tracking for sending/sent/failed states
     let pendingMessages = [];
 
+    let _notifyDebounce = null;
     function notifyPendingChanged() {
-      if (typeof renderMessagePages === 'function') {
+      if (typeof renderMessagePages !== 'function') return;
+      if (_notifyDebounce) clearTimeout(_notifyDebounce);
+      _notifyDebounce = setTimeout(() => {
+        _notifyDebounce = null;
         renderMessagePages({ preserveScroll: true });
-      }
+      }, 40);
+    }
+    function notifyPendingChangedNow() {
+      if (_notifyDebounce) { clearTimeout(_notifyDebounce); _notifyDebounce = null; }
+      if (typeof renderMessagePages === 'function') renderMessagePages({ preserveScroll: true });
     }
 
     window.sendMessage = async () => {
