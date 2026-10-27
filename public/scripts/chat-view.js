@@ -526,7 +526,7 @@ let pendingFile = null; let pendingPreview = null;
           });
           renderUserList();
           if (mode === 'dms') renderSidebar();
-        });
+        }, (err) => { console.error('users snapshot failed', err); });
         
         // [FIX APPLIED] Removed the heavy getDocs(collection(db,"messages")) query here that was causing massive read counts on load.
 
