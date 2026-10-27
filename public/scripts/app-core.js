@@ -95,7 +95,7 @@ const {
       setThemeSelection('custom');
     }
 
-﻿    function applyTheme(theme, persist = true) {
+    function applyTheme(theme, persist = true) {
       if (theme === 'custom') {
         applyCustomTheme(customThemeColors);
         if (persist) {
