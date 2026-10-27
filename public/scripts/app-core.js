@@ -28,7 +28,7 @@ const {
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
     let chan = null, user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'dms', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
-    let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map();
+    let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map();
     const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit
     const IDLE_MS = 120000;
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
@@ -198,7 +198,7 @@ const {
       status: 'online',
       notifications: { desktop: true, sound: true, mentions: true, dm: true },
       privacy: { onlineStatus: true, dmAnyone: true, activity: true },
-      profile: { color: '#57f287', banner: '', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
+      profile: { color: '#57f287', banner: '', background: '', accent: '#57f287', decoration: '', effect: false, gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
       accessibility: { fontSize: 'medium', timeFormat: 'system', highContrast: false, reducedMotion: false, screenReader: false, chatDensity: 'cozy', autoTheme: { enabled: false, timezone: 'auto', dayTheme: 'fulgurite', nightTheme: 'obsidian', dayStart: 7, nightStart: 19 } }
     };
     const SETTINGS_STORAGE_KEY = 'froggocord-settings';
@@ -256,6 +256,10 @@ const {
       if (pgd) pgd.value = (prof.gradient && prof.gradient.direction) || 'to right';
       const pbp = document.getElementById('sp-profile-banner-preview');
       if (pbp) { const b = prof.banner; if (b) { pbp.style.backgroundImage = 'url('+b+')'; } else { pbp.style.backgroundImage = 'none'; } }
+      const pbg = document.getElementById('sp-profile-bg'); if (pbg) pbg.value = prof.background || '';
+      const pef = document.getElementById('sp-profile-effect'); if (pef) pef.checked = !!prof.effect;
+      const pac = document.getElementById('sp-profile-accent'); if (pac) pac.value = prof.accent || prof.color || '#57f287';
+      const pdc = document.getElementById('sp-profile-decoration'); if (pdc) pdc.value = prof.decoration || '';
       updateProfilePreview();
       // Auto theme population
       const at = settings.accessibility.autoTheme || SETTINGS_DEFAULTS.accessibility.autoTheme;
@@ -468,6 +472,33 @@ const {
         saveSettings();
         updateProfilePreview();
       });
+    });
+    const pbgEl = document.getElementById('sp-profile-bg');
+    if (pbgEl) pbgEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.background = pbgEl.value.trim();
+      saveSettings();
+      if (user) setDoc(doc(db,'users',user),{user,background:prof.background,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+    });
+    const pefEl = document.getElementById('sp-profile-effect');
+    if (pefEl) pefEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.effect = pefEl.checked;
+      saveSettings();
+    });
+    const pacEl = document.getElementById('sp-profile-accent');
+    if (pacEl) pacEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.accent = pacEl.value;
+      saveSettings();
+      if (user) setDoc(doc(db,'users',user),{user,accent:prof.accent,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+    });
+    const pdcEl = document.getElementById('sp-profile-decoration');
+    if (pdcEl) pdcEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.decoration = pdcEl.value.trim();
+      saveSettings();
+      if (user) setDoc(doc(db,'users',user),{user,decoration:prof.decoration,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
     });
     const pge = document.getElementById('sp-profile-gradient-enabled');
     if (pge) pge.addEventListener('change', () => {

@@ -239,10 +239,10 @@ textarea.inp2 { resize: vertical; }
 #auth-switch-btn { color: var(--link); cursor: pointer; font-weight: 500; }
 #auth-switch-btn:hover { text-decoration: underline; }
 /* ---------- user settings and theme picker ---------- */
-.settings-card { width: 520px; }
+.settings-card { width: 680px; max-width: 92vw; max-height: 85vh; overflow-y: auto; overflow-x: hidden; }
 .settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .settings-heading h3 { margin-bottom: 12px; }
-.settings-close { background: transparent; color: var(--mut); cursor: pointer; font-size: 18px; padding: 4px 8px; border-radius: 4px; }
+.settings-close { background: transparent; color: var(--mut); cursor: pointer; font-size: 22px; padding: 4px 10px; border-radius: 4px; font-weight: 700; }
 .settings-close:hover { background: var(--hover); color: var(--txt); }
 .settings-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
 .settings-tab { color: var(--bright); background: transparent; border-bottom: 2px solid var(--bl); padding: 8px 12px; font-weight: 600; cursor: default; }

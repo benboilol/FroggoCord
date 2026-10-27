@@ -274,6 +274,16 @@
         <label class="field-label" for="sp-profile-banner-file">Profile banner image</label>
         <input type="file" id="sp-profile-banner-file" accept="image/*" style="margin:8px 0;">
         <div id="sp-profile-banner-preview" style="margin-top:8px;height:60px;border-radius:8px;background:var(--bg-t);background-size:cover;background-position:center;"></div>
+        <label class="field-label" for="sp-profile-bg">Profile background image URL</label>
+        <input id="sp-profile-bg" class="inp2" placeholder="https://...">
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="sp-profile-effect" style="margin:0;">
+        <span>Enable profile effects/animation</span>
+        </label>
+        <label class="field-label" for="sp-profile-accent">Custom accent color</label>
+        <input type="color" id="sp-profile-accent" value="#57f287" style="width:60px;height:36px;border:none;background:none;cursor:pointer;">
+        <label class="field-label" for="sp-profile-decoration">Profile decoration URL</label>
+        <input id="sp-profile-decoration" class="inp2" placeholder="https://.../decoration.png">
         </section>
         <div class="modal-actions" style="justify-content:space-between;">
         <button id="settings-reset" class="btn btn-danger" type="button" style="margin-left:auto;">Reset to defaults</button>

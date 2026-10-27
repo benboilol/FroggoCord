@@ -3,7 +3,10 @@
       const modal = document.getElementById('profile-modal');
       const banner = document.getElementById('prof-banner');
       const ub = (typeof userBannerMap !== 'undefined') ? userBannerMap.get(u) : null;
-      if (banner) { if (ub) { banner.style.backgroundImage = 'url('+ub+')'; } else { banner.style.backgroundImage = 'none'; } }
+      if (banner) { if (ub) { banner.style.backgroundImage = 'url('+escHtml(ub)+')'; } else { banner.style.backgroundImage = 'none'; } }
+      const modalCard = modal.querySelector('.modal-card');
+      const bg = (typeof userBackgroundMap !== 'undefined') ? userBackgroundMap.get(u) : null;
+      if (modalCard) { if (bg) { modalCard.style.backgroundImage = 'url('+escHtml(bg)+')'; modalCard.style.backgroundSize = 'cover'; } else { modalCard.style.backgroundImage = ''; } }
       const av = document.getElementById('prof-avatar');
       const upfp = (typeof userPfpMap !== 'undefined') ? userPfpMap.get(u) : null;
       const hasPfp = upfp && !upfp.startsWith('file:///');
@@ -36,7 +39,9 @@
           pname.style.background = '';
           pname.style.webkitBackgroundClip = '';
           pname.style.backgroundClip = '';
-          pname.style.color = '';
+          const accent = (typeof userAccentMap !== 'undefined') ? userAccentMap.get(u) : null;
+          if (accent) pname.style.color = accent;
+          else pname.style.color = '';
         }
       } catch (e) {}
       const pres = Array.from(document.getElementById('user-list').children).find(el => el.dataset.user === u);
@@ -51,7 +56,12 @@
             if (servers.some(srv => (srv.admins||[]).includes(u))) badges.push('Admin');
           }
         } catch (e) {}
-        badgesEl.innerHTML = badges.map(b => '<span style="background:var(--bg-t);color:var(--bright);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;border:1px solid var(--hover);">' + escHtml(b) + '</span>').join('');
+        const dec = (typeof userDecorationMap !== 'undefined') ? userDecorationMap.get(u) : null;
+        if (dec) badges.push('<img src="'+escHtml(dec)+'" alt="decoration" style="width:20px;height:20px;border-radius:4px;display:block;">');
+        badgesEl.innerHTML = badges.map(b => {
+          if (b.startsWith('<img')) return '<span style="display:inline-block;margin:2px;">'+b+'</span>';
+          return '<span style="background:var(--bg-t);color:var(--bright);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;border:1px solid var(--hover);display:inline-block;margin:2px;">'+escHtml(b)+'</span>';
+        }).join('');
       }
       const actions = document.getElementById('prof-actions');
       // Show loading state immediately to avoid perceived freeze
@@ -552,6 +562,9 @@ let pendingFiles = []; // array of {file, preview}
             if (data.user) allUsers.push(data.user);
             if (data.user && data.pfp) userPfpMap.set(data.user, data.pfp);
             if (data.user && data.banner) userBannerMap.set(data.user, data.banner);
+            if (data.user && data.background) userBackgroundMap.set(data.user, data.background);
+            if (data.user && data.accent) userAccentMap.set(data.user, data.accent);
+            if (data.user && data.decoration) userDecorationMap.set(data.user, data.decoration);
             if (data.user && data.privacy) userPrivacyMap.set(data.user, data.privacy);
           });
           renderUserList();
