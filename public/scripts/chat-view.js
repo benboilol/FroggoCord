@@ -13,7 +13,29 @@
         av.textContent = (u||'?')[0].toUpperCase();
         av.style.textIndent = '0';
       }
-      document.getElementById('prof-name').textContent = u;
+      const pname = document.getElementById('prof-name');
+      pname.textContent = u;
+      try {
+        const prof = (typeof settings !== 'undefined' && settings.profile) ? settings.profile : null;
+        if (prof && u === user) {
+          if (prof.gradient && prof.gradient.enabled) {
+            pname.style.background = 'linear-gradient(' + (prof.gradient.direction||'to right') + ', ' + (prof.gradient.from||prof.color) + ', ' + (prof.gradient.to||prof.color) + ')';
+            pname.style.webkitBackgroundClip = 'text';
+            pname.style.backgroundClip = 'text';
+            pname.style.color = 'transparent';
+          } else {
+            pname.style.background = '';
+            pname.style.webkitBackgroundClip = '';
+            pname.style.backgroundClip = '';
+            pname.style.color = prof.color || '';
+          }
+        } else {
+          pname.style.background = '';
+          pname.style.webkitBackgroundClip = '';
+          pname.style.backgroundClip = '';
+          pname.style.color = '';
+        }
+      } catch (e) {}
       const pres = Array.from(document.getElementById('user-list').children).find(el => el.dataset.user === u);
       const dot = pres && pres.querySelector('.status-dot');
       document.getElementById('prof-status').textContent = dot ? (dot.getAttribute('title') || 'Online') : 'Offline';

@@ -223,6 +223,7 @@ const {
       status: 'online',
       notifications: { desktop: true, sound: true, mentions: true, dm: true },
       privacy: { onlineStatus: true, dmAnyone: true, activity: true },
+      profile: { color: '#57f287', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
       accessibility: { fontSize: 'medium', timeFormat: 'system', highContrast: false, reducedMotion: false, screenReader: false, autoTheme: { enabled: false, timezone: 'auto', dayTheme: 'fulgurite', nightTheme: 'obsidian', dayStart: 7, nightStart: 19 } }
     };
     const SETTINGS_STORAGE_KEY = 'froggocord-settings';
@@ -236,6 +237,7 @@ const {
           settings = { ...SETTINGS_DEFAULTS, ...parsed };
           if (parsed.notifications) settings.notifications = { ...SETTINGS_DEFAULTS.notifications, ...parsed.notifications };
           if (parsed.privacy) settings.privacy = { ...SETTINGS_DEFAULTS.privacy, ...parsed.privacy };
+          if (parsed.profile) settings.profile = { ...SETTINGS_DEFAULTS.profile, ...parsed.profile, gradient: { ...SETTINGS_DEFAULTS.profile.gradient, ...(parsed.profile.gradient||{}) } };
           if (parsed.accessibility) { settings.accessibility = { ...SETTINGS_DEFAULTS.accessibility, ...parsed.accessibility }; if (parsed.accessibility.autoTheme) settings.accessibility.autoTheme = { ...SETTINGS_DEFAULTS.accessibility.autoTheme, ...parsed.accessibility.autoTheme }; }
         }
       } catch (e) { settings = JSON.parse(JSON.stringify(SETTINGS_DEFAULTS)); }
@@ -261,6 +263,18 @@ const {
       document.getElementById('sa-high-contrast').checked = settings.accessibility.highContrast;
       document.getElementById('sa-reduced-motion').checked = settings.accessibility.reducedMotion;
       document.getElementById('sa-screen-reader').checked = settings.accessibility.screenReader;
+      const prof = settings.profile || SETTINGS_DEFAULTS.profile;
+      const pc = document.getElementById('sp-profile-color');
+      if (pc) pc.value = prof.color || '#57f287';
+      const pge = document.getElementById('sp-profile-gradient-enabled');
+      if (pge) pge.checked = !!(prof.gradient && prof.gradient.enabled);
+      const pgf = document.getElementById('sp-profile-grad-from');
+      if (pgf) pgf.value = (prof.gradient && prof.gradient.from) || '#57f287';
+      const pgt = document.getElementById('sp-profile-grad-to');
+      if (pgt) pgt.value = (prof.gradient && prof.gradient.to) || '#23a55a';
+      const pgd = document.getElementById('sp-profile-grad-dir');
+      if (pgd) pgd.value = (prof.gradient && prof.gradient.direction) || 'to right';
+      updateProfilePreview();
       // Auto theme population
       const at = settings.accessibility.autoTheme || SETTINGS_DEFAULTS.accessibility.autoTheme;
       const autoCb = document.getElementById('sa-auto-theme');
@@ -441,6 +455,43 @@ const {
     document.getElementById('sa-high-contrast').addEventListener('change', (e) => { settings.accessibility.highContrast = e.target.checked; applySettings(); });
     document.getElementById('sa-reduced-motion').addEventListener('change', (e) => { settings.accessibility.reducedMotion = e.target.checked; applySettings(); });
     document.getElementById('sa-screen-reader').addEventListener('change', (e) => { settings.accessibility.screenReader = e.target.checked; saveSettings(); });
+    function updateProfilePreview() {
+      const prev = document.getElementById('sp-profile-preview');
+      if (!prev) return;
+      const prof = settings.profile || SETTINGS_DEFAULTS.profile;
+      const grad = prof.gradient || {};
+      if (grad.enabled) {
+        prev.style.background = 'linear-gradient(' + (grad.direction||'to right') + ', ' + (grad.from||prof.color) + ', ' + (grad.to||prof.color) + ')';
+      } else {
+        prev.style.background = prof.color || '#57f287';
+      }
+      prev.style.color = '#fff';
+    }
+    window.updateProfilePreview = updateProfilePreview;
+    const profileInputs = ['sp-profile-color','sp-profile-grad-from','sp-profile-grad-to','sp-profile-grad-dir'];
+    profileInputs.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('change', () => {
+        const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+        prof.color = document.getElementById('sp-profile-color').value;
+        prof.gradient = prof.gradient || { ...SETTINGS_DEFAULTS.profile.gradient };
+        prof.gradient.enabled = document.getElementById('sp-profile-gradient-enabled').checked;
+        prof.gradient.from = document.getElementById('sp-profile-grad-from').value;
+        prof.gradient.to = document.getElementById('sp-profile-grad-to').value;
+        prof.gradient.direction = document.getElementById('sp-profile-grad-dir').value;
+        saveSettings();
+        updateProfilePreview();
+      });
+    });
+    const pge = document.getElementById('sp-profile-gradient-enabled');
+    if (pge) pge.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.gradient = prof.gradient || { ...SETTINGS_DEFAULTS.profile.gradient };
+      prof.gradient.enabled = pge.checked;
+      saveSettings();
+      updateProfilePreview();
+    });
     const autoThemeCb = document.getElementById('sa-auto-theme');
     if (autoThemeCb) autoThemeCb.addEventListener('change', (e) => { settings.accessibility.autoTheme = settings.accessibility.autoTheme || Object.assign({}, SETTINGS_DEFAULTS.accessibility.autoTheme); settings.accessibility.autoTheme.enabled = e.target.checked; saveSettings(); applyAutoTheme(); });
     ['sa-timezone','sa-day-theme','sa-night-theme','sa-day-start','sa-night-start'].forEach(id => { const el = document.getElementById(id); if (!el) return; el.addEventListener('change', () => { const at = settings.accessibility.autoTheme = settings.accessibility.autoTheme || Object.assign({}, SETTINGS_DEFAULTS.accessibility.autoTheme); at.timezone = document.getElementById('sa-timezone').value; at.dayTheme = document.getElementById('sa-day-theme').value; at.nightTheme = document.getElementById('sa-night-theme').value; at.dayStart = parseInt(document.getElementById('sa-day-start').value, 10); at.nightStart = parseInt(document.getElementById('sa-night-start').value, 10); saveSettings(); applyAutoTheme(); }); });

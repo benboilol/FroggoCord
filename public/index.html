@@ -112,6 +112,7 @@
         <button class="settings-tab" id="settings-notifications-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-notifications-panel">Notifications</button>
         <button class="settings-tab" id="settings-privacy-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-privacy-panel">Privacy</button>
         <button class="settings-tab" id="settings-accessibility-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-accessibility-panel">Accessibility</button>
+        <button class="settings-tab" id="settings-profiles-tab" type="button" role="tab" aria-selected="false" aria-controls="settings-profiles-panel">Profiles</button>
         </div>
         <section id="settings-theme-panel" class="settings-panel-section visible" role="tabpanel" aria-labelledby="settings-theme-tab">
         <p class="settings-description">Choose a theme. Your selection applies immediately and is saved on this device.</p>
@@ -238,6 +239,27 @@
         <select id="sa-day-start" class="inp2"></select>
         <label class="field-label" for="sa-night-start">Night starts at (hour)</label>
         <select id="sa-night-start" class="inp2"></select>
+        </section>
+        <section id="settings-profiles-panel" class="settings-panel-section" role="tabpanel" aria-labelledby="settings-profiles-tab">
+        <p class="settings-description">Customize your profile appearance.</p>
+        <label class="field-label" for="sp-profile-color">Profile color</label>
+        <input type="color" id="sp-profile-color" value="#57f287" style="width:60px;height:36px;border:none;background:none;cursor:pointer;">
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="sp-profile-gradient-enabled" style="margin:0;">
+        <span>Enable gradient</span>
+        </label>
+        <label class="field-label" for="sp-profile-grad-from">Gradient from</label>
+        <input type="color" id="sp-profile-grad-from" value="#57f287" style="width:60px;height:36px;border:none;background:none;cursor:pointer;">
+        <label class="field-label" for="sp-profile-grad-to">Gradient to</label>
+        <input type="color" id="sp-profile-grad-to" value="#23a55a" style="width:60px;height:36px;border:none;background:none;cursor:pointer;">
+        <label class="field-label" for="sp-profile-grad-dir">Gradient direction</label>
+        <select id="sp-profile-grad-dir" class="inp2">
+            <option value="to right">Left to right</option>
+            <option value="to bottom">Top to bottom</option>
+            <option value="to bottom right">Diagonal</option>
+            <option value="135deg">135 deg</option>
+        </select>
+        <div id="sp-profile-preview" style="margin-top:12px;padding:12px;border-radius:8px;color:#fff;font-weight:600;">Preview Name</div>
         </section>
         <div class="modal-actions" style="justify-content:space-between;">
         <button id="settings-reset" class="btn btn-danger" type="button" style="margin-left:auto;">Reset to defaults</button>
