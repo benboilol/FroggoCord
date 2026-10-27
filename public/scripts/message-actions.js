@@ -265,6 +265,59 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
       await addDoc(collection(db,"messages"),{text:`<img src="${url}" style="max-width: min(320px, 100%); border-radius:8px; display:block;">`,user,uid:(auth.currentUser&&auth.currentUser.uid)||null,channel:chan,pfp,timestamp:serverTimestamp()});
     };
 
+    // ---------- Soundboard (Web Audio API, no external files) ----------
+    const SOUNDS = [
+      { name: 'Ping', freq: 1000, type: 'sine', dur: 0.1 },
+      { name: 'Ding', freq: 1500, type: 'sine', dur: 0.15 },
+      { name: 'Buzz', freq: 400, type: 'sawtooth', dur: 0.2 },
+      { name: 'Chime', freq: 800, type: 'sine', dur: 0.2 },
+      { name: 'Alert', freq: 600, type: 'square', dur: 0.3 },
+      { name: 'Pop', freq: 1200, type: 'triangle', dur: 0.1 }
+    ];
+    let audioCtx = null;
+    function ensureAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+    function playSound(freq, type, dur) {
+      try {
+        const ctx = ensureAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + dur);
+      } catch (e) { console.error('sound error', e); }
+    }
+    window.toggleSoundboard = () => {
+      const panel = document.getElementById('soundboard-panel');
+      const btn = document.getElementById('soundboard-btn');
+      if (panel.style.display === 'flex') {
+        panel.style.display = 'none';
+        btn.classList.remove('active');
+        return;
+      }
+      panel.innerHTML = '<div style="font-size:11px;color:var(--mut);margin-bottom:6px;">Soundboard</div>' +
+        SOUNDS.map(s => '<button onclick="playSound(' + s.freq + ',\'' + s.type + '\',' + s.dur + ')" style="width:100%;padding:6px 8px;margin:3px 0;background:var(--panel);border:1px solid var(--border);border-radius:4px;color:var(--txt);cursor:pointer;font-size:12px;text-align:left;" onmouseover="this.style.background=var(--hover)" onmouseout="this.style.background=var(--panel)">' + s.name + '</button>').join('') +
+        '<div style="height:6px;"></div>';
+      panel.style.display = 'flex';
+      btn.classList.add('active');
+    };
+    document.addEventListener('click', (e) => {
+      const panel = document.getElementById('soundboard-panel');
+      const btn = document.getElementById('soundboard-btn');
+      if (panel && panel.style.display !== 'none' && !panel.contains(e.target) && e.target !== btn) {
+        panel.style.display = 'none';
+        btn.classList.remove('active');
+      }
+    });
+
     async function updatePresence(s) { if (user) { curStat = s; await setDoc(doc(db,"presence",user),{user,status:s,lastActive:serverTimestamp()},{merge:true}); } }
      function setTyping(active) {
        if (!user || !chan) return;

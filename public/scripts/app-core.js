@@ -807,6 +807,8 @@ const {
       s = s.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<i>$2</i>');
       s = s.replace(/~~([\s\S]+?)~~/g, '<s>$1</s>');
       s = s.replace(/`([^`\n]+?)`/g, '<code class="inline-code">$1</code>');
+      // Rich embeds: YouTube iframes (no CORS needed)
+      s = s.replace(/(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11}))/g, '<div class="embed embed-youtube"><iframe src="https://www.youtube.com/embed/$2" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>');
       s = s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
       s = s.replace(/(^|\s)@(\w+)/g, (m, space, name) => space + '<span class="mention">@' + name + '</span>');
       s = s.replace(/\u0000CB(\d+)\u0000/g, (_, i) => {

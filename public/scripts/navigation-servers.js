@@ -202,7 +202,8 @@
       el.innerHTML = servers.map(s => {
         const active = currentServer === s.id;
         const iconStyle = s.icon ? `background-image:url('${s.icon}');background-size:cover;background-position:center;` : '';
-        return `<div class="si ${active?'active':''}" onclick="switchServer('${s.id}')" oncontextmenu="showServerCtx(event,'${s.id}')" title="${escHtml(s.name)}" style="${iconStyle}">${s.icon?'':escHtml(s.name)[0].toUpperCase()}</div>`;
+        const accentStyle = s.accent ? `border-left:3px solid ${escHtml(s.accent)};` : '';
+        return `<div class="si ${active?'active':''}" onclick="switchServer('${s.id}')" oncontextmenu="showServerCtx(event,'${s.id}')" title="${escHtml(s.name)}" style="${iconStyle}${accentStyle}">${s.icon?'':escHtml(s.name)[0].toUpperCase()}</div>`;
       }).join('');
      }
      let ctxServerId = null;
@@ -242,6 +243,7 @@ document.addEventListener('click', (e) => {
        document.getElementById('ss-desc').value = s.description || '';
        document.getElementById('ss-icon-url').value = s.icon || '';
        document.getElementById('ss-banner-url').value = s.banner || '';
+       document.getElementById('ss-accent').value = s.accent || '#57f287';
        const ssEmojis = document.getElementById('ss-emojis');
        if (ssEmojis) ssEmojis.value = (s.emojis||[]).map(e => e.name + ':' + e.url).join('\n');
        document.getElementById('ss-preview').innerHTML = s.banner ? `<img src="${escHtml(s.banner)}" style="width:100%;height:60px;object-fit:cover;border-radius:6px;">` : '';
@@ -311,6 +313,7 @@ document.addEventListener('click', (e) => {
        const description = document.getElementById('ss-desc').value.trim();
        let icon = document.getElementById('ss-icon-url').value.trim();
        let banner = document.getElementById('ss-banner-url').value.trim();
+      const accent = document.getElementById('ss-accent').value.trim() || '#57f287';
        const iconFile = document.getElementById('ss-icon-file').files[0];
        const bannerFile = document.getElementById('ss-banner-file').files[0];
        if (iconFile) icon = await fileToDataUrl(iconFile);
@@ -324,7 +327,7 @@ document.addEventListener('click', (e) => {
          if (!name || !url) return null;
          return { name, url };
        }).filter(Boolean);
-       await updateDoc(doc(db,'servers',ctxServerId), { name, description, icon, banner, emojis });
+      await updateDoc(doc(db,'servers',ctxServerId), { name, description, icon, banner, accent, emojis });
        await loadServers();
        if (currentServer === ctxServerId) switchServer(ctxServerId);
        closeServerSettings();
@@ -400,6 +403,7 @@ window.hideServerCtx = hideServerCtx;
         else { banner.style.display = 'none'; banner.style.backgroundImage = ''; }
         bannerName.textContent = s.name;
         if (s.description) banner.title = s.description;
+        if (s.accent) { banner.style.borderLeft = `4px solid ${escHtml(s.accent)}`; bannerName.style.color = s.accent; }
         const chBtns = `<div class="cat">Text Channels</div>` + (s.channels||[{name:'general'}]).map(c => `<button class="cb ${chan===('srv_'+currentServer+'_'+c.name)?'active':''}" onclick="switchServerChannel('${s.id}','${escHtml(c.name)}')"># ${escHtml(c.name)}</button>`).join('');
         document.querySelector('.ch').innerHTML = chBtns +
           `<button class="cb muted" onclick="createChannel('${s.id}')" style="color:var(--bl);">+ Add Channel</button>` +
