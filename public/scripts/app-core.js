@@ -715,7 +715,16 @@ const {
         const u = gif[1];
         const d = (typeof chatGifDims !== 'undefined' && chatGifDims[u]) ? chatGifDims[u] : null;
         const ar = d ? `aspect-ratio:${d.w}/${d.h};` : 'aspect-ratio:4/3;';
-        return `<img data-src="${escHtml(u)}" src="" alt="gif" loading="lazy" style="max-width: min(320px, 100%); border-radius:8px; display:block; background:transparent; min-height:60px; ${ar}">`;
+﻿        const isFav = (typeof isGifFavorite === 'function') ? isGifFavorite(u) : false;
+        const isBlk = (typeof isGifBlocked === 'function') ? isGifBlocked(u) : false;
+        const blur = isBlk ? 'filter:blur(8px);' : '';
+        return `<div class="gif-wrap" data-gif-url="${escHtml(u)}" style="position:relative; display:inline-block; max-width:min(320px,100%); ${ar}">
+          <img data-src="${escHtml(u)}" src="" alt="gif" loading="lazy" style="max-width:100%; border-radius:8px; display:block; background:transparent; min-height:60px; ${ar} ${blur}">
+          <div class="gif-actions" style="position:absolute; top:6px; right:6px; display:flex; gap:4px; opacity:0; transition:opacity .15s;">
+            <button class="gif-star" onclick="toggleGifFavorite('${escHtml(u)}')" title="Favorite" style="background:rgba(0,0,0,.5); border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; color:${isFav?'#f0b232':'#fff'};">${isFav?'★':'☆'}</button>
+            <button class="gif-block" onclick="toggleGifBlock('${escHtml(u)}')" title="Block" style="background:rgba(0,0,0,.5); border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; color:${isBlk?'#da373c':'#fff'};">${isBlk?'●':'○'}</button>
+          </div>
+        </div>`;
       }
       // Handle invite cards
       const inviteMatch = raw.match(/^<invite server="([^"]*)" icon="([^"]*)" banner="([^"]*)" desc="([^"]*)" link="([^"]*)"><\/invite>$/i);
@@ -830,4 +839,35 @@ const {
 
 
     // Periodically re-evaluate auto theme
-    setInterval(() => { try { applyAutoTheme(); } catch (e) {} }, 60000);
+    setInterval(() => { try { applyAutoTheme(); } catch (e) {} }, 60000);const GIF_FAV_KEY = 'froggocord-gif-favorites';
+const GIF_BLK_KEY = 'froggocord-gif-blocked';
+function loadGifSets() {
+  try { window.gifFavorites = new Set(JSON.parse(localStorage.getItem(GIF_FAV_KEY) || '[]')); } catch(e){ window.gifFavorites = new Set(); }
+  try { window.gifBlocked = new Set(JSON.parse(localStorage.getItem(GIF_BLK_KEY) || '[]')); } catch(e){ window.gifBlocked = new Set(); }
+}
+loadGifSets();
+window.isGifFavorite = (u) => window.gifFavorites.has(u);
+window.isGifBlocked = (u) => window.gifBlocked.has(u);
+window.toggleGifFavorite = (u) => {
+  if (window.gifFavorites.has(u)) window.gifFavorites.delete(u); else window.gifFavorites.add(u);
+  try { localStorage.setItem(GIF_FAV_KEY, JSON.stringify([...window.gifFavorites])); } catch(e){}
+  // update DOM
+  document.querySelectorAll('.gif-wrap[data-gif-url]').forEach(w => {
+    if (w.getAttribute('data-gif-url') !== u) return;
+    const fav = window.gifFavorites.has(u);
+    const btn = w.querySelector('.gif-star');
+    if (btn) { btn.textContent = fav ? '★' : '☆'; btn.style.color = fav ? '#f0b232' : '#fff'; }
+  });
+};
+window.toggleGifBlock = (u) => {
+  if (window.gifBlocked.has(u)) window.gifBlocked.delete(u); else window.gifBlocked.add(u);
+  try { localStorage.setItem(GIF_BLK_KEY, JSON.stringify([...window.gifBlocked])); } catch(e){}
+  document.querySelectorAll('.gif-wrap[data-gif-url]').forEach(w => {
+    if (w.getAttribute('data-gif-url') !== u) return;
+    const blk = window.gifBlocked.has(u);
+    const img = w.querySelector('img');
+    if (img) img.style.filter = blk ? 'blur(8px)' : '';
+    const btn = w.querySelector('.gif-block');
+    if (btn) { btn.textContent = blk ? '●' : '○'; btn.style.color = blk ? '#da373c' : '#fff'; }
+  });
+};
