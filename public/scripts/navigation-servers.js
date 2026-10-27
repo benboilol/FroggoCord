@@ -155,7 +155,7 @@
     async function createServerFromModal() {
       const name = document.getElementById('sm-name').value.trim(); if (!name) { appAlert('Enter a server name'); return; }
       const code = Math.random().toString(36).substring(2,8).toUpperCase();
-      const ref = await addDoc(collection(db,'servers'), { name, owner: user, inviteCode: code, members: [user], admins: [], channels: [{name:'general', id:'general'}], createdAt: serverTimestamp() });
+      const ref = await addDoc(collection(db,'servers'), { name, owner: user, ownerUid: (auth.currentUser&&auth.currentUser.uid)||null, inviteCode: code, members: [user], memberUids: [(auth.currentUser&&auth.currentUser.uid)||null], admins: [], channels: [{name:'general', id:'general'}], createdAt: serverTimestamp() });
       document.getElementById('sm-result').textContent = 'Created! Invite code: ' + code;
       await loadServers();
       switchServer(ref.id);
@@ -173,7 +173,7 @@
     async function createServer() {
       const name = await appPrompt('Server name:'); if (!name) return;
       const code = Math.random().toString(36).substring(2,8).toUpperCase();
-      const ref = await addDoc(collection(db,'servers'), { name, owner: user, inviteCode: code, members: [user], admins: [], channels: [{name:'general', id:'general'}], createdAt: serverTimestamp() });
+      const ref = await addDoc(collection(db,'servers'), { name, owner: user, ownerUid: (auth.currentUser&&auth.currentUser.uid)||null, inviteCode: code, members: [user], memberUids: [(auth.currentUser&&auth.currentUser.uid)||null], admins: [], channels: [{name:'general', id:'general'}], createdAt: serverTimestamp() });
       appAlert('Server created! Invite code: ' + code);
       await loadServers();
       switchServer(ref.id);
@@ -532,7 +532,7 @@ window.hideServerCtx = hideServerCtx;
         }
         const inviteCard = `<invite server="${escHtml(s.name)}" icon="${escHtml(s.icon||'')}" banner="${escHtml(s.banner||'')}" desc="${escHtml(s.description||'')}" link="${escHtml(inviteLink)}"></invite>`;
         const chan = 'dm_' + [user, friend].sort().join('_');
-        await addDoc(collection(db, "messages"), { text: inviteCard, user, channel: chan, pfp, timestamp: serverTimestamp() });
+        await addDoc(collection(db, "messages"), { text: inviteCard, user, uid: (auth.currentUser&&auth.currentUser.uid)||null, channel: chan, pfp, timestamp: serverTimestamp() });
       }
       closeInviteModal();
       appAlert('Invites sent to ' + checked.length + ' friend(s)!');

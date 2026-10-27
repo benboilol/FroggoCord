@@ -257,7 +257,7 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
 
     window.sendGif = async (url) => {
       document.getElementById('media-picker').style.display = 'none';
-      await addDoc(collection(db,"messages"),{text:`<img src="${url}" style="max-width: min(320px, 100%); border-radius:8px; display:block;">`,user,channel:chan,pfp,timestamp:serverTimestamp()});
+      await addDoc(collection(db,"messages"),{text:`<img src="${url}" style="max-width: min(320px, 100%); border-radius:8px; display:block;">`,user,uid:(auth.currentUser&&auth.currentUser.uid)||null,channel:chan,pfp,timestamp:serverTimestamp()});
     };
 
     async function updatePresence(s) { if (user) { curStat = s; await setDoc(doc(db,"presence",user),{user,status:s,lastActive:serverTimestamp()},{merge:true}); } }

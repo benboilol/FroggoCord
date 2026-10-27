@@ -515,7 +515,7 @@ let pendingFile = null; let pendingPreview = null;
         document.getElementById('up-name').textContent = user;
         if (Notification.permission !== "granted") Notification.requestPermission();
         await setDoc(doc(db,"presence",user),{user,status:'online',lastActive:serverTimestamp()},{merge:true});
-        setDoc(doc(db,"users",user),{user,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+        setDoc(doc(db,"users",user),{user,uid:(auth.currentUser&&auth.currentUser.uid)||null,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
         onSnapshot(collection(db,"users"),(snap)=>{
           allUsers = []; userPfpMap.clear(); userPrivacyMap.clear();
           snap.docs.forEach(d => {
@@ -571,7 +571,7 @@ let pendingFile = null; let pendingPreview = null;
         pfp = localStorage.getItem('pfp_'+user) || '';
         if (pfp.startsWith('file:///')) { pfp = ''; localStorage.removeItem('pfp_'+user); }
         if (pfp) { document.getElementById('my-pfp').style.backgroundImage = `url(${pfp})`; document.getElementById('my-pfp').textContent = ''; }
-        await setDoc(doc(db,"users",user),{user,pfp,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+        await setDoc(doc(db,"users",user),{user,pfp,uid:(auth.currentUser&&auth.currentUser.uid)||null,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
         // Load into DMs by default
         document.getElementById('dm-btn').classList.add('active');
         renderSidebar();
@@ -614,7 +614,7 @@ let pendingFile = null; let pendingPreview = null;
           // Already friends or already pending - don't create new request
           if (status === "accepted" || status === "pending") return;
         }
-        await setDoc(doc(db, "friends", pairId), {from:user,to:u,status:"pending",timestamp:serverTimestamp()});
+        await setDoc(doc(db, "friends", pairId), {from:user,fromUid:(auth.currentUser&&auth.currentUser.uid)||null,to:u,toUid:null,status:"pending",timestamp:serverTimestamp()});
       } catch (e) { console.error("sendReq failed", e); }
     };
     window.cancelReq = async (id) => {

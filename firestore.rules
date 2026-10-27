@@ -1,53 +1,97 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users: readable by authenticated users, writable by owner only
+
+    function isAuth() { return request.auth != null && request.auth.token.email != null; }
+    function username() { return request.auth.token.email.split('@')[0]; }
+
+    // Users: readable by authenticated users; writable only by the owner (matched by uid).
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.token.email.split('@')[0] == userId;
-      allow update: if request.auth != null && request.auth.token.email.split('@')[0] == userId;
-      allow delete: if request.auth != null && request.auth.token.email.split('@')[0] == userId;
+      allow read: if isAuth();
+      allow create: if isAuth()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.user == userId
+        && request.resource.data.user is string
+        && request.resource.data.user.size() > 0
+        && request.resource.data.user.size() <= 32;
+      allow update: if isAuth()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.user == resource.data.user;
+      allow delete: if isAuth() && resource.data.uid == request.auth.uid;
     }
 
-    // Messages: readable by authenticated users, writable by authenticated users
-    match /messages/{messageId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && request.auth.token.email.split('@')[0] == resource.data.user;
-      allow delete: if request.auth != null && request.auth.token.email.split('@')[0] == resource.data.user;
-    }
-
-    // Presence: readable by authenticated users, writable by authenticated users
+    // Presence: writable only by the owner.
     match /presence/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if isAuth();
+      allow write: if isAuth()
+        && userId == username()
+        && request.resource.data.uid == request.auth.uid;
     }
 
-    // Friends: readable by involved users
+    // Messages: create requires uid matches auth; update/delete owner only; size limits.
+    match /messages/{messageId} {
+      allow read: if isAuth();
+      allow create: if isAuth()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.user == username()
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 4000
+        && request.resource.data.channel is string
+        && request.resource.data.channel.size() <= 128;
+      allow update: if isAuth()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.user == resource.data.user
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 4000;
+      allow delete: if isAuth() && resource.data.uid == request.auth.uid;
+    }
+
+    // Friends: readable/writable only by involved users.
     match /friends/{friendId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
+      allow read: if isAuth() && (resource.data.from == username() || resource.data.to == username());
+      allow create: if isAuth()
+        && request.resource.data.from == username()
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.from is string
+        && request.resource.data.to is string;
+      allow update: if isAuth()
+        && (resource.data.from == username() || resource.data.to == username())
+        && request.resource.data.from == resource.data.from
+        && request.resource.data.to == resource.data.to;
+      allow delete: if isAuth() && (resource.data.from == username() || resource.data.to == username());
     }
 
-    // Servers: readable by members, writable by members
+    // Servers: readable by members; create by owner; update by members (owner immutable); delete by owner.
     match /servers/{serverId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
+      allow read: if isAuth() && username() in resource.data.members;
+      allow create: if isAuth()
+        && request.resource.data.owner == username()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.members is list
+        && request.resource.data.members.size() >= 1
+        && request.resource.data.members.size() <= 500
+        && username() in request.resource.data.members;
+      allow update: if isAuth()
+        && username() in resource.data.members
+        && request.resource.data.owner == resource.data.owner
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.members is list
+        && request.resource.data.members.size() <= 500;
+      allow delete: if isAuth() && resource.data.owner == username();
     }
 
-    // Typing: readable by all authenticated, writable by authenticated
+    // Typing: authenticated only.
     match /typing/{typingId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if isAuth();
+      allow write: if isAuth();
     }
 
-    // Reads: readable/writable by authenticated users
+    // Reads: authenticated only.
     match /reads/{readId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isAuth();
     }
   }
 }

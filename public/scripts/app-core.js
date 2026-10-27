@@ -575,7 +575,7 @@ const {
 
       // Send to Firestore
       try {
-        const payload = { text: t, user, channel: chan, pfp, timestamp: serverTimestamp(), clientMsgId: clientId };
+        const payload = { text: t, user, uid: (auth.currentUser && auth.currentUser.uid) || null, channel: chan, pfp, timestamp: serverTimestamp(), clientMsgId: clientId };
         if (pending.image) payload.image = pending.image;
         if (pending.imageW) { payload.imageW = pending.imageW; payload.imageH = pending.imageH; }
         if (pending.replyTo) payload.replyTo = pending.replyTo;
@@ -610,7 +610,7 @@ const {
       notifyPendingChanged();
 
       try {
-        const payload = { text: pending.text, user: pending.user, channel: pending.channel, pfp: pending.pfp, timestamp: serverTimestamp(), clientMsgId: clientId };
+        const payload = { text: pending.text, user: pending.user, uid: (auth.currentUser && auth.currentUser.uid) || null, channel: pending.channel, pfp: pending.pfp, timestamp: serverTimestamp(), clientMsgId: clientId };
         if (pending.image) payload.image = pending.image;
         if (pending.imageW) { payload.imageW = pending.imageW; payload.imageH = pending.imageH; }
         if (pending.replyTo) payload.replyTo = pending.replyTo;
@@ -814,7 +814,7 @@ const {
       try {
         pfp = await compressImage(f);
         localStorage.setItem('pfp_'+user, pfp);
-        await setDoc(doc(db,"users",user),{user,pfp,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+        await setDoc(doc(db,"users",user),{user,pfp,uid:(auth.currentUser&&auth.currentUser.uid)||null,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
         document.getElementById('my-pfp').style.backgroundImage = `url(${pfp})`;
         document.getElementById('my-pfp').textContent = '';
         listen();
@@ -827,7 +827,7 @@ const {
       try {
         pfp = await compressImage(f);
         localStorage.setItem('pfp_'+user, pfp);
-        await setDoc(doc(db,"users",user),{user,pfp,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+        await setDoc(doc(db,"users",user),{user,pfp,uid:(auth.currentUser&&auth.currentUser.uid)||null,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
         document.getElementById('my-pfp').style.backgroundImage = `url(${pfp})`;
         document.getElementById('my-pfp').textContent = '';
         listen();
