@@ -15,8 +15,8 @@ service cloud.firestore {
         && request.resource.data.user.size() > 0
         && request.resource.data.user.size() <= 32;
       allow update: if isAuth()
-        && resource.data.uid == request.auth.uid
-        && request.resource.data.uid == resource.data.uid
+        && (resource.data.uid == request.auth.uid || !('uid' in resource.data))
+        && request.resource.data.uid == request.auth.uid
         && request.resource.data.user == resource.data.user;
       allow delete: if isAuth() && resource.data.uid == request.auth.uid;
     }
@@ -26,7 +26,8 @@ service cloud.firestore {
       allow read: if isAuth();
       allow write: if isAuth()
         && userId == username()
-        && request.resource.data.uid == request.auth.uid;
+        && request.resource.data.uid == request.auth.uid
+        && (resource == null || !('uid' in resource.data) || resource.data.uid == request.auth.uid);
     }
 
     // Messages: create requires uid matches auth; update/delete owner only; size limits.
@@ -40,12 +41,12 @@ service cloud.firestore {
         && request.resource.data.channel is string
         && request.resource.data.channel.size() <= 128;
       allow update: if isAuth()
-        && resource.data.uid == request.auth.uid
-        && request.resource.data.uid == resource.data.uid
+        && (resource.data.uid == request.auth.uid || (!('uid' in resource.data) && resource.data.user == username()))
+        && request.resource.data.uid == request.auth.uid
         && request.resource.data.user == resource.data.user
         && request.resource.data.text is string
         && request.resource.data.text.size() <= 4000;
-      allow delete: if isAuth() && resource.data.uid == request.auth.uid;
+      allow delete: if isAuth() && (resource.data.uid == request.auth.uid || (!('uid' in resource.data) && resource.data.user == username()));
     }
 
     // Friends: readable/writable only by involved users.
@@ -77,7 +78,7 @@ service cloud.firestore {
       allow update: if isAuth()
         && username() in resource.data.members
         && request.resource.data.owner == resource.data.owner
-        && request.resource.data.ownerUid == resource.data.ownerUid
+        && (request.resource.data.ownerUid == resource.data.ownerUid || !('ownerUid' in resource.data))
         && request.resource.data.members is list
         && request.resource.data.members.size() <= 500;
       allow delete: if isAuth() && resource.data.owner == username();
