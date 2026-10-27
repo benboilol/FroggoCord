@@ -193,6 +193,8 @@
     async function loadServers() {
       const snap = await getDocs(query(collection(db,'servers'), where('members','array-contains', user)));
       servers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      window.serverEmojis = window.serverEmojis || {};
+      servers.forEach(s => { window.serverEmojis[s.id] = Array.isArray(s.emojis) ? s.emojis : []; });
       renderServerList();
     }
     function renderServerList() {
@@ -240,6 +242,8 @@ document.addEventListener('click', (e) => {
        document.getElementById('ss-desc').value = s.description || '';
        document.getElementById('ss-icon-url').value = s.icon || '';
        document.getElementById('ss-banner-url').value = s.banner || '';
+       const ssEmojis = document.getElementById('ss-emojis');
+       if (ssEmojis) ssEmojis.value = (s.emojis||[]).map(e => e.name + ':' + e.url).join('\n');
        document.getElementById('ss-preview').innerHTML = s.banner ? `<img src="${escHtml(s.banner)}" style="width:100%;height:60px;object-fit:cover;border-radius:6px;">` : '';
        const adminsSection = document.getElementById('ss-admins-section');
        const deleteBtn = document.getElementById('ss-delete-btn');
@@ -311,7 +315,16 @@ document.addEventListener('click', (e) => {
        const bannerFile = document.getElementById('ss-banner-file').files[0];
        if (iconFile) icon = await fileToDataUrl(iconFile);
        if (bannerFile) banner = await fileToDataUrl(bannerFile);
-       await updateDoc(doc(db,'servers',ctxServerId), { name, description, icon, banner });
+       const emojisRaw = (document.getElementById('ss-emojis').value || '').trim();
+       const emojis = emojisRaw.split('\n').map(line => {
+         const idx = line.indexOf(':');
+         if (idx < 0) return null;
+         const name = line.slice(0, idx).trim();
+         const url = line.slice(idx+1).trim();
+         if (!name || !url) return null;
+         return { name, url };
+       }).filter(Boolean);
+       await updateDoc(doc(db,'servers',ctxServerId), { name, description, icon, banner, emojis });
        await loadServers();
        if (currentServer === ctxServerId) switchServer(ctxServerId);
        closeServerSettings();

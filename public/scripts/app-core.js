@@ -735,6 +735,17 @@ const {
         const inviteLink = inviteMatch[5];
         return renderInviteCard(serverName, serverIcon, serverBanner, serverDesc, inviteLink);
       }
+      // Server emoji support: replace :name: with image
+      try {
+        const emojis = (window.serverEmojis && currentServer && window.serverEmojis[currentServer]) || [];
+        if (emojis.length) {
+          emojis.forEach(e => {
+            if (!e || !e.name || !e.url) return;
+            const re = new RegExp(':' + e.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ':', 'g');
+            raw = raw.replace(re, '<img src="' + escHtml(e.url) + '" alt="' + escHtml(e.name) + '" style="height:1.2em;vertical-align:middle;display:inline-block;">');
+          });
+        }
+      } catch (ex) {}
       return renderMarkdown(raw);
     };
     function renderInviteCard(name, icon, banner, desc, link) {
