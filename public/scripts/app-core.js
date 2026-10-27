@@ -116,7 +116,7 @@ const {
       settings.theme = theme;
       themeLink.dataset.theme = theme;
       setThemeSelection(theme);
-      themeLink.href = 'themes/' + theme + '.css?v=' + THEME_ASSET_VERSION;
+      themeLink.href = '/themes/' + theme + '.css?v=' + THEME_ASSET_VERSION;
       if (persist) {
         try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch (e) {}
         saveSettings();
