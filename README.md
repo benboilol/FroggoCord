@@ -36,7 +36,7 @@ Do not assume that code is correct just because it runs. Preserve existing funct
 3. Add the theme ID to `THEME_IDS` in `public/scripts/app-core.js` and add a matching theme option to the settings theme list in `public/index.html`. Use a hyphenated swatch class based on the ID, such as `example-theme-swatch`.
 4. Add that swatch class and its three `--swatch-a`, `--swatch-b`, and `--swatch-c` values to every file in `public/themes/`. The active theme stylesheet provides the previews for every theme option.
 5. If the new theme should be the default, update `DEFAULT_THEME` in `public/scripts/app-core.js` and the theme stylesheet link in `public/index.html`.
-6. Bump `THEME_ASSET_VERSION` in `public/scripts/app-core.js` and the `?v=` values on the shared stylesheet, initial theme stylesheet, and loader script links in `public/index.html`. This gives browsers a new URL for updated assets.
+6. Asset updates are detected automatically by the loader, which checks the current HTML, JavaScript, and CSS files with cache-disabled requests. No manual version bump is required.
 7. Check that the theme defines all variables used by the shared stylesheet, run `node --check` on the JavaScript files in `public/scripts/`, inspect `git diff`, and append the change and verification results to `changelog.txt`.
 
 Theme IDs, CSS filenames, the settings option's `data-theme`, and the swatch class must match. Keep theme definitions in CSS files and theme registration in the existing HTML and JavaScript files.

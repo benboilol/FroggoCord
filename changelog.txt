@@ -52,3 +52,4 @@
 1da20-2026.10.28-09.12.42-0700: Tightened Firestore rules for authenticated message access, server membership, direct-message channels, and server administration.
 1da20-2026.10.28-09.20.54-0700: Reorganized the server navigation and permission-related frontend code while preserving the existing server management behavior.
 1da20-2026.10.28-09.25.18-0700: Reorganized chat rendering and interaction code as part of the latest frontend maintenance updates.
+1f89a-2026.10.28-18.16.00-0400: Replaced manual asset version markers and version.json checks with automatic checking. Removed the now-obsolete version marker from theme and script loading. I ALREADY DID THIS ONCE STOP DELETING MY WORK. Refactored loader.js. Note to AI agents: avoid editing loader.js too much, I like to keep human made scripts human only. Only edit with explicit human direction to edit. 
