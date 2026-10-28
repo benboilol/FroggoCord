@@ -48,3 +48,7 @@
 1da20-2026.10.27-13.05.35-0700: Fixed GIF scrolling flicker by only pinning the chat to the bottom when the user is already near the bottom.
 1da20-2026.10.27-13.35.28-0700: Added Nitro rich link embeds for YouTube, per-server accent colors, and a soundboard.
 20a6d-2026.10.27-16.36.06-0400: Replaced manual version markers with automatic update detection. The loader compares fresh HTML, JavaScript, and CSS responses without requiring deployment actions or version bumps.
+1da20-2026.10.27-16.33.52-0700: Refactored Firestore security rules for clearer server membership, ownership, administration, channel, message, and permission checks.
+1da20-2026.10.28-09.12.42-0700: Tightened Firestore rules for authenticated message access, server membership, direct-message channels, and server administration.
+1da20-2026.10.28-09.20.54-0700: Reorganized the server navigation and permission-related frontend code while preserving the existing server management behavior.
+1da20-2026.10.28-09.25.18-0700: Reorganized chat rendering and interaction code as part of the latest frontend maintenance updates.
