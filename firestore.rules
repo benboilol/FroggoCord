@@ -10,14 +10,26 @@ service cloud.firestore {
       return request.auth.token.email.split('@')[0];
     }
 
-    function isOwnerOfServer(data) {
-      return data.ownerUid == request.auth.uid || data.owner == username();
+    function isMemberOfServer(serverDoc, uid) {
+      return serverDoc.members is list
+        && (uid in serverDoc.memberUids || username() in serverDoc.members);
     }
 
-    function isAdminOfServer(data) {
-      return isOwnerOfServer(data)
-        || (data.adminUids is list && request.auth.uid in data.adminUids)
-        || (data.admins is list && username() in data.admins);
+    function isChannelForServer(channel) {
+      return channel is string
+        && channel.matches('^srv_[A-Za-z0-9_-]+_.*$');
+    }
+
+    function serverIdFromChannel(channel) {
+      return channel.split('_')[1];
+    }
+
+    function isDmChannelForUser(channel) {
+      return channel is string
+        && channel.matches('^dm_.*$')
+        && (
+          username() in channel.split('_').slice(1)
+        );
     }
 
     match /users/{userId} {
@@ -46,22 +58,60 @@ service cloud.firestore {
 
     match /messages/{messageId} {
       allow read: if isAuth();
+
       allow create: if isAuth()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.user == username()
         && request.resource.data.text is string
         && request.resource.data.text.size() <= 4000
         && request.resource.data.channel is string
-        && request.resource.data.channel.size() <= 128;
+        && (
+          (
+            isChannelForServer(request.resource.data.channel)
+            && exists(/databases/$(database)/documents/servers/$(serverIdFromChannel(request.resource.data.channel)))
+            && isMemberOfServer(get(/databases/$(database)/documents/servers/$(serverIdFromChannel(request.resource.data.channel))).data, request.auth.uid)
+          )
+          ||
+          (
+            isDmChannelForUser(request.resource.data.channel)
+          )
+        );
 
       allow update: if isAuth()
         && (resource.data.uid == request.auth.uid || (!('uid' in resource.data) && resource.data.user == username()))
-        && request.resource.data.user == resource.data.user
+        && request.resource.data.user == request.resource.data.user
         && request.resource.data.text is string
         && request.resource.data.text.size() <= 4000
+        && (
+          (
+            resource.data.channel is string
+            && isChannelForServer(resource.data.channel)
+            && exists(/databases/$(database)/documents/servers/$(serverIdFromChannel(resource.data.channel)))
+            && isMemberOfServer(get(/databases/$(database)/documents/servers/$(serverIdFromChannel(resource.data.channel))).data, request.auth.uid)
+          )
+          ||
+          (
+            resource.data.channel is string
+            && isDmChannelForUser(resource.data.channel)
+          )
+        )
         && (!('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid);
 
-      allow delete: if isAuth() && (resource.data.uid == request.auth.uid || (!('uid' in resource.data) && resource.data.user == username()));
+      allow delete: if isAuth()
+        && (resource.data.uid == request.auth.uid || (!('uid' in resource.data) && resource.data.user == username()))
+        && (
+          (
+            resource.data.channel is string
+            && isChannelForServer(resource.data.channel)
+            && exists(/databases/$(database)/documents/servers/$(serverIdFromChannel(resource.data.channel)))
+            && isMemberOfServer(get(/databases/$(database)/documents/servers/$(serverIdFromChannel(resource.data.channel))).data, request.auth.uid)
+          )
+          ||
+          (
+            resource.data.channel is string
+            && isDmChannelForUser(resource.data.channel)
+          )
+        );
     }
 
     match /friends/{friendId} {
@@ -98,11 +148,11 @@ service cloud.firestore {
         && request.resource.data.memberUids is list
         && request.auth.uid in request.resource.data.memberUids
         && request.resource.data.adminUids is list
-        && request.resource.data.ownerUid in request.resource.data.adminUids == false;
+        && request.auth.uid in request.resource.data.adminUids;
 
       allow update: if isAuth() && (
         (
-          // Owner can change everything except ownership fields.
+          // Owner only: all server state except ownership fields
           resource.data.ownerUid == request.auth.uid
           && request.resource.data.owner == resource.data.owner
           && request.resource.data.ownerUid == resource.data.ownerUid
@@ -114,7 +164,7 @@ service cloud.firestore {
         )
         ||
         (
-          // Admins may edit properties but cannot change ownership/admin membership/invite.
+          // Admins may update settings but not owner/admin/member list/invite
           (
             resource.data.adminUids is list && request.auth.uid in resource.data.adminUids
           ) || (
@@ -130,7 +180,7 @@ service cloud.firestore {
         )
         ||
         (
-          // Self-join only: a user may append themselves to member lists, nothing else.
+          // Self-join only: a user may append themselves to members, not others
           request.auth.uid != null
           && request.resource.data.owner == resource.data.owner
           && request.resource.data.ownerUid == resource.data.ownerUid
