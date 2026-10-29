@@ -7,4 +7,3 @@
   --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.7); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#2a1040; --link:#ff88ff;
   --swatch-a:#2a1040; --swatch-b:#3f2850; --swatch-c:#e066ff;
 }
-.phantom-swatch { --swatch-a:#2a1040; --swatch-b:#3f2850; --swatch-c:#e066ff; }

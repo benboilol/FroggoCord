@@ -7,10 +7,3 @@
   --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.7); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#111214; --link:#00a8fc;
   --swatch-a:#1e1f22; --swatch-b:#313338; --swatch-c:#57f287;
 }
-
-.ash-swatch { --swatch-a:#303236; --swatch-b:#77797d; --swatch-c:#c3c5c8; }
-.obsidian-swatch { --swatch-a:#100b18; --swatch-b:#512c70; --swatch-c:#d98bff; }
-.fulgurite-swatch { --swatch-a:#1e1f22; --swatch-b:#313338; --swatch-c:#57f287; }
-.magma-swatch { --swatch-a:#241719; --swatch-b:#6f2925; --swatch-c:#ff8247; }
-.plasma-swatch { --swatch-a:#fff5fb; --swatch-b:#ff45c7; --swatch-c:#6427cf; }
-.alpenglow-swatch { --swatch-a:#ffc999; --swatch-b:#9059ff; --swatch-c:#ff4aa2; }

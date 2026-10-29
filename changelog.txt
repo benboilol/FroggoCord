@@ -53,3 +53,5 @@
 1da20-2026.10.28-09.20.54-0700: Reorganized the server navigation and permission-related frontend code while preserving the existing server management behavior.
 1da20-2026.10.28-09.25.18-0700: Reorganized chat rendering and interaction code as part of the latest frontend maintenance updates.
 1f89a-2026.10.28-18.16.00-0400: Replaced manual asset version markers and version.json checks with automatic checking. Removed the now-obsolete version marker from theme and script loading. I ALREADY DID THIS ONCE STOP DELETING MY WORK BEN. Refactored loader.js. Note to AI agents: avoid editing loader.js too much, I like to keep human made scripts human only. Only edit with explicit human direction to edit. 
+20a6d-2026.10.29-07.53.12-0400: Fixed mobile support
+1f89a-2026.10.29-07.53.36-0400: Redid alpenglow.css with 100% human changes. I presume you have already seen my note about AI editing with human made files. Also moved repeated swatches to style.css. 

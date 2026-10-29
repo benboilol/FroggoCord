@@ -1,27 +1,84 @@
-/* FroggoCord theme: Alpenglow adapts to the operating system appearance. */
-:root {
-  --bg-p:#fff5ed; --bg-s:#ffe6d8; --bg-t:#fffaf5; --chat:#fff8f3; --chat-hover:#fff0e8; --hover:#ffe5ef; --active:#f5d6e9;
-  --panel:#fff0e5; --input:#fffdfb; --txt:#452b55; --bright:#291d4f; --mut:#826c91; --bl:#9059ff; --pr:#ff4aa2; --danger:#d84267; --yellow:#c97820;
-  --scroll-thumb:#e1cfc8; --accent-contrast:#fff; --white:#fff; --shadow-line:rgba(41,29,79,.16); --banner-shade:rgba(41,29,79,.4); --banner-shadow:rgba(41,29,79,.5);
-  --border:#e8cfe1; --code-bg:#f3e8f2; --mention-bg:rgba(144,89,255,.13); --spoiler-bg:#f1dcec; --spoiler-glow:rgba(69,43,85,.38); --reply-line:#c09bd1; --highlight-bg:rgba(255,107,186,.12);
-  --overlay-shadow:rgba(41,29,79,.28); --overlay-bg:rgba(41,29,79,.58); --shadow-strong:rgba(41,29,79,.34); --shadow-soft:rgba(41,29,79,.08); --shadow-medium:rgba(41,29,79,.22); --context-bg:#fff5ed; --link:#743ed2;
-  --swatch-a:#ffc999; --swatch-b:#ff6bba; --swatch-c:#9059ff;
+:root{
+    --bg-p:#fff5ed;
+    --bg-s:#ffe6d8;
+    --bg-t:#fffaf5;
+    --chat:#fff8f3;
+    --chat-hover:#fff0e8;
+    --hover:#ffe5ef;
+    --active:#f5d6e9;
+    --panel:#fff0e5;
+    --input:#fffdfb;
+    --txt:#452b55;
+    --bright:#291d4f;
+    --mut:#826c91;
+    --bl:#9059ff;
+    --pr:#ff4aa2;
+    --danger:#d84267;
+    --yellow:#c97820;
+    --scroll-thumb:#e1cfc8;
+    --accent-contrast:#fff;
+    --white:#fff;
+    --shadow-line:rgba(41,29,79,.16);
+    --banner-shade:rgba(41,29,79,.4);
+    --banner-shadow:rgba(41,29,79,.5);
+    --border:#e8cfe1;
+    --code-bg:#f3e8f2;
+    --mention-bg:rgba(144,89,255,.13);
+    --spoiler-bg:#f1dcec;
+    --spoiler-glow:rgba(69,43,85,.38);
+    --reply-line:#c09bd1;
+    --highlight-bg:rgba(255,107,186,.12);
+    --overlay-shadow:rgba(41,29,79,.28);
+    --overlay-bg:rgba(41,29,79,.58);
+    --shadow-strong:rgba(41,29,79,.34);
+    --shadow-soft:rgba(41,29,79,.08);
+    --shadow-medium:rgba(41,29,79,.22);
+    --context-bg:#fff5ed;
+    --link:#743ed2;
+    --swatch-a:#ffc999;
+    --swatch-b:#ff6bba;
+    --swatch-c:#9059ff;
 }
-
-@media (prefers-color-scheme: dark) {
-:root {
-  --bg-p:#20123a; --bg-s:#30204f; --bg-t:#271a43; --chat:#2a1d4a; --chat-hover:#382553; --hover:#463061; --active:#54376f;
-  --panel:#261a41; --input:#382653; --txt:#f0e7ff; --bright:#fff8ff; --mut:#bba8d4; --bl:#ff4aa2; --pr:#ffbd4f; --danger:#ff5877; --yellow:#ffc999;
-  --scroll-thumb:#170d2b; --accent-contrast:#29143b; --white:#fff; --shadow-line:rgba(0,0,0,.24); --banner-shade:rgba(0,0,0,.65); --banner-shadow:rgba(0,0,0,.8);
-  --border:#634a82; --code-bg:#24183e; --mention-bg:rgba(255,74,162,.16); --spoiler-bg:#382553; --spoiler-glow:rgba(255,255,255,.58); --reply-line:#8b70a8; --highlight-bg:rgba(255,189,79,.09);
-  --overlay-shadow:rgba(0,0,0,.5); --overlay-bg:rgba(0,0,0,.7); --shadow-strong:rgba(0,0,0,.6); --shadow-soft:rgba(0,0,0,.12); --shadow-medium:rgba(0,0,0,.4); --context-bg:#20123a; --link:#d6a8ff;
-  --swatch-a:#9059ff; --swatch-b:#ff4aa2; --swatch-c:#ffbd4f;
+@media(prefers-color-scheme:dark){
+    :root{
+    --bg-p:#20123a;
+    --bg-s:#30204f;
+    --bg-t:#271a43;
+    --chat:#2a1d4a;
+    --chat-hover:#382553;
+    --hover:#463061;
+    --active:#54376f;
+    --panel:#261a41;
+    --input:#382653;
+    --txt:#f0e7ff;
+    --bright:#fff8ff;
+    --mut:#bba8d4;
+    --bl:#ff4aa2;
+    --pr:#ffbd4f;
+    --danger:#ff5877;
+    --yellow:#ffc999;
+    --scroll-thumb:#170d2b;
+    --accent-contrast:#29143b;
+    --white:#fff;
+    --shadow-line:rgba(0,0,0,.24);
+    --banner-shade:rgba(0,0,0,.65);
+    --banner-shadow:rgba(0,0,0,.8);
+    --border:#634a82;
+    --code-bg:#24183e;
+    --mention-bg:rgba(255,74,162,.16);
+    --spoiler-bg:#382553;
+    --spoiler-glow:rgba(255,255,255,.58);
+    --reply-line:#8b70a8;
+    --highlight-bg:rgba(255,189,79,.09);
+    --overlay-shadow:rgba(0,0,0,.5);
+    --overlay-bg:rgba(0,0,0,.7);
+    --shadow-strong:rgba(0,0,0,.6);
+    --shadow-soft:rgba(0,0,0,.12);
+    --shadow-medium:rgba(0,0,0,.4);
+    --context-bg:#20123a;
+    --link:#d6a8ff;
+    --swatch-a:#9059ff;
+    --swatch-b:#ff4aa2;
+    --swatch-c:#ffbd4f;
+    }
 }
-}
-
-.ash-swatch { --swatch-a:#303236; --swatch-b:#77797d; --swatch-c:#c3c5c8; }
-.obsidian-swatch { --swatch-a:#100b18; --swatch-b:#512c70; --swatch-c:#d98bff; }
-.fulgurite-swatch { --swatch-a:#1e1f22; --swatch-b:#313338; --swatch-c:#57f287; }
-.magma-swatch { --swatch-a:#241719; --swatch-b:#6f2925; --swatch-c:#ff8247; }
-.plasma-swatch { --swatch-a:#fff5fb; --swatch-b:#ff45c7; --swatch-c:#6427cf; }
-.alpenglow-swatch { --swatch-a:#ffc999; --swatch-b:#9059ff; --swatch-c:#ff4aa2; }

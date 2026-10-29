@@ -163,9 +163,6 @@ const {
       mobileNavToggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
     });
     mobileNavBackdrop.addEventListener('click', closeMobileNav);
-    document.querySelectorAll('.sv, .sb').forEach(nav => nav.addEventListener('click', event => {
-      if (event.target.closest('.si, .cb, .sb-header')) closeMobileNav();
-    }));
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape') closeMobileNav();
     });
