@@ -473,6 +473,9 @@ function renderMembersList(s) {
       btn = isAdmin
         ? `<button onclick="toggleAdmin('${escHtml(m)}', false)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Remove Admin</button>`
         : `<button onclick="toggleAdmin('${escHtml(m)}', true)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--bl);color:var(--accent-contrast);cursor:pointer;">Make Admin</button>`;
+      btn += ` <button onclick="kickMember('${escHtml(m)}')" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Kick</button>`;
+    } else if ((s.admins || []).includes(user) && !isOwner) {
+      btn = `<button onclick="kickMember('${escHtml(m)}')" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Kick</button>`;
     }
 
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bg-t);font-size:12px;color:var(--txt);"><span>${escHtml(m)}${badge}</span>${btn}</div>`;
@@ -536,7 +539,23 @@ async function deleteServer() {
 }
 
 window.deleteServer = deleteServer;
+async function kickMember(member) {
+  const s = getServerById(ctxServerId);
+  if (!s) return;
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner && !isAdmin) { appAlert('No permission.'); return; }
+  if (member === s.owner) { appAlert('Cannot kick the owner.'); return; }
+  if (!(await appConfirm('Kick ' + member + ' from the server?'))) return;
+  const members = (s.members || []).filter(m => m !== member);
+  const memberUids = (s.memberUids || []).filter((_, i) => (s.members || [])[i] !== member);
+  await updateDoc(doc(db, 'servers', ctxServerId), { members, memberUids });
+  await loadServers();
+  if (currentServer === ctxServerId) switchServer(ctxServerId);
+  appAlert(member + ' has been kicked.');
+}
+
 window.toggleAdmin = toggleAdmin;
+window.kickMember = kickMember;
 
 function closeServerSettings() {
   const m = document.getElementById('server-settings-modal');
@@ -726,7 +745,8 @@ function switchServer(id) {
     const chBtns = `<div class="cat">Text Channels</div>` + (s.channels || [{ name: 'general' }]).map(c => `<button class="cb ${chan === ('srv_' + currentServer + '_' + c.name) ? 'active' : ''}" onclick="switchServerChannel('${s.id}','${escHtml(c.name)}')"># ${escHtml(c.name)}</button>`).join('');
     document.querySelector('.ch').innerHTML = chBtns +
       `<button class="cb muted" onclick="createChannel('${s.id}')" style="color:var(--bl);">+ Add Channel</button>` +
-      `<button class="cb muted" onclick="shareInvite('${s.id}')">Invite Code: ${escHtml(s.inviteCode)}</button>`;
+      `<button class="cb muted" onclick="shareInvite('${s.id}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
+      `<button class="cb muted" onclick="revokeInvite('${s.id}')" style="color:var(--danger);">Revoke Invite</button>`;
   } else {
     chan = null; mode = 'channels'; dmWith = null;
     document.querySelector('.sb h3').textContent = 'Channels';
@@ -762,7 +782,8 @@ window.switchServerChannel = (sid, cname) => {
   chan = 'srv_' + sid + '_' + cname;
   document.querySelector('.ch').innerHTML = `<div class="cat">Text Channels</div>` + (s.channels || [{ name: 'general' }]).map(c => `<button class="cb ${chan === ('srv_' + sid + '_' + c.name) ? 'active' : ''}" onclick="switchServerChannel('${sid}','${escHtml(c.name)}')"># ${escHtml(c.name)}</button>${unreadBadge('srv_' + sid + '_' + c.name)}`).join('') +
     `<button class="cb muted" onclick="createChannel('${sid}')" style="color:var(--bl);">+ Add Channel</button>` +
-    `<button class="cb muted" onclick="shareInvite('${sid}')">Invite Code: ${escHtml(s.inviteCode)}</button>`;
+    `<button class="cb muted" onclick="shareInvite('${sid}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
+    `<button class="cb muted" onclick="revokeInvite('${sid}')" style="color:var(--danger);">Revoke Invite</button>`;
 
   renderServerList();
   updateHeader();
@@ -813,6 +834,27 @@ async function shareInvite(sid) {
 
 window.createChannel = createChannel;
 window.shareInvite = shareInvite;
+
+async function revokeInvite(sid) {
+  const s = servers.find(x => x.id === sid);
+  if (!s) return;
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner) { appAlert('Only the server owner can revoke invite codes.'); return; }
+  if (!(await appConfirm('Revoke the current invite code and generate a new one?'))) return;
+  const oldCode = s.inviteCode;
+  const newCode = Math.random().toString(36).substring(2,8).toUpperCase();
+  // Delete old invite doc
+  try { await deleteDoc(doc(db, 'invites', oldCode.toUpperCase())); } catch (e) {}
+  // Update server with new code
+  await updateDoc(doc(db, 'servers', sid), { inviteCode: newCode });
+  // Create new invite doc
+  await setDoc(doc(db, 'invites', newCode), { serverId: sid, createdBy: user, createdAt: serverTimestamp() });
+  await loadServers();
+  if (currentServer === sid) switchServer(sid);
+  appAlert('New invite code: ' + newCode);
+}
+
+window.revokeInvite = revokeInvite;
 window.renameChannel = renameChannel;
 window.setChannelTopic = setChannelTopic;
 window.serverMenu = serverMenu;
