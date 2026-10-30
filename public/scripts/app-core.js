@@ -1244,3 +1244,34 @@ window.toggleGifBlock = (u) => {
         if (typeof window.sendMessage === 'function') window.sendMessage();
       }
     });
+
+
+    // ---------- Reporting ----------
+    window.reportContent = async (type, id, reason) => {
+      if (!user) return;
+      try {
+        await addDoc(collection(db, 'reports'), {
+          type: type, // 'message', 'user', 'server'
+          targetId: id,
+          reporter: user,
+          reason: reason || 'No reason provided',
+          timestamp: serverTimestamp(),
+          status: 'pending'
+        });
+        appAlert('Report submitted. Thank you.');
+      } catch (e) {
+        appAlert('Failed to submit report.');
+      }
+    };
+
+    window.reportMessage = async (msgId) => {
+      const reason = await appPrompt('Reason for reporting this message:');
+      if (reason === null) return;
+      await reportContent('message', msgId, reason);
+    };
+
+    window.reportUser = async (username) => {
+      const reason = await appPrompt('Reason for reporting this user:');
+      if (reason === null) return;
+      await reportContent('user', username, reason);
+    };

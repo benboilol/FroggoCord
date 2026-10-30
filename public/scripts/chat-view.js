@@ -380,6 +380,8 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
     let btns = (me && !pending) ? `<span data-action="edit" data-id="${m.id}" data-text="${escHtml(textVal)}" style="color:var(--bl);">Edit</span><span data-action="delete" data-id="${m.id}" style="color:var(--danger);">Delete</span>` : '';
     const pinBtn = (!pending && (typeof canPinMessages === 'function' && canPinMessages())) ? `<span data-action="pin" data-id="${m.id}" style="color:var(--mut);">Pin</span>` : '';
     if (pinBtn) btns = btns + pinBtn;
+    const reportBtn = (!pending) ? `<span data-action="report" data-id="${m.id}" style="color:var(--mut);">Report</span>` : '';
+    if (reportBtn) btns = btns + reportBtn;
     const rBtn = `<span data-action="reply" data-id="${m.id}" data-user="${safeUser}" style="color:var(--mut);">Reply</span>`;
     const reactBtn = `<span data-action="react" data-id="${m.id}" style="color:var(--mut);">😀</span>`;
     let statusHtml = '';
