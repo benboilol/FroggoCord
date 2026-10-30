@@ -198,9 +198,11 @@ function updateHeader() {
     const s = servers.find(x => x.id === currentServer);
     const ch = s && (s.channels || []).find(c => c.name === label);
     const topic = ch && ch.topic ? ch.topic : '';
+    const desc = ch && ch.description ? ch.description : '';
     const canEdit = s && (s.owner === user || (s.admins || []).includes(user));
     const topicBtn = canEdit ? `<button onclick="setChannelTopic('${currentServer}','${escHtml(label)}')" style="margin-left:8px;background:transparent;border:none;color:var(--mut);cursor:pointer;font-size:11px;" title="Set topic">✎</button>` : '';
-    h.innerHTML = `<span class="hash">#</span><span class="hname">${escHtml(label)}</span>${topic ? `<span class="channel-topic" style="margin-left:12px;color:var(--mut);font-size:12px;font-weight:400;">${escHtml(topic)}</span>` : ''}${topicBtn}`;
+    const descBtn = canEdit ? `<button onclick="setChannelDescription('${currentServer}','${escHtml(label)}')" style="margin-left:4px;background:transparent;border:none;color:var(--mut);cursor:pointer;font-size:11px;" title="Set description">📝</button>` : '';
+    h.innerHTML = `<span class="hash">#</span><span class="hname">${escHtml(label)}</span>${topic ? `<span class="channel-topic" style="margin-left:12px;color:var(--mut);font-size:12px;font-weight:400;">${escHtml(topic)}</span>` : ''}${topicBtn}${descBtn}${desc ? `<div style="width:100%;color:var(--mut);font-size:11px;margin-top:2px;">${escHtml(desc)}</div>` : ''}`;
   }
 
   document.body.classList.toggle('dm-mode', mode === 'dms');
@@ -857,6 +859,21 @@ async function revokeInvite(sid) {
 window.revokeInvite = revokeInvite;
 window.renameChannel = renameChannel;
 window.setChannelTopic = setChannelTopic;
+
+async function setChannelDescription(sid, cname) {
+  const s = servers.find(x => x.id === sid);
+  if (!s) return;
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner && !isAdmin) { appAlert('Only the owner or admins can set channel descriptions.'); return; }
+  const ch = (s.channels || []).find(c => c.name === cname);
+  const currentDesc = ch && ch.description ? ch.description : '';
+  const desc = await appPrompt('Channel description:', currentDesc);
+  if (desc === null) return;
+  if (ch) ch.description = desc;
+  await updateDoc(doc(db, 'servers', sid), { channels: s.channels });
+  await loadServers();
+  updateHeader();
+}
 
 async function moveChannel(sid, cname, direction) {
   const s = servers.find(x => x.id === sid);
