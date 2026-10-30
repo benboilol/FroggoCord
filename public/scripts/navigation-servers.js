@@ -253,6 +253,7 @@ async function createServerFromModal() {
     memberUids: [(auth.currentUser && auth.currentUser.uid) || null],
     admins: [],
     adminUids: [],
+    banned: [],
     channels: [{ name: 'general', id: 'general' }],
     createdAt: serverTimestamp()
   });
@@ -290,6 +291,7 @@ async function createServer() {
     memberUids: [(auth.currentUser && auth.currentUser.uid) || null],
     admins: [],
     adminUids: [],
+    banned: [],
     channels: [{ name: 'general', id: 'general' }],
     createdAt: serverTimestamp()
   });
@@ -320,6 +322,10 @@ async function joinServer(codeParam) {
 
   if (members.includes(user)) {
     switchServer(s.id);
+    return;
+  }
+  if (Array.isArray(data.banned) && data.banned.includes(user)) {
+    appAlert('You are banned from this server.');
     return;
   }
 
@@ -476,12 +482,18 @@ function renderMembersList(s) {
         ? `<button onclick="toggleAdmin('${escHtml(m)}', false)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Remove Admin</button>`
         : `<button onclick="toggleAdmin('${escHtml(m)}', true)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--bl);color:var(--accent-contrast);cursor:pointer;">Make Admin</button>`;
       btn += ` <button onclick="kickMember('${escHtml(m)}')" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Kick</button>`;
+      btn += ` <button onclick="banMember('${escHtml(m)}')" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Ban</button>`;
     } else if ((s.admins || []).includes(user) && !isOwner) {
       btn = `<button onclick="kickMember('${escHtml(m)}')" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Kick</button>`;
     }
 
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bg-t);font-size:12px;color:var(--txt);"><span>${escHtml(m)}${badge}</span>${btn}</div>`;
   }).join('');
+  // Show banned users
+  const banned = Array.isArray(s.banned) ? s.banned : [];
+  if (banned.length && (s.owner === user || (s.admins || []).includes(user))) {
+    el.innerHTML += '<div style="margin-top:8px;font-size:11px;color:var(--mut);">Banned:</div>' + banned.map(b => `<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;font-size:12px;color:var(--mut);"><span>${escHtml(b)}</span><button onclick="unbanMember('${escHtml(b)}')" style="font-size:10px;padding:2px 6px;border:none;border-radius:4px;background:var(--bl);color:var(--accent-contrast);cursor:pointer;">Unban</button></div>`).join('');
+  }
 }
 
 async function toggleAdmin(member, makeAdmin) {
@@ -556,8 +568,37 @@ async function kickMember(member) {
   appAlert(member + ' has been kicked.');
 }
 
+async function banMember(member) {
+  const s = getServerById(ctxServerId);
+  if (!s) return;
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner && !isAdmin) { appAlert('No permission.'); return; }
+  if (member === s.owner) { appAlert('Cannot ban the owner.'); return; }
+  if (!(await appConfirm('Ban ' + member + ' from the server? They will not be able to rejoin.'))) return;
+  const members = (s.members || []).filter(m => m !== member);
+  const memberUids = (s.memberUids || []).filter((_, i) => (s.members || [])[i] !== member);
+  const banned = Array.isArray(s.banned) ? [...s.banned, member] : [member];
+  await updateDoc(doc(db, 'servers', ctxServerId), { members, memberUids, banned });
+  await loadServers();
+  if (currentServer === ctxServerId) switchServer(ctxServerId);
+  appAlert(member + ' has been banned.');
+}
+
+async function unbanMember(member) {
+  const s = getServerById(ctxServerId);
+  if (!s) return;
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner && !isAdmin) { appAlert('No permission.'); return; }
+  const banned = (s.banned || []).filter(m => m !== member);
+  await updateDoc(doc(db, 'servers', ctxServerId), { banned });
+  await loadServers();
+  appAlert(member + ' has been unbanned.');
+}
+
 window.toggleAdmin = toggleAdmin;
 window.kickMember = kickMember;
+window.banMember = banMember;
+window.unbanMember = unbanMember;
 
 function closeServerSettings() {
   const m = document.getElementById('server-settings-modal');
