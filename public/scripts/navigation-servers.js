@@ -250,6 +250,7 @@ async function createServerFromModal() {
     createdAt: serverTimestamp()
   });
 
+  await setDoc(doc(db, 'invites', code), { serverId: ref.id, createdBy: user, createdAt: serverTimestamp() });
   document.getElementById('sm-result').textContent = 'Created! Invite code: ' + code;
   await loadServers();
   switchServer(ref.id);
@@ -286,6 +287,7 @@ async function createServer() {
     createdAt: serverTimestamp()
   });
 
+  await setDoc(doc(db, 'invites', code), { serverId: ref.id, createdBy: user, createdAt: serverTimestamp() });
   appAlert('Server created! Invite code: ' + code);
   await loadServers();
   switchServer(ref.id);
@@ -295,10 +297,15 @@ async function joinServer(codeParam) {
   const code = (codeParam || await appPrompt('Invite code:') || '').trim();
   if (!code) return;
 
-  const snap = await getDocs(query(collection(db, 'servers'), where('inviteCode', '==', code.toUpperCase())));
-  if (snap.empty) { appAlert('Invalid code'); return; }
-
-  const s = snap.docs[0];
+  // Look up invite code in separate invites collection (readable by any auth user)
+  const inviteSnap = await getDoc(doc(db, 'invites', code.toUpperCase()));
+  if (!inviteSnap.exists()) { appAlert('Invalid code'); return; }
+  const inviteData = inviteSnap.data();
+  const serverId = inviteData.serverId;
+  // Now read the server doc
+  const serverSnap = await getDoc(doc(db, 'servers', serverId));
+  if (!serverSnap.exists()) { appAlert('Server not found'); return; }
+  const s = serverSnap;
   const data = s.data();
 
   const members = Array.isArray(data.members) ? data.members : [];

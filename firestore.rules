@@ -236,5 +236,16 @@ service cloud.firestore {
     match /reads/{readId} {
       allow read, write: if isAuth();
     }
+
+    // Invites: readable by any authenticated user (for join lookups).
+    // Only the server owner can create/delete invite codes.
+    match /invites/{inviteCode} {
+      allow read: if isAuth();
+      allow create: if isAuth()
+        && request.resource.data.serverId is string
+        && request.resource.data.createdBy == username();
+      allow update: if false;
+      allow delete: if isAuth() && resource.data.createdBy == username();
+    }
   }
 }
