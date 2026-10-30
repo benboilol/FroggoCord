@@ -1213,3 +1213,34 @@ window.toggleGifBlock = (u) => {
       // Check if Firestore is responsive by trying a lightweight read
       // If not, attempt reconnect
     }, 30000);
+
+
+    // ---------- Keyboard shortcuts ----------
+    document.addEventListener('keydown', (e) => {
+      // Ctrl/Cmd + K: focus search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchBtn = document.getElementById('search-btn');
+        if (searchBtn) searchBtn.click();
+      }
+      // Escape: close modals/popups
+      if (e.key === 'Escape') {
+        const mediaPicker = document.getElementById('media-picker');
+        if (mediaPicker && mediaPicker.style.display !== 'none') {
+          mediaPicker.style.display = 'none';
+        }
+        const favTooltip = document.getElementById('fav-gifs-tooltip');
+        if (favTooltip && favTooltip.style.display !== 'none') {
+          favTooltip.style.display = 'none';
+        }
+        const soundboard = document.getElementById('soundboard-panel');
+        if (soundboard && soundboard.style.display !== 'none') {
+          soundboard.style.display = 'none';
+        }
+      }
+      // Ctrl/Cmd + Enter: send message
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (typeof window.sendMessage === 'function') window.sendMessage();
+      }
+    });
