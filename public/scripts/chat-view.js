@@ -995,3 +995,58 @@ window.addEventListener('popstate', () => {
     window.renderMessagePages = async function() {
       return originalRender.apply(this, arguments);
     };
+
+
+    // ---------- Message drafts (auto-save) ----------
+    const DRAFT_KEY = 'froggocord-draft-';
+
+    function saveDraft(channel, text) {
+      try {
+        if (text.trim()) {
+          localStorage.setItem(DRAFT_KEY + channel, text);
+        } else {
+          localStorage.removeItem(DRAFT_KEY + channel);
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    function loadDraft(channel) {
+      try {
+        return localStorage.getItem(DRAFT_KEY + channel) || '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function clearDraft(channel) {
+      try {
+        localStorage.removeItem(DRAFT_KEY + channel);
+      } catch (e) { /* ignore */ }
+    }
+
+    // Auto-save draft on input
+""
+    const chatInputEl = document.getElementById('chat-input');
+    if (chatInputEl) {
+      chatInputEl.addEventListener('input', () => {
+        if (chan) {
+          saveDraft(chan, chatInputEl.value);
+        }
+      });
+
+      // Restore draft on load
+      if (chan) {
+        const draft = loadDraft(chan);
+        if (draft) {
+          chatInputEl.value = draft;
+        }
+      }
+
+      // Clear draft after successful send
+      const origSend = window.sendMessage;
+      window.sendMessage = async function() {
+        const result = await origSend.apply(this, arguments);
+        if (chan) clearDraft(chan);
+        return result;
+      };
+    }
