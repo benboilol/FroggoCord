@@ -674,7 +674,8 @@ const {
       const pending = {
         clientId: clientId,
         text: t,
-        images: pendingFiles.map(p => p.preview),
+        images: pendingFiles.filter(p => p.isImage).map(p => p.preview),
+        files: pendingFiles.filter(p => !p.isImage).map(p => ({ name: p.name, size: p.size, type: p.type, preview: p.preview })),
         imageW: null,
         imageH: null,
         user: user,
@@ -694,9 +695,9 @@ const {
       notifyPendingChanged();
 
       // Handle image dimensions
-      if (pendingFiles.length) {
+      if (pendingFiles.some(p => p.isImage)) {
         for (const pf of pendingFiles) {
-          if (pf.file && pf.file.size > 700000) {
+          if (pf.isImage && pf.file && pf.file.size > 700000) {
             pending.status = 'failed';
             pending.error = 'Image too large (max ~700KB)';
             pendingMessages = pendingMessages.filter(m => m.clientId !== clientId);
@@ -708,7 +709,8 @@ const {
         }
         try {
           const im = new Image();
-          const first = pendingFiles[0].preview;
+          const firstImg = pendingFiles.find(p => p.isImage);
+          const first = firstImg ? firstImg.preview : pendingFiles[0].preview;
           const dims = await new Promise((resolve) => {
             im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
             im.onerror = () => resolve(null);
@@ -722,6 +724,7 @@ const {
       try {
         const payload = { text: t, user, uid: (auth.currentUser && auth.currentUser.uid) || null, channel: chan, pfp, timestamp: serverTimestamp(), clientMsgId: clientId };
         if (pending.images && pending.images.length) payload.images = pending.images;
+        if (pending.files && pending.files.length) payload.files = pending.files;
         if (pending.imageW) { payload.imageW = pending.imageW; payload.imageH = pending.imageH; }
         if (pending.replyTo) payload.replyTo = pending.replyTo;
 
@@ -757,6 +760,7 @@ const {
       try {
         const payload = { text: pending.text, user: pending.user, uid: (auth.currentUser && auth.currentUser.uid) || null, channel: pending.channel, pfp: pending.pfp, timestamp: serverTimestamp(), clientMsgId: clientId };
         if (pending.images && pending.images.length) payload.images = pending.images;
+        if (pending.files && pending.files.length) payload.files = pending.files;
         if (pending.imageW) { payload.imageW = pending.imageW; payload.imageH = pending.imageH; }
         if (pending.replyTo) payload.replyTo = pending.replyTo;
 
@@ -865,8 +869,10 @@ const {
         const blur = isBlk ? 'filter:blur(8px);' : '';
         return `<div class="gif-wrap" data-gif-url="${escHtml(u)}" style="position:relative; display:inline-block; max-width:min(320px,100%);">
           <img data-src="${escHtml(u)}" src="" alt="gif" loading="lazy" style="max-width:100%; border-radius:8px; display:block; background:transparent; min-height:60px; ${ar} ${blur}">
-          <button class="gif-star" onclick="toggleGifFavorite('${escHtml(u)}')" title="Favorite" style="position:absolute; top:6px; left:6px; background:rgba(0,0,0,.5); border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; color:${isFav?'#f0b232':'#fff'}; opacity:0; transition:opacity .15s; z-index:5;">${isFav?'★':'☆'}</button>
-          <button class="gif-block" onclick="toggleGifBlock('${escHtml(u)}')" title="Block" style="position:absolute; top:6px; right:6px; background:rgba(0,0,0,.5); border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; color:${isBlk?'#da373c':'#fff'}; opacity:0; transition:opacity .15s; z-index:5;">${isBlk?'●':'○'}</button>
+          <div class="gif-actions-bar" style="margin-top:4px; display:flex; gap:4px; justify-content:center;">
+            <button class="gif-star" onclick="toggleGifFavorite('${escHtml(u)}')" title="Favorite" style="background:rgba(0,0,0,.5); border:none; border-radius:4px; width:28px; height:28px; cursor:pointer; font-size:14px; color:${isFav?'#f0b232':'#fff'}; opacity:1; transition:opacity .15s;">${isFav?'★':'☆'}</button>
+            <button class="gif-block" onclick="toggleGifBlock('${escHtml(u)}')" title="Block" style="background:rgba(0,0,0,.5); border:none; border-radius:4px; width:28px; height:28px; cursor:pointer; font-size:14px; color:${isBlk?'#da373c':'#fff'}; opacity:1; transition:opacity .15s;">${isBlk?'●':'○'}</button>
+          </div>
         </div>`;
       }
       // Handle invite cards

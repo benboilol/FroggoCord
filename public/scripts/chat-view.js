@@ -248,26 +248,57 @@ function interactiveSvgDocument(markup) {
   return '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="' + contentPolicy + '"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}body{display:grid;place-items:center}svg{display:block;width:100%;height:100%}</style></head><body>' + markup + '</body></html>';
 }
 
-function renderMessageImage(message) {
-  const imgs = Array.isArray(message.images) ? message.images : (message.image ? [message.image] : []);
-  if (!imgs.length) return '';
-  if (imgs.length > 1) {
-    return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:4px;margin-top:4px;">' +
-      imgs.map(u => '<img src="' + escHtml(u) + '" alt="image" style="width:100%;border-radius:8px;display:block;cursor:pointer;aspect-ratio:1/1;object-fit:cover;" onclick="openLightbox(\'' + escHtml(u) + '\',\'Image\')">').join('') +
-      '</div>';
-  }
-  const img = imgs[0];
-  const svgMarkup = svgMarkupFromDataUrl(img);
-  if (svgMarkup !== null) {
-    const srcdoc = interactiveSvgDocument(svgMarkup);
-    const imageWidth = Number(message.imageW);
-    const imageHeight = Number(message.imageH);
-    const hasDimensions = Number.isFinite(imageWidth) && imageWidth > 0 && Number.isFinite(imageHeight) && imageHeight > 0;
-    const aspectRatio = hasDimensions ? `${Math.min(imageWidth, 100000)} / ${Math.min(imageHeight, 100000)}` : '4 / 3';
-    return `<iframe class="interactive-svg" sandbox="allow-scripts" referrerpolicy="no-referrer" loading="lazy" title="Interactive SVG attachment" srcdoc="${escHtml(srcdoc)}" style="width:min(320px, 100%);height:auto;min-height:80px;max-height:60vh;aspect-ratio:${aspectRatio};"></iframe>`;
-  }
-  return `<img src="${escHtml(img)}" alt="image" style="max-width:min(320px, 100%);border-radius:8px;display:block;margin-top:4px;cursor:pointer;${message.imageW && message.imageH ? ' aspect-ratio:' + Number(message.imageW) + '/' + Number(message.imageH) + ';' : ''}" onclick="openLightbox('${escHtml(img)}','Image')">`;
-}
+    function renderMessageImage(message) {
+      const imgs = Array.isArray(message.images) ? message.images : (message.image ? [message.image] : []);
+      const files = Array.isArray(message.files) ? message.files : [];
+      const hasImages = imgs.length > 0;
+      const hasFiles = files.length > 0;
+      if (!hasImages && !hasFiles) return '';
+
+      let parts = [];
+
+      // Render images
+      if (imgs.length > 1) {
+        parts.push('<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:4px;margin-top:4px;">' +
+          imgs.map(u => '<img src="' + escHtml(u) + '" alt="image" style="width:100%;border-radius:8px;display:block;cursor:pointer;aspect-ratio:1/1;object-fit:cover;" onclick="openLightbox(\'\' + escHtml(u) + \'\',\'\'Image\'\')">').join('') +
+          '</div>');
+      } else if (imgs.length === 1) {
+        const img = imgs[0];
+        const svgMarkup = svgMarkupFromDataUrl(img);
+        if (svgMarkup !== null) {
+          const srcdoc = interactiveSvgDocument(svgMarkup);
+          const imageWidth = Number(message.imageW);
+          const imageHeight = Number(message.imageH);
+          const hasDimensions = Number.isFinite(imageWidth) && imageWidth > 0 && Number.isFinite(imageHeight) && imageHeight > 0;
+          const aspectRatio = hasDimensions ? `${Math.min(imageWidth, 100000)} / ${Math.min(imageHeight, 100000)}` : '4 / 3';
+          parts.push(`<iframe class="interactive-svg" sandbox="allow-scripts" referrerpolicy="no-referrer" loading="lazy" title="Interactive SVG attachment" srcdoc="${escHtml(srcdoc)}" style="width:min(320px, 100%);height:auto;min-height:80px;max-height:60vh;aspect-ratio:${aspectRatio};"></iframe>`);
+        } else {
+          parts.push(`<img src="${escHtml(img)}" alt="image" style="max-width:min(320px, 100%);border-radius:8px;display:block;margin-top:4px;cursor:pointer;${message.imageW && message.imageH ? ' aspect-ratio:' + Number(message.imageW) + '/' + Number(message.imageH) + ';' : ''}" onclick="openLightbox('${escHtml(img)}','Image')">`);
+        }
+      }
+
+      // Render file attachments
+      if (hasFiles) {
+        parts.push('<div class="file-attachments" style="margin-top:4px;">' +
+          files.map(f => {
+            const sizeKB = (f.size / 1024).toFixed(1);
+            const sizeMB = (f.size / (1024 * 1024)).toFixed(2);
+            const sizeStr = f.size >= 1024 * 1024 ? sizeMB + ' MB' : sizeKB + ' KB';
+            const isPreviewable = f.preview && f.preview.startsWith('data:');
+            return '<div class="file-attachment" style="display:flex;align-items:center;gap:8px;margin-top:4px;padding:6px 8px;background:var(--panel);border-radius:6px;border:1px solid var(--border);max-width:100%;">' +
+              '<div style="width:32px;height:32px;border-radius:4px;background:var(--mut);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">📎</div>' +
+              '<div style="flex:1;min-width:0;">' +
+              '<div style="font-weight:600;color:var(--bright);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(f.name) + '</div>' +
+              '<div style="font-size:11px;color:var(--mut);">' + sizeStr + ' \u00b7 ' + escHtml(f.type || 'file') + '</div>' +
+              '</div>' +
+              '<a href="' + escHtml(f.preview) + '" download="' + escHtml(f.name) + '" style="flex-shrink:0;color:var(--bl);text-decoration:none;font-size:13px;">Download</a>' +
+              '</div>';
+          }).join('') +
+          '</div>');
+      }
+
+      return parts.join('');
+    }
 
 let pendingFiles = []; // array of {file, preview}
 

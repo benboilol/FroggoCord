@@ -344,7 +344,9 @@ body.high-contrast button { border:1px solid #fff; }
 @media (max-width: 480px) { #app-update-notice { align-items: stretch; flex-direction: column; gap: 8px; } }
 
 
-.gif-wrap:hover .gif-star, .gif-wrap:hover .gif-block { opacity: 1 !important; }
+.gif-wrap .gif-actions-bar { margin-top: 6px; display: flex; gap: 6px; justify-content: center; }
+.gif-wrap .gif-star, .gif-wrap .gif-block { opacity: 1 !important; width: 28px; height: 28px; border-radius: 4px; }
+.gif-wrap .gif-star:hover, .gif-wrap .gif-block:hover { filter: brightness(1.2); }
 .gif-actions button:hover { filter: brightness(1.2); }
 
 
@@ -385,3 +387,58 @@ body.compact .msg-bubble { font-size: 13px; }
 .profile-effect-pulse { animation: profilePulse 2s ease-in-out infinite; }
 .profile-effect-shimmer { animation: profileShimmer 2s ease-in-out infinite; }
 .profile-effect-rainbow { animation: profileRainbow 3s linear infinite; font-weight: 700; }
+
+/* ---------- file attachments ---------- */
+.msg-bubble .file-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+.msg-bubble .file-attachment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 8px 10px;
+  background: var(--panel);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  max-width: 100%;
+}
+.msg-bubble .file-attachment .file-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--mut);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.msg-bubble .file-attachment .file-info {
+  flex: 1;
+  min-width: 0;
+}
+.msg-bubble .file-attachment .file-name {
+  font-weight: 600;
+  color: var(--bright);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.msg-bubble .file-attachment .file-meta {
+  font-size: 11px;
+  color: var(--mut);
+}
+.msg-bubble .file-attachment a.download {
+  flex-shrink: 0;
+  color: var(--bl);
+  text-decoration: none;
+  font-size: 13px;
+}
+.msg-bubble .file-attachment a.download:hover {
+  text-decoration: underline;
+}
