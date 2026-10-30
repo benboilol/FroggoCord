@@ -194,7 +194,7 @@ const {
       status: 'online',
       notifications: { desktop: true, sound: true, mentions: true, dm: true },
       privacy: { onlineStatus: true, dmAnyone: true, activity: true },
-      profile: { color: '#57f287', banner: '', background: '', accent: '#57f287', decoration: '', effect: false, layout: 'default', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
+      profile: { color: '#57f287', banner: '', background: '', accent: '#57f287', decoration: '', effect: false, layout: 'default', appBg: '', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
       accessibility: { fontSize: 'medium', timeFormat: 'system', highContrast: false, reducedMotion: false, screenReader: false, chatDensity: 'cozy', autoTheme: { enabled: false, timezone: 'auto', dayTheme: 'fulgurite', nightTheme: 'obsidian', dayStart: 7, nightStart: 19 } }
     };
     const SETTINGS_STORAGE_KEY = 'froggocord-settings';
@@ -256,6 +256,7 @@ const {
       const pef = document.getElementById('sp-profile-effect'); if (pef) pef.checked = !!prof.effect;
       const pac = document.getElementById('sp-profile-accent'); if (pac) pac.value = prof.accent || prof.color || '#57f287';
       const pdc = document.getElementById('sp-profile-decoration'); if (pdc) pdc.value = prof.decoration || '';
+      const pab = document.getElementById('sp-app-bg'); if (pab) pab.value = prof.appBg || '';
       const ppl = document.getElementById('sp-profile-layout'); if (ppl) ppl.value = prof.layout || 'default';
       updateProfilePreview();
       // Auto theme population
@@ -333,8 +334,22 @@ const {
         document.body.classList.remove('high-contrast');
       }
       document.body.classList.toggle('compact', settings.accessibility.chatDensity === 'compact');
+      applyAppBg(settings.profile && settings.profile.appBg);
       applyAutoTheme();
       saveSettings();
+    }
+    function applyAppBg(url) {
+      if (url) {
+        document.body.style.backgroundImage = 'url('+url+')';
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundAttachment = 'fixed';
+        document.body.style.backgroundPosition = 'center';
+      } else {
+        document.body.style.backgroundImage = '';
+        document.body.style.backgroundSize = '';
+        document.body.style.backgroundAttachment = '';
+        document.body.style.backgroundPosition = '';
+      }
     }
     function applyAutoTheme() {
       const at = settings.accessibility && settings.accessibility.autoTheme;
@@ -496,6 +511,13 @@ const {
       prof.decoration = pdcEl.value.trim();
       saveSettings();
       if (user) setDoc(doc(db,'users',user),{user,decoration:prof.decoration,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+    });
+    const pabEl = document.getElementById('sp-app-bg');
+    if (pabEl) pabEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.appBg = pabEl.value.trim();
+      saveSettings();
+      applyAppBg(prof.appBg);
     });
     const pplEl = document.getElementById('sp-profile-layout');
     if (pplEl) pplEl.addEventListener('change', () => {
