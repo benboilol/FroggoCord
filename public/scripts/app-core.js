@@ -657,6 +657,36 @@ const {
       } catch (err) { appAlert('Failed to process banner.'); }
       e.target.value = '';
     });
+    const resetBannerBg = document.getElementById('sp-reset-banner-bg');
+    if (resetBannerBg) resetBannerBg.addEventListener('click', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.banner = '';
+      prof.background = '';
+      prof.bgColor = '#1e1f22';
+      prof.bannerPos = 'center';
+      prof.bannerSize = 'cover';
+      prof.bgPos = 'center';
+      prof.bgSize = 'cover';
+      saveSettings();
+      const pbp = document.getElementById('sp-profile-banner-preview');
+      if (pbp) pbp.style.backgroundImage = 'none';
+      const pbg = document.getElementById('sp-profile-bg');
+      if (pbg) pbg.value = '';
+      const pbgp = document.getElementById('sp-profile-bg-preview');
+      if (pbgp) pbgp.style.backgroundImage = 'none';
+      const pbc = document.getElementById('sp-profile-bg-color');
+      if (pbc) pbc.value = '#1e1f22';
+      const bpos = document.getElementById('sp-banner-position');
+      if (bpos) bpos.value = 'center';
+      const bsz = document.getElementById('sp-banner-size');
+      if (bsz) bsz.value = 'cover';
+      const bgpos = document.getElementById('sp-bg-position');
+      if (bgpos) bgpos.value = 'center';
+      const bgsz = document.getElementById('sp-bg-size');
+      if (bgsz) bgsz.value = 'cover';
+      if (user) setDoc(doc(db,'users',user),{user,banner:'',background:'',bgColor:'#1e1f22',lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+      appAlert('Banner and background reset.');
+    });
     const bgFile = document.getElementById('sp-profile-bg-file');
     if (bgFile) bgFile.addEventListener('change', async (e) => {
       const f = e.target.files && e.target.files[0];
