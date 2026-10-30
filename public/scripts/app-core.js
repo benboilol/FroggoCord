@@ -1207,11 +1207,27 @@ window.toggleGifBlock = (u) => {
     window.addEventListener('offline', updateNetworkStatus);
 
     // Periodic reconnect check
-    setInterval(() => {
+    setInterval(async () => {
       if (!navigator.onLine) return;
       if (!user) return;
-      // Check if Firestore is responsive by trying a lightweight read
-      // If not, attempt reconnect
+      try {
+        // Lightweight check: try to read presence doc
+        await getDoc(doc(db, 'presence', user));
+        const indicator = document.getElementById('network-status');
+        if (indicator) indicator.style.display = 'none';
+      } catch (e) {
+        console.warn('Reconnect check failed, retrying...', e);
+        const indicator = document.getElementById('network-status');
+        if (indicator) { indicator.style.display = 'block'; indicator.textContent = 'Reconnecting...'; }
+        // Attempt reconnect
+        try {
+          if (chan) listen();
+          if (user) loadServers();
+          if (indicator) indicator.style.display = 'none';
+        } catch (err) {
+          console.error('Reconnect failed', err);
+        }
+      }
     }, 30000);
 
 
