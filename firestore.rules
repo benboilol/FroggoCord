@@ -152,15 +152,22 @@ service cloud.firestore {
 
       allow update: if isAuth() && (
         (
-          // Owner only: all server state except ownership fields
+          // Owner only: can change everything including ownership transfer
           resource.data.ownerUid == request.auth.uid
-          && request.resource.data.owner == resource.data.owner
-          && request.resource.data.ownerUid == resource.data.ownerUid
           && request.resource.data.inviteCode == resource.data.inviteCode
           && request.resource.data.members is list
           && request.resource.data.members.size() <= 500
           && request.resource.data.memberUids is list
           && request.resource.data.memberUids.size() <= 500
+          && (
+            // Normal owner update: ownership unchanged
+            (request.resource.data.owner == resource.data.owner && request.resource.data.ownerUid == resource.data.ownerUid)
+            ||
+            // Ownership transfer: new owner must be a current member
+            (request.resource.data.owner != resource.data.owner &&
+             request.resource.data.owner in resource.data.members &&
+             request.resource.data.ownerUid is string)
+          )
         )
         ||
         (
