@@ -194,14 +194,34 @@ service cloud.firestore {
           && (
             (
               request.resource.data.members == resource.data.members + [username()]
-              && username() not in resource.data.members
+              && !(username() in resource.data.members)
             )
             ||
             (
               request.resource.data.memberUids == resource.data.memberUids + [request.auth.uid]
-              && request.auth.uid not in resource.data.memberUids
+              && !(request.auth.uid in resource.data.memberUids)
             )
           )
+        )
+        ||
+        (
+          // Self-leave: a non-owner member may remove only themselves from members
+          request.auth.uid != null
+          && resource.data.owner != username()
+          && username() in resource.data.members
+          && request.resource.data.owner == resource.data.owner
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.inviteCode == resource.data.inviteCode
+          && request.resource.data.admins == resource.data.admins
+          && request.resource.data.adminUids == resource.data.adminUids
+          && request.resource.data.members is list
+          && request.resource.data.members.size() == resource.data.members.size() - 1
+          && !request.resource.data.members.has(username())
+          && resource.data.members.hasAll(request.resource.data.members)
+          && request.resource.data.memberUids is list
+          && request.resource.data.memberUids.size() == resource.data.memberUids.size() - 1
+          && !(request.auth.uid in request.resource.data.memberUids)
+          && request.auth.uid in resource.data.memberUids
         )
       );
 
