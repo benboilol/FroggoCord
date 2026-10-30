@@ -698,8 +698,8 @@ document.getElementById('auth-submit-btn').addEventListener('click', () => {
   const u = document.getElementById('auth-username').value.trim();
   const p = document.getElementById('auth-password').value.trim();
   if (!u || !p) { appAlert("Please enter both fields."); return; }
-  if (isSignUpMode) { createUserWithEmailAndPassword(auth, u + "@friends.com", p).catch(err => appAlert(err.message)); }
-  else { signInWithEmailAndPassword(auth, u + "@friends.com", p).catch(err => appAlert(err.message)); }
+  if (isSignUpMode) { createUserWithEmailAndPassword(window.auth, u + "@friends.com", p).catch(err => appAlert(err.message)); }
+  else { signInWithEmailAndPassword(window.auth, u + "@friends.com", p).catch(err => appAlert(err.message)); }
 });
 
 document.getElementById('auth-switch-btn').addEventListener('click', () => {
@@ -710,7 +710,7 @@ document.getElementById('auth-switch-btn').addEventListener('click', () => {
   document.getElementById('auth-switch-btn').textContent = isSignUpMode ? 'Login' : 'Sign up';
 });
 
-document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+document.getElementById('logout-btn').addEventListener('click', () => signOut(window.auth));
 
 const statusSel = document.getElementById('status-select');
 if (statusSel) {
@@ -721,7 +721,7 @@ if (statusSel) {
 window.render = () => {};
 
 // Authentication starts after the feature scripts have registered their functions.
-onAuthStateChanged(auth, async (u) => {
+onAuthStateChanged(window.auth, async (u) => {
   if (u) {
     user = u.email.split('@')[0];
     document.getElementById('auth-overlay').style.display = 'none';
