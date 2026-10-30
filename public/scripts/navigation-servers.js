@@ -857,6 +857,25 @@ async function revokeInvite(sid) {
 window.revokeInvite = revokeInvite;
 window.renameChannel = renameChannel;
 window.setChannelTopic = setChannelTopic;
+
+async function moveChannel(sid, cname, direction) {
+  const s = servers.find(x => x.id === sid);
+  if (!s) return;
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner && !isAdmin) { appAlert('No permission.'); return; }
+  const channels = s.channels || [];
+  const idx = channels.findIndex(c => c.name === cname);
+  if (idx < 0) return;
+  const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (newIdx < 0 || newIdx >= channels.length) return;
+  // Swap
+  [channels[idx], channels[newIdx]] = [channels[newIdx], channels[idx]];
+  await updateDoc(doc(db, 'servers', sid), { channels });
+  await loadServers();
+  if (currentServer === sid) switchServer(sid);
+}
+
+window.moveChannel = moveChannel;
 window.serverMenu = serverMenu;
 window.switchServer = switchServer;
 window.joinServer = joinServer;
