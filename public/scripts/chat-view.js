@@ -30,6 +30,31 @@ window.openProfile = async (u) => {
       if (prof.layout === 'spacious') modalCard.classList.add('profile-spacious');
     }
   } catch (e) {}
+  // Apply profile effect
+  try {
+    const prof = (typeof settings !== 'undefined' && settings.profile) ? settings.profile : null;
+    if (prof && u === user) {
+      const av = document.getElementById('prof-avatar');
+      if (av) {
+        av.classList.remove('profile-effect-glow', 'profile-effect-pulse', 'profile-effect-shimmer');
+        if (prof.effect) {
+          const type = prof.effectType || 'glow';
+          if (type === 'glow' || type === 'pulse' || type === 'shimmer') {
+            av.classList.add('profile-effect-' + type);
+          }
+        }
+      }
+      if (prof.effect && prof.effectType === 'rainbow') {
+        pname.classList.add('profile-effect-rainbow');
+      } else {
+        pname.classList.remove('profile-effect-rainbow');
+      }
+    } else {
+      const av = document.getElementById('prof-avatar');
+      if (av) av.classList.remove('profile-effect-glow', 'profile-effect-pulse', 'profile-effect-shimmer');
+      pname.classList.remove('profile-effect-rainbow');
+    }
+  } catch (e) {}
   try {
     const prof = (typeof settings !== 'undefined' && settings.profile) ? settings.profile : null;
     if (prof && u === user) {

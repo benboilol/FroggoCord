@@ -194,7 +194,7 @@ const {
       status: 'online',
       notifications: { desktop: true, sound: true, mentions: true, dm: true },
       privacy: { onlineStatus: true, dmAnyone: true, activity: true },
-      profile: { color: '#57f287', banner: '', background: '', accent: '#57f287', decoration: '', effect: false, layout: 'default', appBg: '', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
+      profile: { color: '#57f287', banner: '', background: '', accent: '#57f287', decoration: '', effect: false, effectType: 'glow', layout: 'default', appBg: '', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
       accessibility: { fontSize: 'medium', timeFormat: 'system', highContrast: false, reducedMotion: false, screenReader: false, chatDensity: 'cozy', autoTheme: { enabled: false, timezone: 'auto', dayTheme: 'fulgurite', nightTheme: 'obsidian', dayStart: 7, nightStart: 19 } }
     };
     const SETTINGS_STORAGE_KEY = 'froggocord-settings';
@@ -254,6 +254,7 @@ const {
       if (pbp) { const b = prof.banner; if (b) { pbp.style.backgroundImage = 'url('+b+')'; } else { pbp.style.backgroundImage = 'none'; } }
       const pbg = document.getElementById('sp-profile-bg'); if (pbg) pbg.value = prof.background || '';
       const pef = document.getElementById('sp-profile-effect'); if (pef) pef.checked = !!prof.effect;
+      const pet = document.getElementById('sp-profile-effect-type'); if (pet) pet.value = prof.effectType || 'glow';
       const pac = document.getElementById('sp-profile-accent'); if (pac) pac.value = prof.accent || prof.color || '#57f287';
       const pdc = document.getElementById('sp-profile-decoration'); if (pdc) pdc.value = prof.decoration || '';
       const pab = document.getElementById('sp-app-bg'); if (pab) pab.value = prof.appBg || '';
@@ -496,6 +497,12 @@ const {
     if (pefEl) pefEl.addEventListener('change', () => {
       const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
       prof.effect = pefEl.checked;
+      saveSettings();
+    });
+    const petEl = document.getElementById('sp-profile-effect-type');
+    if (petEl) petEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.effectType = petEl.value;
       saveSettings();
     });
     const pacEl = document.getElementById('sp-profile-accent');
