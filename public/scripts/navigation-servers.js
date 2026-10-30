@@ -195,7 +195,12 @@ function updateHeader() {
     h.innerHTML = `<span class="hname">Direct Messages</span>`;
   } else {
     const label = chan && chan.startsWith('srv_') ? chan.split('_').slice(2).join('_') : (chan || 'general');
-    h.innerHTML = `<span class="hash">#</span><span class="hname">${escHtml(label)}</span>`;
+    const s = servers.find(x => x.id === currentServer);
+    const ch = s && (s.channels || []).find(c => c.name === label);
+    const topic = ch && ch.topic ? ch.topic : '';
+    const canEdit = s && (s.owner === user || (s.admins || []).includes(user));
+    const topicBtn = canEdit ? `<button onclick="setChannelTopic('${currentServer}','${escHtml(label)}')" style="margin-left:8px;background:transparent;border:none;color:var(--mut);cursor:pointer;font-size:11px;" title="Set topic">✎</button>` : '';
+    h.innerHTML = `<span class="hash">#</span><span class="hname">${escHtml(label)}</span>${topic ? `<span class="channel-topic" style="margin-left:12px;color:var(--mut);font-size:12px;font-weight:400;">${escHtml(topic)}</span>` : ''}${topicBtn}`;
   }
 
   document.body.classList.toggle('dm-mode', mode === 'dms');
@@ -808,6 +813,8 @@ async function shareInvite(sid) {
 
 window.createChannel = createChannel;
 window.shareInvite = shareInvite;
+window.renameChannel = renameChannel;
+window.setChannelTopic = setChannelTopic;
 window.serverMenu = serverMenu;
 window.switchServer = switchServer;
 window.joinServer = joinServer;
