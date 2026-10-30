@@ -29,6 +29,7 @@ window.openProfile = async (u) => {
   pname.textContent = u;
   const txtCol = (typeof userTextColorMap !== 'undefined') ? userTextColorMap.get(u) : null;
   if (txtCol) pname.style.color = txtCol;
+  const profStatusEl = document.getElementById('prof-status');
   // Apply profile layout
   try {
     const prof = (typeof settings !== 'undefined' && settings.profile) ? settings.profile : null;
@@ -89,9 +90,15 @@ window.openProfile = async (u) => {
   const pres = Array.from(document.getElementById('user-list').children).find(el => el.dataset.user === u);
   const dot = pres && pres.querySelector('.status-dot');
   document.getElementById('prof-status').textContent = dot ? (dot.getAttribute('title') || 'Online') : 'Offline';
+  const bio = (typeof userBioMap !== 'undefined') ? userBioMap.get(u) : null;
+  if (bio) {
+    const bioEl = document.createElement('div');
+    bioEl.style.cssText = 'color:var(--mut);font-size:13px;margin:8px 0;white-space:pre-wrap;';
+    bioEl.textContent = bio;
+    profStatusEl.parentNode.insertBefore(bioEl, profStatusEl.nextSibling);
+  }
   const cs = (typeof userCustomStatusMap !== 'undefined') ? userCustomStatusMap.get(u) : null;
   const pr = (typeof userPronounsMap !== 'undefined') ? userPronounsMap.get(u) : null;
-  const profStatusEl = document.getElementById('prof-status');
   if (profStatusEl) {
     let statusText = profStatusEl.textContent;
     if (pr) statusText = pr + ' \u00b7 ' + statusText;
