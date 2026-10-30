@@ -28,7 +28,7 @@ const {
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
     let chan = null, user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'dms', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
-    let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map(), userBgColorMap = new Map();
+    let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map(), userBgColorMap = new Map(), userTextColorMap = new Map();
     const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit
     const IDLE_MS = 120000;
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
@@ -194,7 +194,7 @@ const {
       status: 'online',
       notifications: { desktop: true, sound: true, mentions: true, dm: true },
       privacy: { onlineStatus: true, dmAnyone: true, activity: true },
-      profile: { color: '#57f287', banner: '', background: '', bgColor: '#1e1f22', accent: '#57f287', decoration: '', effect: false, effectType: 'glow', layout: 'default', appBg: '', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
+      profile: { color: '#57f287', banner: '', bannerPos: 'center', bannerSize: 'cover', background: '', bgColor: '#1e1f22', bgPos: 'center', bgSize: 'cover', accent: '#57f287', textColor: '#ffffff', decoration: '', effect: false, effectType: 'glow', layout: 'default', appBg: '', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
       accessibility: { fontSize: 'medium', timeFormat: 'system', highContrast: false, reducedMotion: false, screenReader: false, chatDensity: 'cozy', autoTheme: { enabled: false, timezone: 'auto', dayTheme: 'fulgurite', nightTheme: 'obsidian', dayStart: 7, nightStart: 19 } }
     };
     const SETTINGS_STORAGE_KEY = 'froggocord-settings';
@@ -242,7 +242,46 @@ const {
       const prof = settings.profile || SETTINGS_DEFAULTS.profile;
       const pc = document.getElementById('sp-profile-color');
       if (pc) pc.value = prof.color || '#57f287';
-      const pge = document.getElementById('sp-profile-gradient-enabled');
+      const bposEl = document.getElementById('sp-banner-position');
+    if (bposEl) bposEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.bannerPos = bposEl.value;
+      saveSettings();
+      const pbp = document.getElementById('sp-profile-banner-preview');
+      if (pbp) pbp.style.backgroundPosition = prof.bannerPos;
+    });
+    const bszEl = document.getElementById('sp-banner-size');
+    if (bszEl) bszEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.bannerSize = bszEl.value;
+      saveSettings();
+      const pbp = document.getElementById('sp-profile-banner-preview');
+      if (pbp) pbp.style.backgroundSize = prof.bannerSize;
+    });
+    const bgposEl = document.getElementById('sp-bg-position');
+    if (bgposEl) bgposEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.bgPos = bgposEl.value;
+      saveSettings();
+      const pbgp = document.getElementById('sp-profile-bg-preview');
+      if (pbgp) pbgp.style.backgroundPosition = prof.bgPos;
+    });
+    const bgszEl = document.getElementById('sp-bg-size');
+    if (bgszEl) bgszEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.bgSize = bgszEl.value;
+      saveSettings();
+      const pbgp = document.getElementById('sp-profile-bg-preview');
+      if (pbgp) pbgp.style.backgroundSize = prof.bgSize;
+    });
+    const ptcolEl = document.getElementById('sp-profile-text-color');
+    if (ptcolEl) ptcolEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.textColor = ptcolEl.value;
+      saveSettings();
+      if (user) setDoc(doc(db,'users',user),{user,textColor:prof.textColor,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+    });
+    const pge = document.getElementById('sp-profile-gradient-enabled');
       if (pge) pge.checked = !!(prof.gradient && prof.gradient.enabled);
       const pgf = document.getElementById('sp-profile-grad-from');
       if (pgf) pgf.value = (prof.gradient && prof.gradient.from) || '#57f287';
@@ -252,8 +291,13 @@ const {
       if (pgd) pgd.value = (prof.gradient && prof.gradient.direction) || 'to right';
       const pbp = document.getElementById('sp-profile-banner-preview');
       if (pbp) { const b = prof.banner; if (b) { pbp.style.backgroundImage = 'url('+b+')'; } else { pbp.style.backgroundImage = 'none'; } }
+      const bpos = document.getElementById('sp-banner-position'); if (bpos) bpos.value = prof.bannerPos || 'center';
+      const bsz = document.getElementById('sp-banner-size'); if (bsz) bsz.value = prof.bannerSize || 'cover';
       const pbg = document.getElementById('sp-profile-bg'); if (pbg) pbg.value = prof.background || '';
       const pbgp = document.getElementById('sp-profile-bg-preview'); if (pbgp) { const b = prof.background; if (b) pbgp.style.backgroundImage = 'url('+b+')'; else pbgp.style.backgroundImage = 'none'; }
+      const bgpos = document.getElementById('sp-bg-position'); if (bgpos) bgpos.value = prof.bgPos || 'center';
+      const bgsz = document.getElementById('sp-bg-size'); if (bgsz) bgsz.value = prof.bgSize || 'cover';
+      const ptcol = document.getElementById('sp-profile-text-color'); if (ptcol) ptcol.value = prof.textColor || '#ffffff';
       const pbc = document.getElementById('sp-profile-bg-color'); if (pbc) pbc.value = prof.bgColor || '#1e1f22';
       const pef = document.getElementById('sp-profile-effect'); if (pef) pef.checked = !!prof.effect;
       const pet = document.getElementById('sp-profile-effect-type'); if (pet) pet.value = prof.effectType || 'glow';

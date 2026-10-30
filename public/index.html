@@ -259,11 +259,39 @@
         <label class="field-label" for="sp-profile-banner-file">Profile banner image</label>
         <input type="file" id="sp-profile-banner-file" accept="image/*" style="margin:8px 0;">
         <div id="sp-profile-banner-preview" style="margin-top:8px;height:60px;border-radius:8px;background:var(--bg-t);background-size:cover;background-position:center;"></div>
+        <label class="field-label" for="sp-banner-position">Banner position</label>
+        <select id="sp-banner-position" class="inp2">
+            <option value="center">Center</option>
+            <option value="top">Top</option>
+            <option value="bottom">Bottom</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+        </select>
+        <label class="field-label" for="sp-banner-size">Banner size</label>
+        <select id="sp-banner-size" class="inp2">
+            <option value="cover">Cover (crop)</option>
+            <option value="contain">Contain (fit)</option>
+        </select>
         <label class="field-label" for="sp-profile-bg">Profile background image URL</label>
         <input id="sp-profile-bg" class="inp2" placeholder="https://...">
         <label class="field-label" for="sp-profile-bg-file">Or upload background image</label>
         <input type="file" id="sp-profile-bg-file" accept="image/*" style="margin:8px 0;">
         <div id="sp-profile-bg-preview" style="margin-top:8px;height:60px;border-radius:8px;background:var(--bg-t);background-size:cover;background-position:center;"></div>
+        <label class="field-label" for="sp-bg-position">Background position</label>
+        <select id="sp-bg-position" class="inp2">
+            <option value="center">Center</option>
+            <option value="top">Top</option>
+            <option value="bottom">Bottom</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+        </select>
+        <label class="field-label" for="sp-bg-size">Background size</label>
+        <select id="sp-bg-size" class="inp2">
+            <option value="cover">Cover (crop)</option>
+            <option value="contain">Contain (fit)</option>
+        </select>
+        <label class="field-label" for="sp-profile-text-color">Profile text color</label>
+        <input type="color" id="sp-profile-text-color" value="#ffffff" style="width:60px;height:36px;border:none;background:none;cursor:pointer;">
         <label class="field-label" for="sp-profile-bg-color">Profile background color</label>
         <input type="color" id="sp-profile-bg-color" value="#1e1f22" style="width:60px;height:36px;border:none;background:none;cursor:pointer;">
         <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">

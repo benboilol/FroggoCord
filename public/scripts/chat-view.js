@@ -3,10 +3,16 @@ window.openProfile = async (u) => {
   const modal = document.getElementById('profile-modal');
   const banner = document.getElementById('prof-banner');
   const ub = (typeof userBannerMap !== 'undefined') ? userBannerMap.get(u) : null;
-  if (banner) { if (ub) { banner.style.backgroundImage = 'url('+escHtml(ub)+')'; } else { banner.style.backgroundImage = 'none'; } }
+  if (banner) { if (ub) { banner.style.backgroundImage = 'url('+escHtml(ub)+')'; } else { banner.style.backgroundImage = 'none'; } 
+    const prof = (typeof settings !== 'undefined' && settings.profile) ? settings.profile : null;
+    if (prof && u === user) {
+      banner.style.backgroundPosition = prof.bannerPos || 'center';
+      banner.style.backgroundSize = prof.bannerSize || 'cover';
+    }
+  }
   const modalCard = modal.querySelector('.modal-card');
   const bg = (typeof userBackgroundMap !== 'undefined') ? userBackgroundMap.get(u) : null;
-  if (modalCard) { if (bg) { modalCard.style.backgroundImage = 'url('+escHtml(bg)+')'; modalCard.style.backgroundSize = 'cover'; } else { modalCard.style.backgroundImage = ''; } const bgColor = (typeof userBgColorMap !== 'undefined') ? userBgColorMap.get(u) : null; if (bgColor) modalCard.style.backgroundColor = bgColor; else modalCard.style.backgroundColor = ''; }
+  if (modalCard) { if (bg) { modalCard.style.backgroundImage = 'url('+escHtml(bg)+')'; modalCard.style.backgroundSize = (typeof settings !== 'undefined' && settings.profile && u === user) ? (settings.profile.bgSize || 'cover') : 'cover'; modalCard.style.backgroundPosition = (typeof settings !== 'undefined' && settings.profile && u === user) ? (settings.profile.bgPos || 'center') : 'center'; } else { modalCard.style.backgroundImage = ''; } const bgColor = (typeof userBgColorMap !== 'undefined') ? userBgColorMap.get(u) : null; if (bgColor) modalCard.style.backgroundColor = bgColor; else modalCard.style.backgroundColor = ''; }
   const av = document.getElementById('prof-avatar');
   const upfp = (typeof userPfpMap !== 'undefined') ? userPfpMap.get(u) : null;
   const hasPfp = upfp && !upfp.startsWith('file:///');
@@ -21,6 +27,8 @@ window.openProfile = async (u) => {
   }
   const pname = document.getElementById('prof-name');
   pname.textContent = u;
+  const txtCol = (typeof userTextColorMap !== 'undefined') ? userTextColorMap.get(u) : null;
+  if (txtCol) pname.style.color = txtCol;
   // Apply profile layout
   try {
     const prof = (typeof settings !== 'undefined' && settings.profile) ? settings.profile : null;
