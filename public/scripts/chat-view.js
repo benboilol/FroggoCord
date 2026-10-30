@@ -886,6 +886,47 @@ window.unfriendReq = async (id) => {
   await updateDoc(doc(db,"friends",id),{status:"unfriended"});
 };
 
+
+    window.toggleSearch = () => {
+      const bar = document.getElementById('search-bar');
+      if (!bar) return;
+      if (bar.style.display === 'none' || !bar.style.display) {
+        bar.style.display = 'block';
+        const inp = document.getElementById('search-input');
+        if (inp) { inp.value = ''; inp.focus(); }
+      } else {
+        bar.style.display = 'none';
+        if (typeof renderMessagePages === 'function') renderMessagePages({ preserveScroll: true });
+      }
+    };
+
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+      let searchTimer = null;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+          const q = searchInput.value.trim().toLowerCase();
+          if (!q) {
+            if (typeof renderMessagePages === 'function') renderMessagePages({ preserveScroll: true });
+            return;
+          }
+          const msgBox = document.getElementById('message-container');
+          if (!msgBox) return;
+          const msgs = msgBox.querySelectorAll('.msg');
+          msgs.forEach(m => {
+            const text = (m.textContent || '').toLowerCase();
+            if (text.includes(q)) {
+              m.style.display = '';
+              m.style.background = 'var(--mention-bg)';
+            } else {
+              m.style.display = 'none';
+            }
+          });
+        }, 200);
+      });
+    }
+
 window.addEventListener('popstate', () => {
   try {
     const parts = window.location.pathname.split('/').filter(Boolean);

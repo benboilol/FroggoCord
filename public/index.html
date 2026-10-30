@@ -409,6 +409,9 @@
     <div class="ca">
     <div id="chat-header" class="chat-header"><button id="mobile-nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button><span class="hash">#</span><span class="hname">general</span></div>
     <div id="pinned-bar" style="display:none; padding:4px 8px; background:var(--bg-t); border-bottom:1px solid var(--border); font-size:12px; color:var(--mut);"></div>
+    <div id="search-bar" style="display:none; padding:4px 8px; background:var(--bg-t); border-bottom:1px solid var(--border);">
+      <input id="search-input" type="text" placeholder="Search messages..." style="width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--input);color:var(--txt);font-size:13px;">
+    </div>
     <div class="msgs" id="message-container"></div>
     <div id="reply-preview">
         <div class="reply-bar">
@@ -453,6 +456,7 @@
         <button id="emoji-btn" class="emoji" title="Emoji">😀</button>
         <button id="fav-gifs-btn" class="emoji" title="Favorite GIFs" onclick="showFavoriteGifs()">⭐</button>
         <button id="soundboard-btn" class="emoji" title="Soundboard" onclick="toggleSoundboard()">🔊</button>
+        <button id="search-btn" class="emoji" title="Search messages" onclick="toggleSearch()">🔍</button>
         <div id="soundboard-panel" style="display:none; position:absolute; bottom:60px; right:70px; width:260px; max-height:300px; overflow-y:auto; background:var(--bg-s); border-radius:8px; padding:8px; box-shadow:0 4px 16px rgba(0,0,0,.4); z-index:1000; border:1px solid var(--border);"></div>
         <div id="fav-gifs-tooltip" style="display:none; position:absolute; bottom:60px; right:20px; width:320px; max-height:400px; overflow:auto; background:var(--bg-s); border-radius:8px; padding:8px; box-shadow:0 4px 16px rgba(0,0,0,.4); z-index:1000;"></div>
         <button id="send-btn" class="send-btn" title="Send message" onclick="sendMessage()"><img src="/send_message_icon.svg" alt="Send message" style="width: 22px; height: 22px;"></button>
