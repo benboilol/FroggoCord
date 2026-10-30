@@ -973,3 +973,25 @@ window.addEventListener('popstate', () => {
     }
   } catch (e) { window.__skipPush = false; }
 });
+
+
+    // Quote message functionality
+    window.quoteMessage = async (msgId) => {
+      const msgEl = document.querySelector(`[data-id="${msgId}"]`);
+      if (!msgEl) return;
+      const authorEl = msgEl.querySelector('.msg-author');
+      const textEl = msgEl.querySelector('.msg-bubble');
+      const author = authorEl ? authorEl.textContent : 'Unknown';
+      const text = textEl ? textEl.textContent : '';
+      const chatInput = document.getElementById('chat-input');
+      if (chatInput) {
+        chatInput.value = '> ' + author + ': ' + text + '\n';
+        chatInput.focus();
+      }
+    };
+
+    // Also add quote button to message actions when rendering
+    const originalRender = window.renderMessagePages;
+    window.renderMessagePages = async function() {
+      return originalRender.apply(this, arguments);
+    };
