@@ -89,6 +89,15 @@ window.openProfile = async (u) => {
   const pres = Array.from(document.getElementById('user-list').children).find(el => el.dataset.user === u);
   const dot = pres && pres.querySelector('.status-dot');
   document.getElementById('prof-status').textContent = dot ? (dot.getAttribute('title') || 'Online') : 'Offline';
+  const cs = (typeof userCustomStatusMap !== 'undefined') ? userCustomStatusMap.get(u) : null;
+  const pr = (typeof userPronounsMap !== 'undefined') ? userPronounsMap.get(u) : null;
+  const profStatusEl = document.getElementById('prof-status');
+  if (profStatusEl) {
+    let statusText = profStatusEl.textContent;
+    if (pr) statusText = pr + ' \u00b7 ' + statusText;
+    if (cs) statusText = '\"' + cs + '\" \u00b7 ' + statusText;
+    profStatusEl.textContent = statusText;
+  }
   const badgesEl = document.getElementById('prof-badges');
   if (badgesEl) {
     const badges = [];
@@ -730,6 +739,10 @@ onAuthStateChanged(auth, async (u) => {
         if (data.user && data.background) userBackgroundMap.set(data.user, data.background);
         if (data.user && data.accent) userAccentMap.set(data.user, data.accent);
         if (data.user && data.decoration) userDecorationMap.set(data.user, data.decoration);
+        if (data.user && data.bgColor) userBgColorMap.set(data.user, data.bgColor);
+        if (data.user && data.textColor) userTextColorMap.set(data.user, data.textColor);
+        if (data.user && data.customStatus) userCustomStatusMap.set(data.user, data.customStatus);
+        if (data.user && data.pronouns) userPronounsMap.set(data.user, data.pronouns);
         if (data.user && data.privacy) userPrivacyMap.set(data.user, data.privacy);
       });
 

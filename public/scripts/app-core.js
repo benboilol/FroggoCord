@@ -28,7 +28,7 @@ const {
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
     let chan = null, user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'dms', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
-    let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map(), userBgColorMap = new Map(), userTextColorMap = new Map();
+    let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map(), userBgColorMap = new Map(), userTextColorMap = new Map(), userCustomStatusMap = new Map(), userPronounsMap = new Map();
     const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit
     const IDLE_MS = 120000;
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
@@ -194,7 +194,7 @@ const {
       status: 'online',
       notifications: { desktop: true, sound: true, mentions: true, dm: true },
       privacy: { onlineStatus: true, dmAnyone: true, activity: true },
-      profile: { color: '#57f287', banner: '', bannerPos: 'center', bannerSize: 'cover', background: '', bgColor: '#1e1f22', bgPos: 'center', bgSize: 'cover', accent: '#57f287', textColor: '#ffffff', decoration: '', effect: false, effectType: 'glow', layout: 'default', appBg: '', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
+      profile: { color: '#57f287', banner: '', bannerPos: 'center', bannerSize: 'cover', background: '', bgColor: '#1e1f22', bgPos: 'center', bgSize: 'cover', accent: '#57f287', textColor: '#ffffff', decoration: '', effect: false, effectType: 'glow', layout: 'default', appBg: '', customStatus: '', pronouns: '', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
       accessibility: { fontSize: 'medium', timeFormat: 'system', highContrast: false, reducedMotion: false, screenReader: false, chatDensity: 'cozy', autoTheme: { enabled: false, timezone: 'auto', dayTheme: 'fulgurite', nightTheme: 'obsidian', dayStart: 7, nightStart: 19 } }
     };
     const SETTINGS_STORAGE_KEY = 'froggocord-settings';
@@ -281,6 +281,20 @@ const {
       saveSettings();
       if (user) setDoc(doc(db,'users',user),{user,textColor:prof.textColor,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
     });
+    const pcsEl = document.getElementById('sp-custom-status');
+    if (pcsEl) pcsEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.customStatus = pcsEl.value.trim();
+      saveSettings();
+      if (user) setDoc(doc(db,'users',user),{user,customStatus:prof.customStatus,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+    });
+    const pprEl = document.getElementById('sp-pronouns');
+    if (pprEl) pprEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.pronouns = pprEl.value.trim();
+      saveSettings();
+      if (user) setDoc(doc(db,'users',user),{user,pronouns:prof.pronouns,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+    });
     const pge = document.getElementById('sp-profile-gradient-enabled');
       if (pge) pge.checked = !!(prof.gradient && prof.gradient.enabled);
       const pgf = document.getElementById('sp-profile-grad-from');
@@ -298,6 +312,8 @@ const {
       const bgpos = document.getElementById('sp-bg-position'); if (bgpos) bgpos.value = prof.bgPos || 'center';
       const bgsz = document.getElementById('sp-bg-size'); if (bgsz) bgsz.value = prof.bgSize || 'cover';
       const ptcol = document.getElementById('sp-profile-text-color'); if (ptcol) ptcol.value = prof.textColor || '#ffffff';
+      const pcs = document.getElementById('sp-custom-status'); if (pcs) pcs.value = prof.customStatus || '';
+      const ppr = document.getElementById('sp-pronouns'); if (ppr) ppr.value = prof.pronouns || '';
       const pbc = document.getElementById('sp-profile-bg-color'); if (pbc) pbc.value = prof.bgColor || '#1e1f22';
       const pef = document.getElementById('sp-profile-effect'); if (pef) pef.checked = !!prof.effect;
       const pet = document.getElementById('sp-profile-effect-type'); if (pet) pet.value = prof.effectType || 'glow';
