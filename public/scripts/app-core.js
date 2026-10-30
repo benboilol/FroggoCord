@@ -28,7 +28,7 @@ const {
     const app = initializeApp(config), auth = getAuth(app), db = getFirestore(app);
     let chan = null, user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'dms', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
-    let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map(), userBgColorMap = new Map(), userTextColorMap = new Map(), userCustomStatusMap = new Map(), userPronounsMap = new Map(), userBioMap = new Map();
+    let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map(), userBgColorMap = new Map(), userTextColorMap = new Map(), userCustomStatusMap = new Map(), userPronounsMap = new Map(), userBioMap = new Map(), userDisplayNameMap = new Map();
     let blockedUsers = new Set();
     function loadBlockedUsers() { try { const raw = localStorage.getItem('froggocord-blocked'); if (raw) blockedUsers = new Set(JSON.parse(raw)); } catch (e) {} }
     function saveBlockedUsers() { try { localStorage.setItem('froggocord-blocked', JSON.stringify([...blockedUsers])); } catch (e) {} }
@@ -212,7 +212,7 @@ const {
       status: 'online',
       notifications: { desktop: true, sound: true, mentions: true, dm: true },
       privacy: { onlineStatus: true, dmAnyone: true, activity: true },
-      profile: { color: '#57f287', banner: '', bannerPos: 'center', bannerSize: 'cover', background: '', bgColor: '#1e1f22', bgPos: 'center', bgSize: 'cover', accent: '#57f287', textColor: '#ffffff', decoration: '', effect: false, effectType: 'glow', layout: 'default', appBg: '', customStatus: '', pronouns: '', bio: '', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
+      profile: { color: '#57f287', banner: '', bannerPos: 'center', bannerSize: 'cover', background: '', bgColor: '#1e1f22', bgPos: 'center', bgSize: 'cover', accent: '#57f287', textColor: '#ffffff', decoration: '', effect: false, effectType: 'glow', layout: 'default', appBg: '', customStatus: '', pronouns: '', bio: '', displayName: '', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
       accessibility: { fontSize: 'medium', timeFormat: 'system', highContrast: false, reducedMotion: false, screenReader: false, chatDensity: 'cozy', autoTheme: { enabled: false, timezone: 'auto', dayTheme: 'fulgurite', nightTheme: 'obsidian', dayStart: 7, nightStart: 19 } }
     };
     const SETTINGS_STORAGE_KEY = 'froggocord-settings';
@@ -299,6 +299,13 @@ const {
       saveSettings();
       if (user) setDoc(doc(db,'users',user),{user,textColor:prof.textColor,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
     });
+    const pdnEl = document.getElementById('sp-display-name');
+    if (pdnEl) pdnEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.displayName = pdnEl.value.trim();
+      saveSettings();
+      if (user) setDoc(doc(db,'users',user),{user,displayName:prof.displayName,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+    });
     const pcsEl = document.getElementById('sp-custom-status');
     if (pcsEl) pcsEl.addEventListener('change', () => {
       const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
@@ -337,6 +344,7 @@ const {
       const bgpos = document.getElementById('sp-bg-position'); if (bgpos) bgpos.value = prof.bgPos || 'center';
       const bgsz = document.getElementById('sp-bg-size'); if (bgsz) bgsz.value = prof.bgSize || 'cover';
       const ptcol = document.getElementById('sp-profile-text-color'); if (ptcol) ptcol.value = prof.textColor || '#ffffff';
+      const pdn = document.getElementById('sp-display-name'); if (pdn) pdn.value = prof.displayName || '';
       const pcs = document.getElementById('sp-custom-status'); if (pcs) pcs.value = prof.customStatus || '';
       const ppr = document.getElementById('sp-pronouns'); if (ppr) ppr.value = prof.pronouns || '';
       const pbio = document.getElementById('sp-bio'); if (pbio) pbio.value = prof.bio || '';

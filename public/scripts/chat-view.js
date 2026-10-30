@@ -26,7 +26,8 @@ window.openProfile = async (u) => {
     av.style.textIndent = '0';
   }
   const pname = document.getElementById('prof-name');
-  pname.textContent = u;
+  const dn = (typeof userDisplayNameMap !== 'undefined') ? userDisplayNameMap.get(u) : null;
+  pname.textContent = dn || u;
   const txtCol = (typeof userTextColorMap !== 'undefined') ? userTextColorMap.get(u) : null;
   if (txtCol) pname.style.color = txtCol;
   const profStatusEl = document.getElementById('prof-status');
@@ -759,6 +760,8 @@ onAuthStateChanged(auth, async (u) => {
         if (data.user && data.textColor) userTextColorMap.set(data.user, data.textColor);
         if (data.user && data.customStatus) userCustomStatusMap.set(data.user, data.customStatus);
         if (data.user && data.pronouns) userPronounsMap.set(data.user, data.pronouns);
+        if (data.user && data.bio) userBioMap.set(data.user, data.bio);
+        if (data.user && data.displayName) userDisplayNameMap.set(data.user, data.displayName);
         if (data.user && data.privacy) userPrivacyMap.set(data.user, data.privacy);
       });
 
