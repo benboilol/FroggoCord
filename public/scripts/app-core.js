@@ -814,6 +814,17 @@ const {
           });
         }
       } catch (ex) {}
+      // Server stickers: replace :stickername: with larger image
+      try {
+        const stickers = (window.serverStickers && currentServer && window.serverStickers[currentServer]) || [];
+        if (stickers.length) {
+          stickers.forEach(e => {
+            if (!e || !e.name || !e.url) return;
+            const re = new RegExp(':' + e.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ':', 'g');
+            raw = raw.replace(re, '<img src="' + escHtml(e.url) + '" alt="' + escHtml(e.name) + '" style="max-width:120px;max-height:120px;display:block;margin:4px 0;border-radius:8px;">');
+          });
+        }
+      } catch (ex) {}
       return renderMarkdown(raw);
     };
     function renderInviteCard(name, icon, banner, desc, link) {
