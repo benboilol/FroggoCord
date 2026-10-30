@@ -822,7 +822,7 @@ const {
         }, 3000);
       } catch (err) {
         pending.status = 'failed';
-        pending.error = err.message || 'Send failed';
+        pending.error = (err && err.code === 'permission-denied') ? 'Permission denied - you may not have access to this channel.' : (err.message || 'Send failed');
         notifyPendingChanged();
       }
 
@@ -857,7 +857,7 @@ const {
         }, 3000);
       } catch (err) {
         pending.status = 'failed';
-        pending.error = err.message || 'Send failed';
+        pending.error = (err && err.code === 'permission-denied') ? 'Permission denied - you may not have access to this channel.' : (err.message || 'Send failed');
         notifyPendingChanged();
       }
     };

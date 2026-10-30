@@ -483,6 +483,7 @@ function renderMembersList(s) {
         : `<button onclick="toggleAdmin('${escHtml(m)}', true)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--bl);color:var(--accent-contrast);cursor:pointer;">Make Admin</button>`;
       btn += ` <button onclick="kickMember('${escHtml(m)}')" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Kick</button>`;
       btn += ` <button onclick="banMember('${escHtml(m)}')" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Ban</button>`;
+      btn += ` <button onclick="transferOwnership('${escHtml(m)}')" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--yellow);color:var(--accent-contrast);cursor:pointer;">Transfer Owner</button>`;
     } else if ((s.admins || []).includes(user) && !isOwner) {
       btn = `<button onclick="kickMember('${escHtml(m)}')" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Kick</button>`;
     }
@@ -595,10 +596,24 @@ async function unbanMember(member) {
   appAlert(member + ' has been unbanned.');
 }
 
+async function transferOwnership(newOwner) {
+  const s = getServerById(ctxServerId);
+  if (!s) return;
+  if (s.owner !== user) { appAlert('Only the server owner can transfer ownership.'); return; }
+  if (newOwner === user) { appAlert('You are already the owner.'); return; }
+  if (!(s.members || []).includes(newOwner)) { appAlert('That user is not a member of this server.'); return; }
+  if (!(await appConfirm('Transfer ownership to ' + newOwner + '? This cannot be undone.'))) return;
+  await updateDoc(doc(db, 'servers', ctxServerId), { owner: newOwner, ownerUid: null });
+  await loadServers();
+  if (currentServer === ctxServerId) switchServer(ctxServerId);
+  appAlert('Ownership transferred to ' + newOwner + '.');
+}
+
 window.toggleAdmin = toggleAdmin;
 window.kickMember = kickMember;
 window.banMember = banMember;
 window.unbanMember = unbanMember;
+window.transferOwnership = transferOwnership;
 
 function closeServerSettings() {
   const m = document.getElementById('server-settings-modal');
