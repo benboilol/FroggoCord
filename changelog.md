@@ -55,3 +55,44 @@
  - 1f89a-2026.10.28-18.16.00-0400: Replaced manual asset version markers and version.json checks with automatic checking. Removed the now-obsolete version marker from theme and script loading. I ALREADY DID THIS ONCE STOP DELETING MY WORK BEN. Refactored loader.js. Note to AI agents: avoid editing loader.js too much, I like to keep human made scripts human only. Only edit with explicit human direction to edit. 
  - 20a6d-2026.10.29-07.53.12-0400: Fixed mobile support
  - 1f89a-2026.10.29-07.53.36-0400: Redid alpenglow.css with 100% human changes. I presume you have already seen my note about AI editing with human made files. Also moved repeated swatches to style.css. 
+ - 1da20-2026.10.29-17.16.28-0700: Added a self-leave path to server permissions and corrected Firestore `not-in` rule syntax.
+ - 1da20-2026.10.29-17.18.39-0700: Added compact and spacious profile layouts, Twitter/X link embeds, and the supporting styles.
+ - 1da20-2026.10.29-17.20.24-0700: Added customizable application background images to Profile settings.
+ - 1da20-2026.10.29-17.25.06-0700: Added server stickers, including storage in server documents, `:name:` rendering as larger images, and server-settings management.
+ - 1da20-2026.10.29-17.40.23-0700: Moved invite codes into a separate collection accessible to authenticated users and prevented broad reads of invite codes from server documents.
+ - 1da20-2026.10.29-17.43.27-0700: Added server sticker support to the current server-management flow.
+ - 1da20-2026.10.29-17.45.25-0700: Added glow, pulse, shimmer, and rainbow profile effects with CSS animations.
+ - 1da20-2026.10.29-18.39.19-0700: Added profile background color customization.
+ - 1da20-2026.10.29-18.43.31-0700: Added profile background image uploads with animation support and a 2 MB limit.
+ - 1da20-2026.10.29-18.48.35-0700: Added profile banner/background positioning and sizing controls plus profile text color customization.
+ - 1da20-2026.10.30-08.24.31-0700: Added a sticker picker tab to the media picker and fixed inline handler quoting.
+ - 1da20-2026.10.30-08.53.30-0700: Added arbitrary file attachments and repositioned GIF favorite/block controls.
+ - 1da20-2026.10.30-08.58.16-0700: Added custom status text and pronouns to Profile settings.
+ - 1da20-2026.10.30-09.09.21-0700: Added user blocking with Firestore rules for blocked-user records.
+ - 1da20-2026.10.30-09.18.59-0700: Added pinned messages, including pin/unpin controls, a pinned bar, jump-to-message behavior, and supporting Firestore rules.
+ - 1da20-2026.10.30-09.20.06-0700: Added message search with filtering and highlighted matches.
+ - 1da20-2026.10.30-09.21.15-0700: Added editable channel topics and header channel-renaming support.
+ - 1da20-2026.10.30-09.22.08-0700: Added a Profile settings button to reset the banner and background.
+ - 1da20-2026.10.30-09.24.19-0700: Added owner/admin member kicking from server settings.
+ - 1da20-2026.10.30-09.24.58-0700: Added online/offline handlers, a connection status indicator, and reconnect behavior after network interruptions.
+ - 1da20-2026.10.30-09.25.43-0700: Added channel renaming, reordering, and topic-setting functions.
+ - 1da20-2026.10.30-09.26.22-0700: Added keyboard shortcuts for search, sending, and closing popups.
+ - 1da20-2026.10.30-09.27.28-0700: Added message reporting with a reports collection and Firestore rules.
+ - 1da20-2026.10.30-09.28.22-0700: Added error toasts and clearer permission-denied operation messages.
+ - 1da20-2026.10.30-09.29.07-0700: Added editable channel descriptions displayed below channel names.
+ - 1da20-2026.10.30-09.29.45-0700: Added periodic Firestore connectivity checks with automatic reconnect attempts.
+ - 1da20-2026.10.30-09.30.42-0700: Added owner/admin member bans, unbanning, and a banned-members list in server settings.
+ - 1da20-2026.10.30-09.32.55-0700: Added display-name, bio, custom-status, and pronouns synchronization in profile modals.
+ - 1da20-2026.10.30-09.34.55-0700: Added server ownership transfer support in Firestore rules.
+ - 1da20-2026.10.30-09.36.46-0700: Improved permission-denied error handling for failed operations.
+ - 1da20-2026.10.30-09.41.39-0700: Added private channel visibility, showing locked channels only to owners and administrators.
+ - 1da20-2026.10.30-09.42.20-0700: Added keyboard navigation for messages and profiles, including arrow-key navigation, Enter-to-open-profile, and focusable messages.
+ - 1da20-2026.10.30-09.54.48-0700: Fixed undefined channel-renaming and duplicate message-container declarations.
+ - 1da20-2026.10.30-10.38.41-0700: Exposed Firebase Auth globally so all feature scripts can access the active authentication state.
+ - 1da20-2026.10.30-10.45.02-0700: Fixed authentication access across all scripts by standardizing use of the global auth instance.
+ - 1da20-2026.10.30-11.01.09-0700: Added link previews with preview styling and a link-preview loader.
+ - 1da20-2026.10.30-11.13.06-0700: Added quote-message support and profile link-preview loading.
+ - 1da20-2026.10.30-11.20.42-0700: Added draft-message saving and restored drafts when switching channels.
+ - 1da20-2026.10.30-11.39.34-0700: Added ban reasons to ban records and fixed ban-reason declaration handling.
+ - 20a6d-2026.10.30-17.56.00-0400: Restored AGENTS.md and .github/copilot-instructions.md after a Git conflict deleted the repository AI-agent instructions.
+ - 1f89a-2026.10.30-18.02.54-0400: Restored whattimeisit.cpp after a conflict in git. WhatTimeIsIt is a simple program that will give you the timestamp and automatically append it to changelog.md. 
