@@ -1351,3 +1351,53 @@ window.toggleGifBlock = (u) => {
     });
     const msgBox = document.getElementById('message-container');
     if (msgBox) msgObserver.observe(msgBox, { childList: true, subtree: true });
+
+
+    // ---------- Link Previews ----------
+    window.fetchLinkPreview = async (url) => {
+      try {
+        // Try Open Graph / meta tags via a CORS proxy or direct fetch
+        const response = await fetch(url, { redirect: 'follow' });
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        const title = doc.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
+                      doc.querySelector('title')?.textContent ||
+                      '';
+        const description = doc.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
+                            doc.querySelector('meta[name="description"]')?.getAttribute('content') ||
+                            '';
+        const image = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') ||
+                      doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ||
+                      '';
+        
+        return { title, description, image };
+      } catch (e) {
+        console.error('Link preview failed', e);
+        return null;
+      }
+    };
+
+    window.renderLinkPreview = (url, data) => {
+      if (!data) return '';
+      const imgHtml = data.image ? `<img src="${escHtml(data.image)}" alt="Preview" style="width:100px;height:60px;object-fit:cover;border-radius:6px;">` : '';
+      return `<div class="link-preview" style="margin-top:6px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--panel);display:flex;gap:8px;align-items:flex-start;">
+        ${imgHtml}
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;color:var(--bright);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(data.title)}</div>
+          <div style="font-size:11px;color:var(--mut);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:-webkit-line-clamp:2;line-height:1.4;">${escHtml(data.description)}</div>
+          <div style="font-size:11px;color:var(--bl);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(url)}</div>
+        </div>
+      </div>`;
+    };
+
+    // Check URL for link preview
+    const URL_REGEX = /https?:\/\/[^\s<]+/g;
+    window.checkLinkPreview = async (text) => {
+      const matches = text.match(URL_REGEX);
+      if (!matches) return '';
+      const firstUrl = matches[0];
+      const data = await fetchLinkPreview(firstUrl);
+      return data ? renderLinkPreview(firstUrl, data) : '';
+    };

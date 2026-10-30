@@ -376,6 +376,8 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
     const av = (m.pfp && !m.pfp.startsWith('file:///')) ? `style="background-image:url('${escHtml(m.pfp)}');text-indent:-9999px;"` : '';
     const rep = m.replyTo ? `<div class="msg-reply"><span class="bar"></span><span>Replying to <b>@${escHtml(m.replyTo.user)}</b> ${escHtml(m.replyTo.text)}</span></div>` : '';
     const textVal = String(m.text ?? '');
+        // Link preview - loaded async below
+        let linkPreviewHtml = '';
     const isP = textVal.includes('@everyone') || textVal.includes(`@${user}`);
     const msgId = pending ? m.clientId : m.id;
     let btns = (me && !pending) ? `<span data-action="edit" data-id="${m.id}" data-text="${escHtml(textVal)}" style="color:var(--bl);">Edit</span><span data-action="delete" data-id="${m.id}" style="color:var(--danger);">Delete</span>` : '';
@@ -401,7 +403,7 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
             <span class="msg-time">${pending ? 'just now' : fmtMsgTime(m.timestamp)}</span>
             <span class="msg-actions">${pending ? '' : reactBtn + rBtn + btns}</span>
           </div>
-          ${textVal ? `<div class="msg-bubble">${renderText(textVal)}</div>` : ''}
+          ${textVal ? `<div class="msg-bubble">${renderText(textVal)}${linkPreviewHtml}</div>` : ''}
           ${pending ? (m.images && m.images.length ? m.images.map(u => `<img src="${escHtml(u)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px; opacity:0.7;">`).join('') : (m.image ? `<img src="${escHtml(m.image)}" alt="image" style="max-width: min(320px, 100%); border-radius:8px; display:block; margin-top:4px; opacity:0.7;">` : '')) : renderMessageImage(m)}
           ${pending ? '' : renderReactions(m)}
           ${statusHtml}
@@ -451,6 +453,33 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
 }
 
 window.refreshMessageTimestamps = () => renderMessagePages();
+
+    // Async link preview loader
+    window.loadLinkPreviews = async () => {
+      const msgBox = document.getElementById('message-container');
+      if (!msgBox) return;
+      const msgs = msgBox.querySelectorAll('.msg');
+      for (const m of msgs) {
+        const textEl = m.querySelector('.msg-bubble');
+        if (!textEl) continue;
+        const text = textEl.textContent || '';
+        const match = text.match(/^https?:\/\/[^\s<]+/);
+        if (!match) continue;
+        const url = match[0];
+        if (m.querySelector('.link-preview')) continue;
+        try {
+          const data = await window.fetchLinkPreview(url);
+          if (data) {
+            const previewHtml = window.renderLinkPreview(url, data);
+            if (previewHtml) {
+              const wrapper = document.createElement('div');
+              wrapper.innerHTML = previewHtml;
+              textEl.appendChild(wrapper.firstChild);
+            }
+          }
+        } catch (e) { /* ignore */ }
+      }
+    };
 
 function subscribeMessagePage(afterDocument = null) {
   const channel = activeMessagesChannel;

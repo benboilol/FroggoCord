@@ -442,3 +442,52 @@ body.compact .msg-bubble { font-size: 13px; }
 .msg-bubble .file-attachment a.download:hover {
   text-decoration: underline;
 }
+
+/* ---------- link previews ---------- */
+.msg-bubble .link-preview {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--bg-s);
+  border: 1px solid var(--bg-s);
+  margin-top: 6px;
+  max-width: 100%;
+}
+.msg-bubble .link-preview img {
+  width: 96px;
+  height: 56px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.msg-bubble .link-preview .link-info {
+  flex: 1;
+  min-width: 0;
+}
+.msg-bubble .link-preview .link-title {
+  font-weight: 600;
+  color: var(--bright);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.msg-bubble .link-preview .link-desc {
+  font-size: 11px;
+  color: var(--mut);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: -webkit-line-clamp: 2;
+  line-height: 1.4;
+}
+.msg-bubble .link-preview .link-url {
+  font-size: 11px;
+  color: var(--bl);
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
