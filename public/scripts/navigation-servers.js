@@ -330,7 +330,8 @@ async function loadServers() {
   const snap = await getDocs(query(collection(db, 'servers'), where('members', 'array-contains', user)));
   servers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   window.serverEmojis = window.serverEmojis || {};
-  servers.forEach(s => { window.serverEmojis[s.id] = Array.isArray(s.emojis) ? s.emojis : []; });
+  window.serverStickers = window.serverStickers || {};
+  servers.forEach(s => { window.serverEmojis[s.id] = Array.isArray(s.emojis) ? s.emojis : []; window.serverStickers[s.id] = Array.isArray(s.stickers) ? s.stickers : []; });
   renderServerList();
 }
 
@@ -415,6 +416,8 @@ function openServerSettings(sid) {
 
   const ssEmojis = document.getElementById('ss-emojis');
   if (ssEmojis) ssEmojis.value = (s.emojis || []).map(e => e.name + ':' + e.url).join('\n');
+  const ssStickers = document.getElementById('ss-stickers');
+  if (ssStickers) ssStickers.value = (s.stickers || []).map(e => e.name + ':' + e.url).join('\n');
 
   document.getElementById('ss-preview').innerHTML = s.banner
     ? `<img src="${escHtml(s.banner)}" style="width:100%;height:60px;object-fit:cover;border-radius:6px;">`
@@ -577,8 +580,19 @@ async function saveServerSettings() {
     icon,
     banner,
     accent,
-    emojis
+    emojis,
+    stickers
   });
+  const stickersRaw = (document.getElementById('ss-stickers').value || '').trim();
+  const stickers = stickersRaw.split('\n').map(line => {
+    const idx = line.indexOf(':');
+    if (idx < 0) return null;
+    const name = line.slice(0, idx).trim();
+    const url = line.slice(idx+1).trim();
+    if (!name || !url) return null;
+    return { name, url };
+  }).filter(Boolean);
+  await updateDoc(doc(db, 'servers', ctxServerId), { stickers });
 
   await loadServers();
   if (currentServer === ctxServerId) switchServer(ctxServerId);
