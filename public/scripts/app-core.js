@@ -29,6 +29,24 @@ const {
     let chan = null, user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'dms', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
     let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map(), userBgColorMap = new Map(), userTextColorMap = new Map(), userCustomStatusMap = new Map(), userPronounsMap = new Map(), userBioMap = new Map();
+    let blockedUsers = new Set();
+    function loadBlockedUsers() { try { const raw = localStorage.getItem('froggocord-blocked'); if (raw) blockedUsers = new Set(JSON.parse(raw)); } catch (e) {} }
+    function saveBlockedUsers() { try { localStorage.setItem('froggocord-blocked', JSON.stringify([...blockedUsers])); } catch (e) {} }
+    function isBlocked(u) { return blockedUsers.has(u); }
+    function toggleBlock(u) {
+      if (blockedUsers.has(u)) blockedUsers.delete(u); else blockedUsers.add(u);
+      saveBlockedUsers();
+      // Sync to Firestore
+      if (user) {
+        const blockId = [user, u].sort().join('__');
+        if (blockedUsers.has(u)) {
+          setDoc(doc(db, 'blocked', blockId), { blocker: user, blocked: u, timestamp: serverTimestamp() }).catch(() => {});
+        } else {
+          deleteDoc(doc(db, 'blocked', blockId)).catch(() => {});
+        }
+      }
+    }
+    window.isBlocked = isBlocked; window.toggleBlock = toggleBlock;
     const MAX_PFP_BYTES = 500 * 1024; // 500KB cap so messages stay under Firestore 1MB limit
     const IDLE_MS = 120000;
     const PRESENCE_TTL = 24 * 60 * 60 * 1000;
@@ -808,6 +826,7 @@ const {
 
     loadCustomTheme();
     loadSettings();
+    loadBlockedUsers();
     applySettings();
 
     const prunePending = new Set();

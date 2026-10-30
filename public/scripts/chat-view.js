@@ -131,6 +131,11 @@ window.openProfile = async (u) => {
 
   let html = '';
   if (u !== user) {
+    // Block/unblock button
+    const isBlockedUser = (typeof isBlocked === 'function') ? isBlocked(u) : false;
+    html += isBlockedUser
+      ? `<button onclick="toggleBlock('${escHtml(u)}'); closeProfile();" style="background:var(--mut);color:var(--white);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Unblock</button>`
+      : `<button onclick="toggleBlock('${escHtml(u)}'); closeProfile();" style="background:var(--danger);color:var(--white);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:bold;">Block</button>`;
     let friendDoc = null;
     try {
       const snap = await getDocs(query(collection(db,"friends"), where("from","==",user)));

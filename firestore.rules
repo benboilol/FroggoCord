@@ -247,5 +247,12 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if isAuth() && resource.data.createdBy == username();
     }
+
+    // Blocked: readable/writable only by the blocker.
+    match /blocked/{blockId} {
+      allow read: if isAuth() && resource.data.blocker == username();
+      allow create: if isAuth() && request.resource.data.blocker == username();
+      allow delete: if isAuth() && resource.data.blocker == username();
+    }
   }
 }
