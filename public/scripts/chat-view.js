@@ -918,7 +918,7 @@ window.unfriendReq = async (id) => {
           }
           const msgBox = document.getElementById('message-container');
           if (!msgBox) return;
-          const msgs = msgBox.querySelectorAll('.msg');
+          const msgs = msgBox2.querySelectorAll('.msg');
           msgs.forEach(m => {
             const text = (m.textContent || '').toLowerCase();
             if (text.includes(q)) {

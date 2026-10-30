@@ -497,6 +497,38 @@ function renderMembersList(s) {
   }
 }
 
+async function renameChannel(sid, cname) {
+  const s = servers.find(x => x.id === sid);
+  if (!s) return;
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner && !isAdmin) { appAlert('Only the owner or admins can rename channels.'); return; }
+  const newName = await appPrompt('New channel name:', cname);
+  if (!newName || newName === cname) return;
+  const channels = s.channels || [];
+  if (channels.some(c => c.name === newName)) { appAlert('Channel already exists'); return; }
+  const ch = channels.find(c => c.name === cname);
+  if (ch) ch.name = newName;
+  await updateDoc(doc(db, 'servers', sid), { channels });
+  await loadServers();
+  if (currentServer === sid) switchServerChannel(sid, newName);
+  appAlert('Channel renamed to ' + newName + '.');
+}
+
+async function setChannelTopic(sid, cname) {
+  const s = servers.find(x => x.id === sid);
+  if (!s) return;
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner && !isAdmin) { appAlert('Only the owner or admins can set channel topics.'); return; }
+  const ch = (s.channels || []).find(c => c.name === cname);
+  const currentTopic = ch && ch.topic ? ch.topic : '';
+  const topic = await appPrompt('Channel topic:', currentTopic);
+  if (topic === null) return;
+  if (ch) ch.topic = topic;
+  await updateDoc(doc(db, 'servers', sid), { channels: s.channels });
+  await loadServers();
+  updateHeader();
+}
+
 async function toggleAdmin(member, makeAdmin) {
   const s = getServerById(ctxServerId);
   if (!s) return;
