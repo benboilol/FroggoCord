@@ -237,6 +237,13 @@ service cloud.firestore {
       allow read, write: if isAuth();
     }
 
+    // Pins: readable by channel members; writable by authorized moderators.
+    match /pins/{pinId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow delete: if isAuth();
+    }
+
     // Invites: readable by any authenticated user (for join lookups).
     // Only the server owner can create/delete invite codes.
     match /invites/{inviteCode} {

@@ -360,6 +360,7 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
       const act = el.dataset.action, id = el.dataset.id || el.dataset.msgid;
       if (act === 'edit') window.editMsg(id, el.dataset.text || '');
       else if (act === 'delete') window.deleteMsg(id);
+      else if (act === 'pin') { if (typeof window.pinMessage === 'function') window.pinMessage(id); }
       else if (act === 'react') { showReactionPicker(id, el); }
       else if (act === 'toggle-reaction') { window.toggleReaction(id, el.dataset.emoji); }
       else if (act === 'reply') {

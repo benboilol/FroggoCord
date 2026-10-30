@@ -1097,3 +1097,50 @@ window.toggleGifBlock = (u) => {
     if (btn) { btn.textContent = blk ? '●' : '○'; btn.style.color = blk ? '#da373c' : '#fff'; }
   });
 };
+
+    // Pinned messages support
+    window.canPinMessages = () => {
+      if (!currentServer) return false;
+      const s = servers.find(x => x.id === currentServer);
+      if (!s) return false;
+      return s.owner === user || (s.admins || []).includes(user);
+    };
+    window.pinMessage = async (msgId) => {
+      if (!msgId || !chan) return;
+      try {
+        await setDoc(doc(db, 'pins', chan + '__' + msgId), { channel: chan, messageId: msgId, pinnedBy: user, timestamp: serverTimestamp() });
+        if (typeof renderPinnedBar === 'function') renderPinnedBar();
+      } catch (e) { appAlert('Failed to pin message.'); }
+    };
+    window.unpinMessage = async (msgId) => {
+      if (!msgId || !chan) return;
+      try {
+        await deleteDoc(doc(db, 'pins', chan + '__' + msgId));
+        if (typeof renderPinnedBar === 'function') renderPinnedBar();
+      } catch (e) { appAlert('Failed to unpin message.'); }
+    };
+
+
+    window.renderPinnedBar = async () => {
+      const bar = document.getElementById('pinned-bar');
+      if (!bar || !chan) { if (bar) bar.style.display = 'none'; return; }
+      try {
+        const snap = await getDocs(query(collection(db, 'pins'), where('channel', '==', chan)));
+        const pins = snap.docs.map(d => d.data());
+        if (!pins.length) { bar.style.display = 'none'; return; }
+        bar.style.display = 'block';
+        bar.innerHTML = '<span style="font-weight:600;margin-right:8px;">📌 Pinned</span>' + pins.map(p => {
+          const msg = (typeof messagePages !== 'undefined' && messagePages.length) ? messagePages[0].messages.get(p.messageId) : null;
+          const text = msg ? String(msg.text || '').slice(0, 40) : 'Message';
+          return `<span style="cursor:pointer;color:var(--bl);margin-right:8px;" onclick="jumpToMessage('${p.messageId}')">${escHtml(text)}</span>`;
+        }).join('');
+      } catch (e) { bar.style.display = 'none'; }
+    };
+
+    window.jumpToMessage = (msgId) => {
+      const el = document.querySelector(`[data-id="${msgId}"]`);
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.background = 'var(--mention-bg)'; setTimeout(() => { el.style.background = ''; }, 2000); }
+    };
+
+    // Call renderPinnedBar when channel changes
+    const _origListen = (typeof listen === 'function') ? listen : null;

@@ -377,7 +377,9 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
     const textVal = String(m.text ?? '');
     const isP = textVal.includes('@everyone') || textVal.includes(`@${user}`);
     const msgId = pending ? m.clientId : m.id;
-    const btns = (me && !pending) ? `<span data-action="edit" data-id="${m.id}" data-text="${escHtml(textVal)}" style="color:var(--bl);">Edit</span><span data-action="delete" data-id="${m.id}" style="color:var(--danger);">Delete</span>` : '';
+    let btns = (me && !pending) ? `<span data-action="edit" data-id="${m.id}" data-text="${escHtml(textVal)}" style="color:var(--bl);">Edit</span><span data-action="delete" data-id="${m.id}" style="color:var(--danger);">Delete</span>` : '';
+    const pinBtn = (!pending && (typeof canPinMessages === 'function' && canPinMessages())) ? `<span data-action="pin" data-id="${m.id}" style="color:var(--mut);">Pin</span>` : '';
+    if (pinBtn) btns = btns + pinBtn;
     const rBtn = `<span data-action="reply" data-id="${m.id}" data-user="${safeUser}" style="color:var(--mut);">Reply</span>`;
     const reactBtn = `<span data-action="react" data-id="${m.id}" style="color:var(--mut);">😀</span>`;
     let statusHtml = '';
