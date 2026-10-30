@@ -194,7 +194,7 @@ const {
       status: 'online',
       notifications: { desktop: true, sound: true, mentions: true, dm: true },
       privacy: { onlineStatus: true, dmAnyone: true, activity: true },
-      profile: { color: '#57f287', banner: '', background: '', accent: '#57f287', decoration: '', effect: false, gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
+      profile: { color: '#57f287', banner: '', background: '', accent: '#57f287', decoration: '', effect: false, layout: 'default', gradient: { enabled: false, from: '#57f287', to: '#23a55a', direction: 'to right' } },
       accessibility: { fontSize: 'medium', timeFormat: 'system', highContrast: false, reducedMotion: false, screenReader: false, chatDensity: 'cozy', autoTheme: { enabled: false, timezone: 'auto', dayTheme: 'fulgurite', nightTheme: 'obsidian', dayStart: 7, nightStart: 19 } }
     };
     const SETTINGS_STORAGE_KEY = 'froggocord-settings';
@@ -256,6 +256,7 @@ const {
       const pef = document.getElementById('sp-profile-effect'); if (pef) pef.checked = !!prof.effect;
       const pac = document.getElementById('sp-profile-accent'); if (pac) pac.value = prof.accent || prof.color || '#57f287';
       const pdc = document.getElementById('sp-profile-decoration'); if (pdc) pdc.value = prof.decoration || '';
+      const ppl = document.getElementById('sp-profile-layout'); if (ppl) ppl.value = prof.layout || 'default';
       updateProfilePreview();
       // Auto theme population
       const at = settings.accessibility.autoTheme || SETTINGS_DEFAULTS.accessibility.autoTheme;
@@ -495,6 +496,13 @@ const {
       prof.decoration = pdcEl.value.trim();
       saveSettings();
       if (user) setDoc(doc(db,'users',user),{user,decoration:prof.decoration,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+    });
+    const pplEl = document.getElementById('sp-profile-layout');
+    if (pplEl) pplEl.addEventListener('change', () => {
+      const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+      prof.layout = pplEl.value;
+      saveSettings();
+      if (user) setDoc(doc(db,'users',user),{user,layout:prof.layout,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
     });
     const pge = document.getElementById('sp-profile-gradient-enabled');
     if (pge) pge.addEventListener('change', () => {
@@ -813,6 +821,7 @@ const {
       s = s.replace(/`([^`\n]+?)`/g, '<code class="inline-code">$1</code>');
       // Rich embeds: YouTube iframes (no CORS needed)
       s = s.replace(/(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11}))/g, '<div class="embed embed-youtube"><iframe src="https://www.youtube.com/embed/$2" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>');
+      s = s.replace(/(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/(\w+)\/status\/(\d+))/g, '<div class="embed embed-twitter"><a href="$1" target="_blank" rel="noopener noreferrer">$1</a></div>');
       s = s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
       s = s.replace(/(^|\s)@(\w+)/g, (m, space, name) => space + '<span class="mention">@' + name + '</span>');
       s = s.replace(/\u0000CB(\d+)\u0000/g, (_, i) => {

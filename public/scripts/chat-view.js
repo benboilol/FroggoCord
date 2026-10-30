@@ -21,6 +21,15 @@ window.openProfile = async (u) => {
   }
   const pname = document.getElementById('prof-name');
   pname.textContent = u;
+  // Apply profile layout
+  try {
+    const prof = (typeof settings !== 'undefined' && settings.profile) ? settings.profile : null;
+    if (prof && u === user && modalCard) {
+      modalCard.classList.remove('profile-compact', 'profile-spacious');
+      if (prof.layout === 'compact') modalCard.classList.add('profile-compact');
+      if (prof.layout === 'spacious') modalCard.classList.add('profile-spacious');
+    }
+  } catch (e) {}
   try {
     const prof = (typeof settings !== 'undefined' && settings.profile) ? settings.profile : null;
     if (prof && u === user) {

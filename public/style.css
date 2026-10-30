@@ -364,3 +364,14 @@ body.compact .msg-bubble { font-size: 13px; }
 .crystal-swatch{--swatch-a:#050a14;--swatch-b:#0d1a30;--swatch-c:#2a7abf;}
 .verdant-swatch{--swatch-a:#0f1a0f;--swatch-b:#1e2e1e;--swatch-c:#4caf50;}
 .custom-swatch{--swatch-a:#555;--swatch-b:#888;--swatch-c:#aaa;}
+
+/* ---------- profile layout ---------- */
+.profile-compact .pfp { width: 48px; height: 48px; font-size: 18px; }
+.profile-compact h3 { font-size: 16px; }
+.profile-compact #prof-badges { margin: 4px 0; }
+.profile-compact #prof-actions button { padding: 4px 8px; font-size: 11px; }
+.profile-spacious .pfp { width: 80px; height: 80px; font-size: 28px; }
+.profile-spacious h3 { font-size: 22px; }
+.profile-spacious #prof-banner { height: 120px; }
+.profile-spacious #prof-badges { margin: 12px 0; }
+.profile-spacious #prof-actions button { padding: 10px 16px; font-size: 14px; }
