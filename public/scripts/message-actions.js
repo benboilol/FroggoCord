@@ -257,7 +257,21 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
     window.showTab = (t) => {
       document.getElementById('emoji-tab').style.display = t==='emojis'?'grid':'none';
       document.getElementById('gif-tab').style.display = t==='gifs'?'flex':'none';
+      const st = document.getElementById('sticker-tab');
+      if (st) st.style.display = t==='stickers'?'flex':'none';
       if (t === 'gifs' && !gifResults.querySelector('img')) fetchGifs(gifQuery, 0, false);
+      if (t === 'stickers') renderStickerTab();
+    };
+    function renderStickerTab() {
+      const st = document.getElementById('sticker-tab');
+      if (!st) return;
+      const stickers = (window.serverStickers && currentServer && window.serverStickers[currentServer]) || [];
+      if (!stickers.length) { st.innerHTML = '<div style="color:var(--mut);padding:8px;font-size:12px;">No server stickers yet.</div>'; return; }
+      st.innerHTML = stickers.map(s => '<img src="' + escHtml(s.url) + '" alt="' + escHtml(s.name) + '" title="' + escHtml(s.name) + '" style="width:64px;height:64px;object-fit:contain;cursor:pointer;border-radius:6px;" data-url="' + escHtml(s.url) + '" onclick="sendSticker(this.dataset.url, this.title)">').join('');
+    }
+    window.sendSticker = async (url, name) => {
+      document.getElementById('media-picker').style.display = 'none';
+      await addDoc(collection(db,"messages"),{text:`<img src="${url}" style="max-width: 120px; border-radius:8px; display:block;">`,user,uid:(auth.currentUser&&auth.currentUser.uid)||null,channel:chan,pfp,timestamp:serverTimestamp()});
     };
 
     window.sendGif = async (url) => {

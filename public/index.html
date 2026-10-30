@@ -52,6 +52,8 @@
         <label class="field-label">Banner (image)</label>
         <input id="ss-banner-file" type="file" accept="image/*" style="width:100%;margin:4px 0 8px;color:var(--txt);">
         <input id="ss-banner-url" class="inp2" placeholder="or banner URL">
+        <label class="field-label" for="ss-chat-bg">Chat background image URL</label>
+        <input id="ss-chat-bg" class="inp2" placeholder="https://...">
         <label class="field-label" for="ss-accent">Server accent color</label>
         <input type="color" id="ss-accent" value="#57f287" style="width:60px;height:36px;border:none;background:none;cursor:pointer;">
         <div id="ss-preview"></div>
@@ -418,8 +420,10 @@
         <div class="tabs">
         <button onclick="showTab('emojis')">Emojis</button>
         <button onclick="showTab('gifs')">GIFs</button>
+        <button onclick="showTab('stickers')">Stickers</button>
         </div>
         <div id="emoji-tab"></div>
+        <div id="sticker-tab" style="display:none;flex-wrap:wrap;gap:6px;padding:8px;max-height:300px;overflow-y:auto;"></div>
         <div id="gif-tab">
         <input type="text" id="gif-search" placeholder="Search GIPHY...">
         <div id="gif-results"></div>
