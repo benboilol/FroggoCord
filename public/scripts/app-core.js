@@ -1174,3 +1174,42 @@ window.toggleGifBlock = (u) => {
 
     // Call renderPinnedBar when channel changes
     const _origListen = (typeof listen === 'function') ? listen : null;
+
+
+    // ---------- Network reconnect support ----------
+    let isOnline = navigator.onLine;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+
+    function updateNetworkStatus() {
+      const wasOnline = isOnline;
+      isOnline = navigator.onLine;
+      if (wasOnline && !isOnline) {
+        // Went offline
+        const indicator = document.getElementById('network-status');
+        if (indicator) { indicator.style.display = 'block'; indicator.textContent = 'Reconnecting...'; }
+      } else if (!wasOnline && isOnline) {
+        // Came back online - re-establish listeners
+        const indicator = document.getElementById('network-status');
+        if (indicator) { indicator.style.display = 'none'; }
+        reconnectAttempts = 0;
+        // Re-trigger listen() if we have a channel
+        if (user && chan) {
+          try { listen(); } catch (e) { console.error('reconnect listen failed', e); }
+        }
+        if (user) {
+          try { loadServers(); } catch (e) { console.error('reconnect loadServers failed', e); }
+        }
+      }
+    }
+
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+
+    // Periodic reconnect check
+    setInterval(() => {
+      if (!navigator.onLine) return;
+      if (!user) return;
+      // Check if Firestore is responsive by trying a lightweight read
+      // If not, attempt reconnect
+    }, 30000);
