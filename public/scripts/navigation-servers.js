@@ -800,7 +800,8 @@ function switchServer(id) {
     if (s.description) banner.title = s.description;
     if (s.accent) { banner.style.borderLeft = `4px solid ${escHtml(s.accent)}`; bannerName.style.color = s.accent; }
 
-    const chBtns = `<div class="cat">Text Channels</div>` + (s.channels || [{ name: 'general' }]).map(c => `<button class="cb ${chan === ('srv_' + currentServer + '_' + c.name) ? 'active' : ''}" onclick="switchServerChannel('${s.id}','${escHtml(c.name)}')"># ${escHtml(c.name)}</button>`).join('');
+    const visibleChs = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (s.admins || []).includes(user));
+    const chBtns = `<div class="cat">Text Channels</div>` + visibleChs.map(c => `<button class="cb ${chan === ('srv_' + currentServer + '_' + c.name) ? 'active' : ''}" onclick="switchServerChannel('${s.id}','${escHtml(c.name)}')">${c.private ? '🔒 ' : ''}# ${escHtml(c.name)}</button>`).join('');
     document.querySelector('.ch').innerHTML = chBtns +
       `<button class="cb muted" onclick="createChannel('${s.id}')" style="color:var(--bl);">+ Add Channel</button>` +
       `<button class="cb muted" onclick="shareInvite('${s.id}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
@@ -838,7 +839,8 @@ window.switchServerChannel = (sid, cname) => {
   document.getElementById('dm-btn').classList.remove('active');
 
   chan = 'srv_' + sid + '_' + cname;
-  document.querySelector('.ch').innerHTML = `<div class="cat">Text Channels</div>` + (s.channels || [{ name: 'general' }]).map(c => `<button class="cb ${chan === ('srv_' + sid + '_' + c.name) ? 'active' : ''}" onclick="switchServerChannel('${sid}','${escHtml(c.name)}')"># ${escHtml(c.name)}</button>${unreadBadge('srv_' + sid + '_' + c.name)}`).join('') +
+      const visibleChs2 = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (s.admins || []).includes(user));
+      document.querySelector('.ch').innerHTML = `<div class="cat">Text Channels</div>` + visibleChs2.map(c => `<button class="cb ${chan === ('srv_' + sid + '_' + c.name) ? 'active' : ''}" onclick="switchServerChannel('${sid}','${escHtml(c.name)}')">${c.private ? '🔒 ' : ''}# ${escHtml(c.name)}</button>${unreadBadge('srv_' + sid + '_' + c.name)}`).join('') +
     `<button class="cb muted" onclick="createChannel('${sid}')" style="color:var(--bl);">+ Add Channel</button>` +
     `<button class="cb muted" onclick="shareInvite('${sid}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
     `<button class="cb muted" onclick="revokeInvite('${sid}')" style="color:var(--danger);">Revoke Invite</button>`;
