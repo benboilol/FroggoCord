@@ -253,6 +253,7 @@ const {
       const pbp = document.getElementById('sp-profile-banner-preview');
       if (pbp) { const b = prof.banner; if (b) { pbp.style.backgroundImage = 'url('+b+')'; } else { pbp.style.backgroundImage = 'none'; } }
       const pbg = document.getElementById('sp-profile-bg'); if (pbg) pbg.value = prof.background || '';
+      const pbgp = document.getElementById('sp-profile-bg-preview'); if (pbgp) { const b = prof.background; if (b) pbgp.style.backgroundImage = 'url('+b+')'; else pbgp.style.backgroundImage = 'none'; }
       const pbc = document.getElementById('sp-profile-bg-color'); if (pbc) pbc.value = prof.bgColor || '#1e1f22';
       const pef = document.getElementById('sp-profile-effect'); if (pef) pef.checked = !!prof.effect;
       const pet = document.getElementById('sp-profile-effect-type'); if (pet) pet.value = prof.effectType || 'glow';
@@ -568,6 +569,22 @@ const {
         if (pbp) pbp.style.backgroundImage = 'url('+data+')';
         if (user) setDoc(doc(db,'users',user),{user,banner:data,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
       } catch (err) { appAlert('Failed to process banner.'); }
+      e.target.value = '';
+    });
+    const bgFile = document.getElementById('sp-profile-bg-file');
+    if (bgFile) bgFile.addEventListener('change', async (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f || !f.type.startsWith('image/')) return;
+      if (f.size > 2 * 1024 * 1024) { appAlert('Background too large (max 2MB).'); e.target.value=''; return; }
+      try {
+        const data = await compressImage(f, 1200, true);
+        const prof = settings.profile = settings.profile || { ...SETTINGS_DEFAULTS.profile };
+        prof.background = data;
+        saveSettings();
+        const pbp = document.getElementById('sp-profile-bg-preview');
+        if (pbp) pbp.style.backgroundImage = 'url('+data+')';
+        if (user) setDoc(doc(db,'users',user),{user,background:data,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
+      } catch (err) { appAlert('Failed to process background.'); }
       e.target.value = '';
     });
     document.getElementById('sa-avatar-file').addEventListener('change', async (e) => {
