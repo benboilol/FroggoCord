@@ -1312,3 +1312,38 @@ window.toggleGifBlock = (u) => {
         console.error(msg);
       }
     };
+
+
+    // ---------- Keyboard navigation ----------
+    document.addEventListener('keydown', (e) => {
+      // Arrow key navigation in message list (when not in input)
+      if (document.activeElement && document.activeElement.id === 'chat-input') return;
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        const msgs = Array.from(document.querySelectorAll('#message-container .msg'));
+        if (!msgs.length) return;
+        const focused = document.activeElement;
+        let idx = msgs.indexOf(focused);
+        if (idx === -1) idx = (e.key === 'ArrowUp') ? msgs.length - 1 : 0;
+        else idx = (e.key === 'ArrowUp') ? Math.max(0, idx - 1) : Math.min(msgs.length - 1, idx + 1);
+        msgs[idx].focus();
+        msgs[idx].scrollIntoView({ block: 'nearest' });
+        e.preventDefault();
+      }
+      // Enter on a message: open profile of author
+      if (e.key === 'Enter') {
+        const focused = document.activeElement;
+        if (focused && focused.classList.contains('msg')) {
+          const author = focused.querySelector('.msg-author');
+          if (author && author.onclick) author.click();
+        }
+      }
+    });
+
+    // Make messages focusable
+    const msgObserver = new MutationObserver(() => {
+      document.querySelectorAll('#message-container .msg').forEach(m => {
+        if (!m.hasAttribute('tabindex')) m.setAttribute('tabindex', '0');
+      });
+    });
+    const msgBox = document.getElementById('message-container');
+    if (msgBox) msgObserver.observe(msgBox, { childList: true, subtree: true });
