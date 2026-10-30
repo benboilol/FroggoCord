@@ -602,15 +602,17 @@ async function kickMember(member) {
 }
 
 async function banMember(member) {
+  let banReason = '';
   const s = getServerById(ctxServerId);
   if (!s) return;
   const { isOwner, isAdmin } = getServerRole(s);
   if (!isOwner && !isAdmin) { appAlert('No permission.'); return; }
   if (member === s.owner) { appAlert('Cannot ban the owner.'); return; }
   if (!(await appConfirm('Ban ' + member + ' from the server? They will not be able to rejoin.'))) return;
+  banReason = await appPrompt('Ban reason (optional):') || '';
   const members = (s.members || []).filter(m => m !== member);
   const memberUids = (s.memberUids || []).filter((_, i) => (s.members || [])[i] !== member);
-  const banned = Array.isArray(s.banned) ? [...s.banned, member] : [member];
+  const banned = Array.isArray(s.banned) ? [...s.banned, { user: member, reason: banReason || 'No reason provided', bannedAt: serverTimestamp() }] : [{ user: member, reason: banReason || 'No reason provided', bannedAt: serverTimestamp() }];
   await updateDoc(doc(db, 'servers', ctxServerId), { members, memberUids, banned });
   await loadServers();
   if (currentServer === ctxServerId) switchServer(ctxServerId);
