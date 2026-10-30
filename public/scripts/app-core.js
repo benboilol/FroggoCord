@@ -1275,3 +1275,16 @@ window.toggleGifBlock = (u) => {
       if (reason === null) return;
       await reportContent('user', username, reason);
     };
+
+
+    // ---------- Useful error handling ----------
+    window.showError = (msg) => {
+      const el = document.getElementById('error-toast');
+      if (el) {
+        el.textContent = msg;
+        el.style.display = 'block';
+        setTimeout(() => { el.style.display = 'none'; }, 5000);
+      } else {
+        console.error(msg);
+      }
+    };
