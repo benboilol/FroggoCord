@@ -217,6 +217,7 @@
       const remaining = (server.members || []).filter((member) => member !== user);
       const admins = Array.isArray(server.admins) ? server.admins.filter((member) => member !== user) : [];
       if (remaining.length === 0) {
+        if (typeof window.deleteServerMessages === 'function') await window.deleteServerMessages(server);
         await deleteDoc(doc(db, 'servers', window.ctxServerId));
       } else {
         await updateDoc(doc(db, 'servers', window.ctxServerId), {

@@ -103,5 +103,6 @@
  - 20a6d-2026.10.30-20.23.17-0400: Updated Fulgurite to use the Froggo icon green and refreshed Obsidian with Phantom's lighter surfaces while preserving Obsidian's accents.
  - 20a6d-2026.10.30-20.28.59-0400: Removed verified-complete tasks from to_do.txt while leaving unfinished and uncertain items for follow-up.
  - 20a6d-2026.10.30-20.30.04-0400: Fixed mobile sidebar state by closing it after navigation, resetting it on desktop resize, and preventing hidden panels from intercepting touch input.
+ - 20a6d-2026.10.30-20.31.09-0400: Added server-deletion cleanup for messages in the server's channels to prevent orphaned message records.
  - 20a6d-2026.10.30-20.15.27-0400: Made update checks run after ten seconds and exposed the check for reliable live verification instead of waiting a full minute.
  - 20a6d-2026.10.30-20.16.38-0400: Removed the duplicate message sender that bypassed optimistic delivery and reduced update-check overhead to prevent chat lag.

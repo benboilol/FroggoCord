@@ -273,6 +273,19 @@ async function joinServerFromModal() {
   closeServerModal();
 }
 
+window.deleteServerMessages = async (server) => {
+  const channelNames = new Set(['general', ...(server.channels || []).map(channel => channel.name).filter(Boolean)]);
+  for (const channelName of channelNames) {
+    const messages = await getDocs(query(
+      collection(db, 'messages'),
+      where('channel', '==', `srv_${server.id}_${channelName}`)
+    ));
+    for (const message of messages.docs) {
+      await deleteDoc(message.ref);
+    }
+  }
+};
+
 window.openServerModal = openServerModal;
 window.closeServerModal = closeServerModal;
 window.showServerTab = showServerTab;
@@ -572,6 +585,7 @@ async function deleteServer() {
 
   if (!(await appConfirm('Delete server "' + s.name + '"? This cannot be undone.'))) return;
 
+  await window.deleteServerMessages(s);
   await deleteDoc(doc(db, 'servers', ctxServerId));
   if (currentServer === ctxServerId) { currentServer = null; chan = null; mode = 'channels'; dmWith = null; }
   await loadServers();
@@ -744,6 +758,7 @@ async function leaveServer() {
   const admins = (s.admins || []).filter(m => m !== user);
 
   if (remaining.length === 0) {
+    await window.deleteServerMessages(s);
     await deleteDoc(doc(db, 'servers', ctxServerId));
   } else {
     await updateDoc(doc(db, 'servers', ctxServerId), {

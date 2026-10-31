@@ -4,7 +4,6 @@ chatting: Replicate everything that a basic chat app like Discord or Stoat has.
 nitro: Idk vro make nitro features not nitro???
 mobile: fix the ui
 Tasks(explicit):
-chatting: automatically delete orphaned messages(messages that are unreachable, such as a message where the server it was living on was deleted)
 chatting: display message timestamps and edit indicators.
 chatting: support creating, renaming, reordering, and deleting text channels.
 chatting: support server ownership, administrators, roles, and permissions.
