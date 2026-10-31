@@ -1759,6 +1759,33 @@ window.toggleGifBlock = (u) => {
     };
     window.isBookmarked = (msgId) => getBookmarks().includes(msgId);
 
+    // ---------- Server Folders ----------
+    window.getServerFolders = () => {
+      try { return JSON.parse(localStorage.getItem('froggocord-server-folders') || '[]'); } catch (e) { return []; }
+    };
+    window.saveServerFolders = (folders) => {
+      try { localStorage.setItem('froggocord-server-folders', JSON.stringify(folders)); } catch (e) {}
+    };
+    window.createServerFolder = async (folderName) => {
+      const folders = getServerFolders();
+      folders.push({ id: 'folder_' + Date.now(), name: folderName, serverIds: [] });
+      saveServerFolders(folders);
+      appAlert('Server folder created: ' + folderName);
+      if (typeof renderServerList === 'function') renderServerList();
+    };
+    window.moveServerToFolder = (serverId, folderId) => {
+      const folders = getServerFolders();
+      // Remove from all folders
+      folders.forEach(f => { f.serverIds = f.serverIds.filter(id => id !== serverId); });
+      // Add to target folder
+      if (folderId) {
+        const f = folders.find(x => x.id === folderId);
+        if (f && !f.serverIds.includes(serverId)) f.serverIds.push(serverId);
+      }
+      saveServerFolders(folders);
+      if (typeof renderServerList === 'function') renderServerList();
+    };
+
     // ---------- Message Quoting ----------
     window.quoteMessage = async (msgId) => {
       if (!msgId) return;

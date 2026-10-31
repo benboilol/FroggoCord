@@ -489,7 +489,8 @@ function renderChannelItem(server, channel) {
   const controls = canManage
     ? `<span class="channel-controls" onclick="event.stopPropagation()"><button type="button" onclick="channelAction('${server.id}','${encodedName}','rename')" title="Rename channel">✎</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','access')" title="Manage channel access">🔒</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','up')" title="Move up">↑</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','down')" title="Move down">↓</button>${channel.name !== 'general' ? `<button type="button" onclick="channelAction('${server.id}','${encodedName}','delete')" title="Delete channel">×</button>` : ''}</span>`
     : '';
-  return `<div class="channel-row"><button class="cb ${active ? 'active' : ''}" onclick="switchServerChannel('${server.id}','${escHtml(channel.name)}')">${channel.private ? '🔒 ' : ''}${channel.announcement ? '📢 ' : ''}# ${escHtml(channel.name)}</button>${unreadBadge('srv_' + server.id + '_' + channel.name)}${controls}</div>`;
+  const voiceIcon = channel.type === 'voice' ? '🔊 ' : '';
+  return `<div class="channel-row"><button class="cb ${active ? 'active' : ''}" onclick="switchServerChannel('${server.id}','${escHtml(channel.name)}')">${channel.private ? '🔒 ' : ''}${channel.announcement ? '📢 ' : ''}${voiceIcon}# ${escHtml(channel.name)}</button>${unreadBadge('srv_' + server.id + '_' + channel.name)}${controls}</div>`;
 }
 
 function showServerCtx(e, sid) {
@@ -1351,7 +1352,8 @@ async function createChannel(sid) {
   const category = await appPrompt('Category (leave blank for none):');
   const slowMode = await appPrompt('Slow mode seconds (0 for none):');
   const announcement = await appConfirm('Announcement channel (@everyone notifications)?');
-  channels.push({ name, id: name, private: !!isPrivate, nsfw: !!isNsfw, category: category || '', topic: '', description: '', slowMode: parseInt(slowMode || '0', 10) || 0, announcement: !!announcement });
+  const isVoice = await appConfirm('Voice channel?');
+  channels.push({ name, id: name, type: isVoice ? 'voice' : 'text', private: !!isPrivate, nsfw: !!isNsfw, category: category || '', topic: '', description: '', slowMode: parseInt(slowMode || '0', 10) || 0, announcement: !!announcement });
   await updateDoc(doc(db, 'servers', sid), { channels });
   await loadServers();
   switchServerChannel(sid, name);
