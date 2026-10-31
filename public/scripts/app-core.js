@@ -179,12 +179,16 @@ window.db = db;
       mobileNavToggle.setAttribute('aria-expanded', 'false');
       mobileNavToggle.setAttribute('aria-label', 'Open navigation');
     }
+    window.closeMobileNav = closeMobileNav;
     mobileNavToggle.addEventListener('click', () => {
       const isOpen = document.body.classList.toggle('mobile-nav-open');
       mobileNavToggle.setAttribute('aria-expanded', String(isOpen));
       mobileNavToggle.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
     });
     mobileNavBackdrop.addEventListener('click', closeMobileNav);
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 760) closeMobileNav();
+    });
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape') closeMobileNav();
     });

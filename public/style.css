@@ -298,9 +298,10 @@ body.high-contrast button { border:1px solid #fff; }
   body { height: 100vh; height: 100dvh; }
   #mobile-nav-toggle { display: inline-flex; }
   .sv, .sb { position: fixed; top: 0; bottom: 0; height: 100vh; height: 100dvh; z-index: 1200; transition: transform .2s ease; box-shadow: 8px 0 24px var(--overlay-shadow); }
-  .sv { left: 0; width: 64px; padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); transform: translateX(-100%); }
-  .sb { left: 64px; width: min(280px, calc(100vw - 64px)); padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); transform: translateX(calc(-100% - 64px)); }
+  .sv { left: 0; width: 64px; padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); transform: translate3d(-110%, 0, 0); visibility: hidden; }
+  .sb { left: 64px; width: min(280px, calc(100vw - 64px)); padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); transform: translate3d(calc(-100% - 64px), 0, 0); visibility: hidden; }
   body.mobile-nav-open .sv, body.mobile-nav-open .sb { transform: translateX(0); }
+  body.mobile-nav-open .sv, body.mobile-nav-open .sb { visibility: visible; }
   #mobile-nav-backdrop { position: fixed; inset: 0; z-index: 1199; background: var(--overlay-bg); }
   body.mobile-nav-open #mobile-nav-backdrop { display: block; }
   .ca { width: 100%; min-width: 0; }
