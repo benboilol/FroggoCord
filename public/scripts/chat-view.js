@@ -395,7 +395,7 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
       else statusHtml = '<div class="msg-status failed">⚠️ Failed <button class="retry-btn" onclick="retryMessage(\'' + m.clientId + '\')">Retry</button></div>';
     }
     return `
-      <div class="msg ${me ? 'me' : ''} ${isP ? 'mention' : ''} ${pending ? 'msg-pending' : ''} ${m.status === 'failed' ? 'msg-failed' : ''} ${m.replyTo ? 'has-reply' : ''}" data-id="${msgId}">
+      <div class="msg ${me ? 'me' : ''} ${isP ? 'mention' : ''} ${pending ? 'msg-pending' : ''} ${m.status === 'failed' ? 'msg-failed' : ''} ${m.replyTo ? 'has-reply' : ''}" data-id="${msgId}" data-user="${safeUser}" data-date="${m.timestamp && m.timestamp.toDate ? m.timestamp.toDate().toISOString().slice(0, 10) : ''}">
         <div class="pfp" ${av} onclick="openProfile('${safeUser}')">${safeUser ? safeUser[0].toUpperCase() : '?'}</div>
         <div class="msg-content">
           ${rep}
@@ -908,23 +908,43 @@ window.unfriendReq = async (id) => {
       searchInput.addEventListener('input', () => {
         clearTimeout(searchTimer);
         searchTimer = setTimeout(() => {
-          const q = searchInput.value.trim().toLowerCase();
-          if (!q) {
+          const tokens = searchInput.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+          if (!tokens.length) {
+            const results = document.getElementById('search-results');
+            if (results) results.innerHTML = '';
             if (typeof renderMessagePages === 'function') renderMessagePages({ preserveScroll: true });
             return;
           }
           const messageContainer = document.getElementById('message-container');
           if (!messageContainer) return;
+          const resultMatches = [];
           const msgs = messageContainer.querySelectorAll('.msg');
           msgs.forEach(m => {
+            const from = tokens.find(token => token.startsWith('from:'))?.slice(5);
+            const date = tokens.find(token => token.startsWith('date:'))?.slice(5);
+            const terms = tokens.filter(token => !token.startsWith('from:') && !token.startsWith('date:'));
             const text = (m.textContent || '').toLowerCase();
-            if (text.includes(q)) {
+            const isMatch = (!from || (m.dataset.user || '').toLowerCase() === from)
+              && (!date || (m.dataset.date || '') === date)
+              && terms.every(term => text.includes(term));
+            if (isMatch) {
               m.style.display = '';
               m.style.background = 'var(--mention-bg)';
+              const bubble = m.querySelector('.msg-bubble');
+              resultMatches.push({ id: m.dataset.id, text: (bubble ? bubble.textContent : m.textContent).trim().slice(0, 100) });
             } else {
               m.style.display = 'none';
             }
           });
+          const results = document.getElementById('search-results');
+          if (results) {
+            results.innerHTML = matches.length
+              ? resultMatches.map(match => `<button type="button" class="search-result" data-message-id="${escHtml(match.id)}">${escHtml(match.text || 'Message')}</button>`).join('')
+              : '<span style="color:var(--mut);font-size:12px;">No loaded messages found.</span>';
+            results.querySelectorAll('.search-result').forEach(button => button.addEventListener('click', () => {
+              if (typeof window.jumpToMessage === 'function') window.jumpToMessage(button.dataset.messageId);
+            }));
+          }
         }, 200);
       });
     }

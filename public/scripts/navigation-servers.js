@@ -410,7 +410,43 @@ async function channelAction(sid, encodedName, action) {
   const cname = decodeURIComponent(encodedName);
   if (action === 'rename') return renameChannel(sid, cname);
   if (action === 'delete') return deleteChannel(sid, cname);
+  if (action === 'access') return manageChannelAccess(sid, cname);
   if (action === 'up' || action === 'down') return moveChannel(sid, cname, action);
+}
+
+async function manageChannelAccess(sid, cname) {
+  const s = servers.find(x => x.id === sid);
+  if (!s) return;
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner && !isAdmin) { appAlert('Only the owner or admins can manage channel access.'); return; }
+  const channel = (s.channels || []).find(c => c.name === cname);
+  if (!channel) return;
+  const current = channel.private ? (channel.allowedUsers || []).join(', ') : '';
+  const input = await appPrompt('Allowed usernames (comma-separated). Leave blank to make the channel public:', current);
+  if (input === null) return;
+  const names = [...new Set(input.split(',').map(name => name.trim()).filter(Boolean))];
+  const invalid = names.filter(name => !(s.members || []).includes(name));
+  if (invalid.length) { appAlert('These users are not server members: ' + invalid.join(', ')); return; }
+  const allowedUsers = [...new Set([s.owner, ...(s.admins || []), ...names])];
+  const channelAccess = { ...(s.channelAccess || {}) };
+  if (!names.length) {
+    delete channelAccess[cname];
+    channel.private = false;
+    delete channel.allowedUsers;
+  } else {
+    const allowedUids = [];
+    for (const name of allowedUsers) {
+      const snap = await getDocs(query(collection(db, 'users'), where('user', '==', name)));
+      const uid = snap.docs[0]?.data()?.uid;
+      if (uid) allowedUids.push(uid);
+    }
+    channel.private = true;
+    channel.allowedUsers = allowedUsers;
+    channelAccess[cname] = { allowedUids };
+  }
+  await updateDoc(doc(db, 'servers', sid), { channels: s.channels, channelAccess });
+  await loadServers();
+  if (currentServer === sid) switchServer(sid);
 }
 
 function renderChannelItem(server, channel) {
@@ -418,7 +454,7 @@ function renderChannelItem(server, channel) {
   const canManage = canManageServer(server);
   const encodedName = encodeURIComponent(channel.name);
   const controls = canManage
-    ? `<span class="channel-controls" onclick="event.stopPropagation()"><button type="button" onclick="channelAction('${server.id}','${encodedName}','rename')" title="Rename channel">✎</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','up')" title="Move up">↑</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','down')" title="Move down">↓</button>${channel.name !== 'general' ? `<button type="button" onclick="channelAction('${server.id}','${encodedName}','delete')" title="Delete channel">×</button>` : ''}</span>`
+    ? `<span class="channel-controls" onclick="event.stopPropagation()"><button type="button" onclick="channelAction('${server.id}','${encodedName}','rename')" title="Rename channel">✎</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','access')" title="Manage channel access">🔒</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','up')" title="Move up">↑</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','down')" title="Move down">↓</button>${channel.name !== 'general' ? `<button type="button" onclick="channelAction('${server.id}','${encodedName}','delete')" title="Delete channel">×</button>` : ''}</span>`
     : '';
   return `<div class="channel-row"><button class="cb ${active ? 'active' : ''}" onclick="switchServerChannel('${server.id}','${escHtml(channel.name)}')">${channel.private ? '🔒 ' : ''}# ${escHtml(channel.name)}</button>${unreadBadge('srv_' + server.id + '_' + channel.name)}${controls}</div>`;
 }

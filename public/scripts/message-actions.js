@@ -112,22 +112,23 @@ if (fileInputEl) {
   fileInputEl.addEventListener('change', async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    const imgs = files.filter(f => f.type.startsWith('image/'));
-    if (imgs.length !== files.length) { appAlert('Only images and GIFs can be uploaded.'); }
-    if (!imgs.length) { fileInputEl.value = ''; return; }
+    const allowedTypes = new Set(['application/pdf', 'text/plain', 'text/csv', 'application/zip', 'application/json']);
+    const valid = files.filter(f => f.type.startsWith('image/') || allowedTypes.has(f.type));
+    if (valid.length !== files.length) appAlert('Unsupported file type. Use images, PDF, TXT, CSV, JSON, or ZIP files.');
+    if (!valid.length) { fileInputEl.value = ''; return; }
     fileInputEl.value = '';
     try {
       const results = [];
-      for (const f of imgs) {
-        if (f.size > 700000) { appAlert('Image too large (max ~700KB): ' + f.name); continue; }
-        const pf = await preferAvif(f);
+      for (const f of valid) {
+        if (f.size > 700000) { appAlert('File too large (max 700KB): ' + f.name); continue; }
+        const pf = f.type.startsWith('image/') ? await preferAvif(f) : f;
         const preview = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
           reader.onerror = () => reject(reader.error);
           reader.readAsDataURL(pf);
         });
-        results.push({ file: pf, preview });
+        results.push({ file: pf, preview, isImage: pf.type.startsWith('image/'), name: pf.name, size: pf.size, type: pf.type });
       }
       if (!results.length) return;
       pendingFiles = results;

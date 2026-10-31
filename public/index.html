@@ -418,7 +418,8 @@
     <div id="chat-header" class="chat-header"><button id="mobile-nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button><span class="hash">#</span><span class="hname">general</span></div>
     <div id="pinned-bar" style="display:none; padding:4px 8px; background:var(--bg-t); border-bottom:1px solid var(--border); font-size:12px; color:var(--mut);"></div>
     <div id="search-bar" style="display:none; padding:4px 8px; background:var(--bg-t); border-bottom:1px solid var(--border);">
-      <input id="search-input" type="text" placeholder="Search messages..." style="width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--input);color:var(--txt);font-size:13px;">
+      <input id="search-input" type="text" placeholder="Search text, from:user, or date:YYYY-MM-DD..." style="width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--input);color:var(--txt);font-size:13px;">
+      <div id="search-results" style="max-height:160px;overflow:auto;"></div>
     </div>
     <div class="msgs" id="message-container"></div>
     <div id="reply-preview">
@@ -457,8 +458,8 @@
         </div>
         </div>
         <div class="composer">
-        <input type="file" id="file-input" accept="image/*" multiple style="display:none;">
-        <button class="attach" title="Upload image" onclick="document.getElementById('file-input').click()">📎</button>
+        <input type="file" id="file-input" accept="image/*,.pdf,.txt,.csv,.zip,.json" multiple style="display:none;">
+        <button class="attach" title="Upload image or file" onclick="document.getElementById('file-input').click()">📎</button>
         <button class="plus" title="GIFs" onclick="document.getElementById('media-picker').style.display='flex';showTab('gifs')">+</button>
         <textarea id="chat-input" placeholder="Message #general" rows="1" onkeydown="handleKeyPress(event)"></textarea>
         <button id="emoji-btn" class="emoji" title="Emoji">😀</button>

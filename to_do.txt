@@ -4,31 +4,8 @@ chatting: Replicate everything that a basic chat app like Discord or Stoat has.
 nitro: Idk vro make nitro features not nitro???
 mobile: fix the ui
 Tasks(explicit):
-chatting: support channel visibility and channel-specific permissions.
-chatting: support searching messages by text, author, and date.
-chatting: allow jumping to messages from search results.
-chatting: support file attachments with enforced size and type limits.
-chatting: reconnect after temporary network interruptions.
-nitro: make all customization and premium-style features available to every user without a paid subscription.
 nitro: support profile badges earned through achievements or participation.
-nitro: support custom animated avatars, subject to reasonable file size and performance limits.
-nitro: support custom animated profile banners, subject to reasonable file size and performance limits.
-nitro: support richer message embeds.
 nitro: support larger attachment limits where infrastructure permits.
-nitro: do not artificially restrict ordinary messaging, themes, basic profile customization, or other core functionality to create a premium tier.
 Security: use stable authentication UIDs rather than usernames as security identities.
-Security: validate messages, uploads, reactions, friend requests, and administrative actions server-side.
 Security: enforce rate limits and resource limits.
 Security: prevent unauthorized users from reading, modifying, or deleting other users' data.
-Security: test database rules before deployment.
-Development: preserve the existing project structure.
-Development: keep public/index.html HTML-only.
-Development: keep JavaScript in public/scripts/ and each file JavaScript-only.
-Development: keep public/style.css CSS-only.
-Development: keep each theme in its own CSS file.
-Development: do not modify Froggocord.html; it is a legacy redirect.
-Development: do not delete or overwrite the README.
-Development: preserve existing working features.
-Development: inspect the Git working tree before editing.
-Development: inspect the complete diff and test changes before committing.
-Development: do not claim a feature is complete until it has been verified.

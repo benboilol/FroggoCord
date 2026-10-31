@@ -32,8 +32,26 @@ service cloud.firestore {
         );
     }
 
+    function canAccessServerChannel(channel) {
+      let server = get(/databases/$(database)/documents/servers/$(serverIdFromChannel(channel))).data;
+      return isMemberOfServer(server, request.auth.uid)
+        && (
+          !(server.channelAccess is map)
+          || !(channel.split('_').slice(2).join('_') in server.channelAccess)
+          || !(server.channelAccess[channel.split('_').slice(2).join('_')].allowedUids is list)
+          || request.auth.uid in server.channelAccess[channel.split('_').slice(2).join('_')].allowedUids
+        );
+    }
+
     match /users/{userId} {
-      allow read: if isAuth();
+      allow read: if isAuth() && (
+        (
+          resource.data.channel is string
+          && isChannelForServer(resource.data.channel)
+          && canAccessServerChannel(resource.data.channel)
+        )
+        || (resource.data.channel is string && isDmChannelForUser(resource.data.channel))
+      );
       allow create: if isAuth()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.user == userId
@@ -64,12 +82,13 @@ service cloud.firestore {
         && request.resource.data.user == username()
         && request.resource.data.text is string
         && request.resource.data.text.size() <= 4000
+        && (!('files' in request.resource.data) || (request.resource.data.files is list && request.resource.data.files.size() <= 3))
         && request.resource.data.channel is string
         && (
           (
             isChannelForServer(request.resource.data.channel)
             && exists(/databases/$(database)/documents/servers/$(serverIdFromChannel(request.resource.data.channel)))
-            && isMemberOfServer(get(/databases/$(database)/documents/servers/$(serverIdFromChannel(request.resource.data.channel))).data, request.auth.uid)
+            && canAccessServerChannel(request.resource.data.channel)
           )
           ||
           (
@@ -78,16 +97,28 @@ service cloud.firestore {
         );
 
       allow update: if isAuth()
-        && (resource.data.uid == request.auth.uid || (!('uid' in resource.data) && resource.data.user == username()))
-        && request.resource.data.user == request.resource.data.user
-        && request.resource.data.text is string
-        && request.resource.data.text.size() <= 4000
+        && (
+          (
+            (resource.data.uid == request.auth.uid || (!('uid' in resource.data) && resource.data.user == username()))
+            && request.resource.data.user == resource.data.user
+            && request.resource.data.text is string
+            && request.resource.data.text.size() <= 4000
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'editedAt', 'replyTo', 'images', 'files', 'imageW', 'imageH', 'clientMsgId'])
+          )
+          ||
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+            && resource.data.channel is string
+            && isChannelForServer(resource.data.channel)
+            && canAccessServerChannel(resource.data.channel)
+          )
+        )
         && (
           (
             resource.data.channel is string
             && isChannelForServer(resource.data.channel)
             && exists(/databases/$(database)/documents/servers/$(serverIdFromChannel(resource.data.channel)))
-            && isMemberOfServer(get(/databases/$(database)/documents/servers/$(serverIdFromChannel(resource.data.channel))).data, request.auth.uid)
+            && canAccessServerChannel(resource.data.channel)
           )
           ||
           (
@@ -104,7 +135,7 @@ service cloud.firestore {
             resource.data.channel is string
             && isChannelForServer(resource.data.channel)
             && exists(/databases/$(database)/documents/servers/$(serverIdFromChannel(resource.data.channel)))
-            && isMemberOfServer(get(/databases/$(database)/documents/servers/$(serverIdFromChannel(resource.data.channel))).data, request.auth.uid)
+            && canAccessServerChannel(resource.data.channel)
           )
           ||
           (
@@ -173,9 +204,8 @@ service cloud.firestore {
         (
           // Admins may update settings but not owner/admin/member list/invite
           (
-            resource.data.adminUids is list && request.auth.uid in resource.data.adminUids
-          ) || (
-            resource.data.admins is list && username() in resource.data.admins
+            (resource.data.adminUids is list && request.auth.uid in resource.data.adminUids)
+            || (resource.data.admins is list && username() in resource.data.admins)
           )
           && request.resource.data.owner == resource.data.owner
           && request.resource.data.ownerUid == resource.data.ownerUid
