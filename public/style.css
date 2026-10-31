@@ -78,6 +78,11 @@ img, button, span, input { border: none; outline: none; }
 .msg-actions { display: none; gap: 10px; font-size: 11px; margin-left: 4px; }
 .msg:hover .msg-actions { display: inline-flex; }
 .msg-actions span { cursor: pointer; }
+.channel-row { display: flex; align-items: center; gap: 2px; }
+.channel-row .cb { flex: 1; min-width: 0; }
+.channel-controls { display: inline-flex; gap: 1px; }
+.channel-controls button { padding: 2px 4px; color: var(--mut); background: transparent; cursor: pointer; }
+.channel-controls button:hover { color: var(--txt); background: var(--hover); }
 .msg-bubble { color: var(--txt); font-size: 15px; line-height: 1.375; word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; }
 .msg-bubble .codeblock { background: var(--code-bg); border-radius: 4px; padding: 8px 10px; margin: 4px 0; overflow-x: auto; font-family: Consolas, "Courier New", monospace; font-size: 13px; white-space: pre; display: block; }
 .msg-bubble .codeblock code { background: transparent; padding: 0; }

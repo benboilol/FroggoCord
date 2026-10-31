@@ -193,7 +193,7 @@
       if (!server) return;
       if (!enforceServerManage(server, 'create channels')) return;
 
-      const name = await appPrompt('Channel name:');
+      const name = (await appPrompt('Channel name:') || '').trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
       if (!name) return;
       const channels = Array.isArray(server.channels) ? server.channels.slice() : [{ name: 'general', id: 'general' }];
       if (channels.some((channel) => channel.name === name)) {
@@ -204,6 +204,21 @@
       await updateDoc(doc(db, 'servers', sid), { channels });
       await loadServers();
       if (typeof switchServerChannel === 'function') switchServerChannel(sid, name);
+    };
+
+    window.deleteChannel = async function (sid, cname) {
+      const server = Array.isArray(window.servers) ? window.servers.find((entry) => entry.id === sid) : null;
+      if (!server) return;
+      if (!enforceServerManage(server, 'delete channels')) return;
+      if (cname === 'general') {
+        appAlert('The general channel cannot be deleted.');
+        return;
+      }
+      if (!(await appConfirm('Delete #' + cname + '? Messages in this channel will no longer be accessible.'))) return;
+      const channels = (server.channels || []).filter((channel) => channel.name !== cname);
+      await updateDoc(doc(db, 'servers', sid), { channels });
+      await loadServers();
+      if (currentServer === sid) switchServer(sid);
     };
 
     window.leaveServer = async function () {

@@ -393,6 +393,36 @@ function canManageServer(server) {
   return isOwner || isAdmin;
 }
 
+async function deleteChannel(sid, cname) {
+  const s = servers.find(x => x.id === sid);
+  if (!s) return;
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner && !isAdmin) { appAlert('Only the owner or admins can delete channels.'); return; }
+  if (cname === 'general') { appAlert('The general channel cannot be deleted.'); return; }
+  if (!(await appConfirm('Delete #' + cname + '? Messages in this channel will no longer be accessible.'))) return;
+  const channels = (s.channels || []).filter(c => c.name !== cname);
+  await updateDoc(doc(db, 'servers', sid), { channels });
+  await loadServers();
+  if (currentServer === sid) switchServer(sid);
+}
+
+async function channelAction(sid, encodedName, action) {
+  const cname = decodeURIComponent(encodedName);
+  if (action === 'rename') return renameChannel(sid, cname);
+  if (action === 'delete') return deleteChannel(sid, cname);
+  if (action === 'up' || action === 'down') return moveChannel(sid, cname, action);
+}
+
+function renderChannelItem(server, channel) {
+  const active = chan === ('srv_' + server.id + '_' + channel.name);
+  const canManage = canManageServer(server);
+  const encodedName = encodeURIComponent(channel.name);
+  const controls = canManage
+    ? `<span class="channel-controls" onclick="event.stopPropagation()"><button type="button" onclick="channelAction('${server.id}','${encodedName}','rename')" title="Rename channel">✎</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','up')" title="Move up">↑</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','down')" title="Move down">↓</button>${channel.name !== 'general' ? `<button type="button" onclick="channelAction('${server.id}','${encodedName}','delete')" title="Delete channel">×</button>` : ''}</span>`
+    : '';
+  return `<div class="channel-row"><button class="cb ${active ? 'active' : ''}" onclick="switchServerChannel('${server.id}','${escHtml(channel.name)}')">${channel.private ? '🔒 ' : ''}# ${escHtml(channel.name)}</button>${unreadBadge('srv_' + server.id + '_' + channel.name)}${controls}</div>`;
+}
+
 function showServerCtx(e, sid) {
   e.preventDefault();
   e.stopPropagation();
@@ -853,7 +883,7 @@ function switchServer(id) {
     if (s.accent) { banner.style.borderLeft = `4px solid ${escHtml(s.accent)}`; bannerName.style.color = s.accent; }
 
     const visibleChs = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (s.admins || []).includes(user));
-    const chBtns = `<div class="cat">Text Channels</div>` + visibleChs.map(c => `<button class="cb ${chan === ('srv_' + currentServer + '_' + c.name) ? 'active' : ''}" onclick="switchServerChannel('${s.id}','${escHtml(c.name)}')">${c.private ? '🔒 ' : ''}# ${escHtml(c.name)}</button>`).join('');
+    const chBtns = `<div class="cat">Text Channels</div>` + visibleChs.map(c => renderChannelItem(s, c)).join('');
     document.querySelector('.ch').innerHTML = chBtns +
       `<button class="cb muted" onclick="createChannel('${s.id}')" style="color:var(--bl);">+ Add Channel</button>` +
       `<button class="cb muted" onclick="shareInvite('${s.id}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
@@ -893,7 +923,7 @@ window.switchServerChannel = (sid, cname) => {
 
   chan = 'srv_' + sid + '_' + cname;
       const visibleChs2 = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (s.admins || []).includes(user));
-      document.querySelector('.ch').innerHTML = `<div class="cat">Text Channels</div>` + visibleChs2.map(c => `<button class="cb ${chan === ('srv_' + sid + '_' + c.name) ? 'active' : ''}" onclick="switchServerChannel('${sid}','${escHtml(c.name)}')">${c.private ? '🔒 ' : ''}# ${escHtml(c.name)}</button>${unreadBadge('srv_' + sid + '_' + c.name)}`).join('') +
+      document.querySelector('.ch').innerHTML = `<div class="cat">Text Channels</div>` + visibleChs2.map(c => renderChannelItem(s, c)).join('') +
     `<button class="cb muted" onclick="createChannel('${sid}')" style="color:var(--bl);">+ Add Channel</button>` +
     `<button class="cb muted" onclick="shareInvite('${sid}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
     `<button class="cb muted" onclick="revokeInvite('${sid}')" style="color:var(--danger);">Revoke Invite</button>`;
@@ -915,7 +945,7 @@ window.switchServerChannel = (sid, cname) => {
 };
 
 async function createChannel(sid) {
-  const name = await appPrompt('Channel name:');
+  const name = (await appPrompt('Channel name:') || '').trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
   if (!name) return;
 
   const s = servers.find(x => x.id === sid);
@@ -946,6 +976,8 @@ async function shareInvite(sid) {
 }
 
 window.createChannel = createChannel;
+window.channelAction = channelAction;
+window.deleteChannel = deleteChannel;
 window.shareInvite = shareInvite;
 
 async function revokeInvite(sid) {
