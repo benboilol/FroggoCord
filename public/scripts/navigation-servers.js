@@ -683,7 +683,12 @@ async function transferOwnership(newOwner) {
   if (newOwner === user) { appAlert('You are already the owner.'); return; }
   if (!(s.members || []).includes(newOwner)) { appAlert('That user is not a member of this server.'); return; }
   if (!(await appConfirm('Transfer ownership to ' + newOwner + '? This cannot be undone.'))) return;
-  await updateDoc(doc(db, 'servers', ctxServerId), { owner: newOwner, ownerUid: null });
+  const memberSnap = await getDocs(query(collection(db, 'users'), where('user', '==', newOwner)));
+  const memberUid = memberSnap.docs[0]?.data()?.uid;
+  if (!memberUid) { appAlert('Could not verify the new owner account.'); return; }
+  const admins = (s.admins || []).filter(member => member !== newOwner);
+  const adminUids = (s.adminUids || []).filter(uid => uid !== memberUid);
+  await updateDoc(doc(db, 'servers', ctxServerId), { owner: newOwner, ownerUid: memberUid, admins, adminUids });
   await loadServers();
   if (currentServer === ctxServerId) switchServer(ctxServerId);
   appAlert('Ownership transferred to ' + newOwner + '.');

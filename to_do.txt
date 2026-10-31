@@ -4,7 +4,6 @@ chatting: Replicate everything that a basic chat app like Discord or Stoat has.
 nitro: Idk vro make nitro features not nitro???
 mobile: fix the ui
 Tasks(explicit):
-chatting: support server ownership, administrators, roles, and permissions.
 chatting: support channel visibility and channel-specific permissions.
 chatting: support searching messages by text, author, and date.
 chatting: allow jumping to messages from search results.

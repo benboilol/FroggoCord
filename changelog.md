@@ -106,5 +106,6 @@
  - 20a6d-2026.10.30-20.31.09-0400: Added server-deletion cleanup for messages in the server's channels to prevent orphaned message records.
  - 20a6d-2026.10.30-20.31.50-0400: Added edited timestamps and visible edited indicators to edited messages.
  - 20a6d-2026.10.30-20.32.25-0400: Added channel management controls for creating, renaming, reordering, and deleting text channels.
+ - 20a6d-2026.10.30-20.33.37-0400: Completed server ownership and administrator management with verified member UIDs and synchronized permission fields.
  - 20a6d-2026.10.30-20.15.27-0400: Made update checks run after ten seconds and exposed the check for reliable live verification instead of waiting a full minute.
  - 20a6d-2026.10.30-20.16.38-0400: Removed the duplicate message sender that bypassed optimistic delivery and reduced update-check overhead to prevent chat lag.

@@ -131,10 +131,21 @@
       }
 
       const admins = new Set(Array.isArray(server.admins) ? server.admins : []);
+      const adminUids = new Set(Array.isArray(server.adminUids) ? server.adminUids : []);
       if (makeAdmin) admins.add(member);
       else admins.delete(member);
+      const memberSnapshot = await getDocs(query(collection(db, 'users'), where('user', '==', member)));
+      const memberUid = memberSnapshot.docs[0]?.data()?.uid;
+      if (makeAdmin && !memberUid) {
+        if (typeof appAlert === 'function') appAlert('Could not verify that user account.');
+        return;
+      }
+      if (memberUid) {
+        if (makeAdmin) adminUids.add(memberUid);
+        else adminUids.delete(memberUid);
+      }
 
-      await updateDoc(doc(db, 'servers', window.ctxServerId), { admins: Array.from(admins) });
+      await updateDoc(doc(db, 'servers', window.ctxServerId), { admins: Array.from(admins), adminUids: Array.from(adminUids) });
       await loadServers();
       const updated = Array.isArray(window.servers) ? window.servers.find((entry) => entry.id === window.ctxServerId) : null;
       if (updated) renderServerMembersList(updated);
