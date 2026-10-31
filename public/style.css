@@ -74,6 +74,7 @@ img, button, span, input { border: none; outline: none; }
 .msg-author:hover { text-decoration: underline; }
 .msg-author.self { color: var(--bl); }
 .msg-time { font-size: 11px; color: var(--mut); }
+.msg-edited { margin-left: 3px; font-size: 10px; }
 .msg-actions { display: none; gap: 10px; font-size: 11px; margin-left: 4px; }
 .msg:hover .msg-actions { display: inline-flex; }
 .msg-actions span { cursor: pointer; }

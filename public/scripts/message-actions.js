@@ -3,9 +3,9 @@
       const t = await appPrompt("Edit:", txt); 
       if (!t || t === txt) return; 
       try {
-        await updateDoc(doc(db,"messages",id),{text:t}); 
+        await updateDoc(doc(db,"messages",id),{text:t,editedAt:serverTimestamp()}); 
       } catch (e) {
-        // Ignore permission errors
+        appAlert('Failed to edit message.');
       }
     }
     window.deleteMsg = async (id) => { 
