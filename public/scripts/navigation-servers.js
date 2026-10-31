@@ -256,6 +256,7 @@ async function createServerFromModal() {
     admins: [],
     adminUids: [],
     banned: [],
+    welcomeMessage: '',
     channels: [{ name: 'general', id: 'general' }],
     createdAt: serverTimestamp()
   });
@@ -308,6 +309,7 @@ async function createServer() {
     admins: [],
     adminUids: [],
     banned: [],
+    welcomeMessage: '',
     channels: [{ name: 'general', id: 'general' }],
     createdAt: serverTimestamp()
   });
@@ -533,6 +535,8 @@ function openServerSettings(sid) {
   document.getElementById('ss-desc').value = s.description || '';
   const ssRules = document.getElementById('ss-rules');
   if (ssRules) ssRules.value = (s.rules || []).join('\n');
+  const ssWelcome = document.getElementById('ss-welcome');
+  if (ssWelcome) ssWelcome.value = s.welcomeMessage || '';
   document.getElementById('ss-icon-url').value = s.icon || '';
   document.getElementById('ss-banner-url').value = s.banner || '';
   document.getElementById('ss-accent').value = s.accent || '#57f287';
@@ -872,6 +876,8 @@ async function saveServerSettings() {
   const description = document.getElementById('ss-desc').value.trim();
   const rulesRaw = (document.getElementById('ss-rules').value || '').trim();
   const rules = rulesRaw ? rulesRaw.split('\n').map(r => r.trim()).filter(Boolean) : [];
+  const welcomeRaw = (document.getElementById('ss-welcome') || {}).value;
+  const welcomeMessage = welcomeRaw ? welcomeRaw.trim() : '';
   let icon = document.getElementById('ss-icon-url').value.trim();
   let banner = document.getElementById('ss-banner-url').value.trim();
   const accent = document.getElementById('ss-accent').value.trim() || '#57f287';
@@ -901,7 +907,8 @@ async function saveServerSettings() {
     accent,
     emojis,
     stickers,
-    rules
+    rules,
+    welcomeMessage
   });
   const stickersRaw = (document.getElementById('ss-stickers').value || '').trim();
   const stickers = stickersRaw.split('\n').map(line => {
@@ -1038,6 +1045,22 @@ function switchServer(id) {
 
     bannerName.textContent = s.name;
     if (s.description) banner.title = s.description;
+    // Show server rules on first join
+    if (s.rules && s.rules.length) {
+      const rulesKey = 'froggocord-rules-seen-' + s.id;
+      if (!localStorage.getItem(rulesKey)) {
+        localStorage.setItem(rulesKey, '1');
+        setTimeout(() => { appAlert('Server Rules:\n\n' + s.rules.map((r, i) => (i+1) + '. ' + r).join('\n')); }, 500);
+      }
+    }
+    // Show welcome message for new members
+    if (s.welcomeMessage) {
+      const welcomeKey = 'froggocord-welcome-seen-' + s.id;
+      if (!localStorage.getItem(welcomeKey)) {
+        localStorage.setItem(welcomeKey, '1');
+        setTimeout(() => { appAlert('Welcome to ' + s.name + '!\n\n' + s.welcomeMessage); }, 1000);
+      }
+    }
     // Show server rules on first join
     if (s.rules && s.rules.length) {
       const rulesKey = 'froggocord-rules-seen-' + s.id;
