@@ -1349,8 +1349,8 @@ window.toggleGifBlock = (u) => {
         if (!m.hasAttribute('tabindex')) m.setAttribute('tabindex', '0');
       });
     });
-    const msgBox = document.getElementById('message-container');
-    if (msgBox) msgObserver.observe(msgBox, { childList: true, subtree: true });
+    const messageContainer = document.getElementById('message-container');
+    if (messageContainer) msgObserver.observe(messageContainer, { childList: true, subtree: true });
 
 
     // ---------- Link Previews ----------

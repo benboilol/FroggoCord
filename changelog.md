@@ -96,3 +96,5 @@
  - 1da20-2026.10.30-11.39.34-0700: Added ban reasons to ban records and fixed ban-reason declaration handling.
  - 20a6d-2026.10.30-17.56.00-0400: Restored AGENTS.md and .github/copilot-instructions.md after a Git conflict deleted the repository AI-agent instructions.
  - 1f89a-2026.10.30-18.02.54-0400: Restored whattimeisit.cpp after a conflict in git. WhatTimeIsIt is a simple program that will give you the timestamp and automatically append it to changelog.md. 
+ - 20a6d-2026.10.30-20.08.34-0400: Fixed the duplicate global message-container binding that prevented authentication startup from loading, and removed a stray draft-script expression.
+ - 20a6d-2026.10.30-20.08.34-0400: Added cache-busting for the loader and feature scripts so deployed clients cannot mix stale JavaScript versions.

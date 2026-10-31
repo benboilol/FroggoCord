@@ -46,3 +46,7 @@ To make a theme follow the operating system's light or dark appearance, put one 
 ## Direct security testing
 
 `public/hacked.html` is a standalone security test client that signs in with a FroggoCord test account and calls the production Firestore API directly, without FroggoCord's UI permission checks. Firebase Authentication and Firestore Security Rules still apply. Its reads, writes, updates, and deletes affect live data, so use only a test account and disposable test records.
+
+# Test user:
+username: testymcrealpersonface
+password: password123

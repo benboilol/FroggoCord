@@ -13,6 +13,7 @@ for (const file of appScripts){
     await new Promise((resolve,reject)=>{
         const script=document.createElement('script');
         const scriptUrl=new URL(file,import.meta.url);
+        scriptUrl.searchParams.set('v', Date.now().toString());
         script.src=scriptUrl;
         script.onload=resolve;
         script.onerror=()=>reject(new Error(`Could not load ${file}`));

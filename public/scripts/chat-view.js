@@ -195,7 +195,7 @@ function fmtMsgTime(ts) {
   } catch (e) { return ''; }
 }
 
-const msgBox = document.getElementById('message-container');
+const chatMessageContainer = document.getElementById('message-container');
 const MESSAGE_PAGE_SIZE = 25;
 let activeMessagesChannel = null;
 let messagePages = [];
@@ -213,20 +213,20 @@ function markUserScroll() {
   userScrollTimer = setTimeout(() => { userScrolling = false; }, 300);
 }
 
-msgBox.addEventListener('wheel', markUserScroll, { passive: true });
-msgBox.addEventListener('touchstart', markUserScroll, { passive: true });
-msgBox.addEventListener('mousedown', markUserScroll, { passive: true });
-msgBox.addEventListener('scroll', () => {
+chatMessageContainer.addEventListener('wheel', markUserScroll, { passive: true });
+chatMessageContainer.addEventListener('touchstart', markUserScroll, { passive: true });
+chatMessageContainer.addEventListener('mousedown', markUserScroll, { passive: true });
+chatMessageContainer.addEventListener('scroll', () => {
   if (isPinning) return;
-  if (userScrolling) msgsPinned = msgBox.scrollHeight - msgBox.scrollTop - msgBox.clientHeight < 80;
-  if (userScrolling && msgBox.scrollTop <= 80) loadOlderMessages();
+  if (userScrolling) msgsPinned = chatMessageContainer.scrollHeight - chatMessageContainer.scrollTop - chatMessageContainer.clientHeight < 80;
+  if (userScrolling && chatMessageContainer.scrollTop <= 80) loadOlderMessages();
 }, { passive: true });
 
 function pinMsgsBottom() {
   msgsPinned = true;
   isPinning = true;
-  msgBox.scrollTop = msgBox.scrollHeight;
-  setTimeout(() => { msgBox.scrollTop = msgBox.scrollHeight; isPinning = false; }, 0);
+  chatMessageContainer.scrollTop = chatMessageContainer.scrollHeight;
+  setTimeout(() => { chatMessageContainer.scrollTop = chatMessageContainer.scrollHeight; isPinning = false; }, 0);
 }
 
 const chatGifDims = {};
@@ -332,12 +332,12 @@ function resetMessagePages(channel) {
   hasOlderMessages = true;
   messageHistoryError = '';
   msgsPinned = true;
-  if (msgBox._ro) { msgBox._ro.disconnect(); msgBox._ro = null; }
+  if (chatMessageContainer._ro) { chatMessageContainer._ro.disconnect(); chatMessageContainer._ro = null; }
 }
 
 function renderMessagePages({ forceBottom = false, preserveScroll = false, contentAddedAbove = false } = {}) {
-  const previousHeight = msgBox.scrollHeight;
-  const previousTop = msgBox.scrollTop;
+  const previousHeight = chatMessageContainer.scrollHeight;
+  const previousTop = chatMessageContainer.scrollTop;
   const byId = new Map();
   messagePages.forEach(page => page.messages.forEach((message, id) => byId.set(id, message)));
 
@@ -369,7 +369,7 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
     ? 'Loading older messages…'
     : messageHistoryError || (!hasOlderMessages && docs.length ? 'Beginning of conversation' : (docs.length ? 'Scroll up for older messages' : ''));
   const isPendingMsg = (m) => m && m.clientId && String(m.clientId).startsWith('pending_');
-  msgBox.innerHTML = '<div class="msgs-inner"><div class="message-history-status" aria-live="polite">' + escHtml(historyText) + '</div>' + docs.map(m => {
+  chatMessageContainer.innerHTML = '<div class="msgs-inner"><div class="message-history-status" aria-live="polite">' + escHtml(historyText) + '</div>' + docs.map(m => {
     const pending = isPendingMsg(m);
     const me = pending ? true : (m.user === user);
     const safeUser = escHtml(m.user);
@@ -411,28 +411,28 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
       </div>`;
   }).join('') + '</div>';
 
-  const inner = msgBox.querySelector('.msgs-inner');
+  const inner = chatMessageContainer.querySelector('.msgs-inner');
   if (inner) {
-    if (msgBox._ro) msgBox._ro.disconnect();
+    if (chatMessageContainer._ro) chatMessageContainer._ro.disconnect();
     let previousInnerHeight = inner.scrollHeight;
     let firstResize = true;
     const observer = new ResizeObserver(() => {
       const nextHeight = inner.scrollHeight;
       const delta = nextHeight - previousInnerHeight;
       if (!firstResize && delta !== 0) {
-        if (msgsPinned) msgBox.scrollTop = msgBox.scrollHeight;
-        else msgBox.scrollTop += delta;
+        if (msgsPinned) chatMessageContainer.scrollTop = chatMessageContainer.scrollHeight;
+        else chatMessageContainer.scrollTop += delta;
       }
       firstResize = false;
       previousInnerHeight = nextHeight;
     });
     observer.observe(inner);
-    msgBox._ro = observer;
+    chatMessageContainer._ro = observer;
   }
   observeChatImages();
 
   const msgContainer = document.getElementById('message-container');
-  msgBox.querySelectorAll('img').forEach(img => {
+  chatMessageContainer.querySelectorAll('img').forEach(img => {
     if (!img.complete) img.addEventListener('load', () => {
       if (msgContainer && typeof msgsPinned !== 'undefined' && msgsPinned &&
           msgContainer.scrollHeight - msgContainer.scrollTop - msgContainer.clientHeight < 80) {
@@ -443,7 +443,7 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
 
   if (preserveScroll) {
     requestAnimationFrame(() => {
-      msgBox.scrollTop = previousTop + (contentAddedAbove ? msgBox.scrollHeight - previousHeight : 0);
+      chatMessageContainer.scrollTop = previousTop + (contentAddedAbove ? chatMessageContainer.scrollHeight - previousHeight : 0);
     });
   }
   if (forceBottom) {
@@ -456,9 +456,9 @@ window.refreshMessageTimestamps = () => renderMessagePages();
 
     // Async link preview loader
     window.loadLinkPreviews = async () => {
-      const msgBox = document.getElementById('message-container');
-      if (!msgBox) return;
-      const msgs = msgBox.querySelectorAll('.msg');
+      const messageContainer = document.getElementById('message-container');
+      if (!messageContainer) return;
+      const msgs = messageContainer.querySelectorAll('.msg');
       for (const m of msgs) {
         const textEl = m.querySelector('.msg-bubble');
         if (!textEl) continue;
@@ -945,9 +945,9 @@ window.unfriendReq = async (id) => {
             if (typeof renderMessagePages === 'function') renderMessagePages({ preserveScroll: true });
             return;
           }
-          const msgBox = document.getElementById('message-container');
-          if (!msgBox) return;
-          const msgs = msgBox2.querySelectorAll('.msg');
+          const messageContainer = document.getElementById('message-container');
+          if (!messageContainer) return;
+          const msgs = messageContainer.querySelectorAll('.msg');
           msgs.forEach(m => {
             const text = (m.textContent || '').toLowerCase();
             if (text.includes(q)) {
@@ -1025,7 +1025,6 @@ window.addEventListener('popstate', () => {
     }
 
     // Auto-save draft on input
-""
     const chatInputEl = document.getElementById('chat-input');
     if (chatInputEl) {
       chatInputEl.addEventListener('input', () => {
