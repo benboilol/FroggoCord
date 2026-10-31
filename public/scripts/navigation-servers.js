@@ -1019,6 +1019,18 @@ window.applyServerTemplate = async () => {
   } catch (e) { appAlert('Failed to apply template.'); }
 };
 
+// ---------- Copy Invite Link ----------
+window.copyInviteLink = (sid) => {
+  const s = getServerById(sid);
+  if (!s || !s.inviteCode) { appAlert('No invite code available.'); return; }
+  const link = window.location.origin + '?join=' + encodeURIComponent(s.inviteCode);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(() => appAlert('Invite link copied!')).catch(() => { prompt('Copy this link:', link); });
+  } else {
+    prompt('Copy this link:', link);
+  }
+};
+
 window.togglePublicServer = togglePublicServer;
 
 function closeServerSettings() {
@@ -1251,7 +1263,8 @@ function switchServer(id) {
     document.querySelector('.ch').innerHTML = chBtns +
       `<button class="cb muted" onclick="createChannel('${s.id}')" style="color:var(--bl);">+ Add Channel</button>` +
       `<button class="cb muted" onclick="shareInvite('${s.id}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
-      `<button class="cb muted" onclick="revokeInvite('${s.id}')" style="color:var(--danger);">Revoke Invite</button>`;
+      `<button class="cb muted" onclick="revokeInvite('${s.id}')" style="color:var(--danger);">Revoke Invite</button>` +
+`<button class="cb muted" onclick="copyInviteLink('${s.id}')" style="color:var(--bl);">Copy Invite</button>`;
   } else {
     chan = null; mode = 'channels'; dmWith = null;
     document.querySelector('.sb h3').textContent = 'Channels';
@@ -1296,7 +1309,8 @@ window.switchServerChannel = (sid, cname) => {
       document.querySelector('.ch').innerHTML = chBtns2 +
     `<button class="cb muted" onclick="createChannel('${sid}')" style="color:var(--bl);">+ Add Channel</button>` +
     `<button class="cb muted" onclick="shareInvite('${sid}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
-    `<button class="cb muted" onclick="revokeInvite('${sid}')" style="color:var(--danger);">Revoke Invite</button>`;
+    `<button class="cb muted" onclick="revokeInvite('${sid}')" style="color:var(--danger);">Revoke Invite</button>` +
+`<button class="cb muted" onclick="copyInviteLink('${sid}')" style="color:var(--bl);">Copy Invite</button>`;
 
   renderServerList();
   updateHeader();
