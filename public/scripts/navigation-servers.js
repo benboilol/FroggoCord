@@ -867,6 +867,16 @@ async function togglePublicServer() {
 }
 
 window.transferOwnership = transferOwnership;
+window.viewServerRules = () => {
+  const s = getServerById(ctxServerId || currentServer);
+  if (!s) { appAlert('No server selected.'); return; }
+  if (s.rules && s.rules.length) {
+    appAlert('Server Rules:\n\n' + s.rules.map((r, i) => (i+1) + '. ' + r).join('\n'));
+  } else {
+    appAlert('No rules set for this server.');
+  }
+};
+
 window.togglePublicServer = togglePublicServer;
 
 function closeServerSettings() {
