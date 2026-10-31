@@ -35,13 +35,29 @@ window.toggleReaction = async (id, emoji) => {
     await updateDoc(ref, { reactions: current });
   } catch (e) { console.error('toggleReaction', e); }
 };
+function getRecentEmojis() {
+  try { return JSON.parse(localStorage.getItem('froggocord-recent-emojis') || '[]'); } catch (e) { return []; }
+}
+function pushRecentEmoji(emoji) {
+  try {
+    const list = getRecentEmojis().filter(e => e !== emoji);
+    list.unshift(emoji);
+    localStorage.setItem('froggocord-recent-emojis', JSON.stringify(list.slice(0, 8)));
+  } catch (e) {}
+}
 function showReactionPicker(msgId, anchor) {
   pendingReactMsgId = msgId;
   const picker = document.getElementById('reaction-picker');
-  if (!picker.dataset.filled) {
-    picker.innerHTML = REACTION_EMOJIS.map(e => `<span style="cursor:pointer;padding:4px;border-radius:4px;font-size:20px;text-align:center;line-height:1;" data-emoji="${escHtml(e)}" onclick="pickReaction('${e}')">${e}</span>`).join('');
-    picker.dataset.filled = '1';
+  const recent = getRecentEmojis();
+  const recentSet = new Set(recent);
+  const rest = REACTION_EMOJIS.filter(e => !recentSet.has(e));
+  let html = '';
+  if (recent.length) {
+    html += recent.map(e => `<span style="cursor:pointer;padding:4px;border-radius:4px;font-size:20px;text-align:center;line-height:1;background:var(--hover);" data-emoji="${escHtml(e)}" onclick="pickReaction('${e}')">${e}</span>`).join('');
+    html += '<div style="grid-column:1/-1;height:1px;background:var(--border);margin:2px 0;"></div>';
   }
+  html += rest.map(e => `<span style="cursor:pointer;padding:4px;border-radius:4px;font-size:20px;text-align:center;line-height:1;" data-emoji="${escHtml(e)}" onclick="pickReaction('${e}')">${e}</span>`).join('');
+  picker.innerHTML = html;
   const rect = anchor.getBoundingClientRect();
   let left = rect.left;
   if (left + 270 > window.innerWidth) left = window.innerWidth - 280;
@@ -53,6 +69,7 @@ function showReactionPicker(msgId, anchor) {
 function hideReactionPicker() { const p = document.getElementById('reaction-picker'); if (p) p.style.display = 'none'; pendingReactMsgId = null; }
 window.showReactionPicker = showReactionPicker; window.hideReactionPicker = hideReactionPicker;
 window.pickReaction = async (emoji) => {
+  pushRecentEmoji(emoji);
   if (pendingReactMsgId) await window.toggleReaction(pendingReactMsgId, emoji);
   hideReactionPicker();
 };
@@ -367,6 +384,9 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
       else if (act === 'reply') {
         const msg = el.closest('.msg'), body = msg && msg.querySelector('.msg-bubble');
         window.setReply(id, el.dataset.user, body ? body.textContent : '');
+      }
+      else if (act === 'copylink') {
+        if (typeof window.copyMessageLink === 'function') window.copyMessageLink(id);
       }
     });
 

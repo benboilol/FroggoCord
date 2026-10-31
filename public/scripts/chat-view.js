@@ -202,6 +202,8 @@ function fmtMsgTime(ts) {
 }
 
 const chatMessageContainer = document.getElementById('message-container');
+const newMessagesPill = document.getElementById('new-messages-pill');
+if (newMessagesPill) newMessagesPill.addEventListener('click', () => { msgsPinned = true; pinMsgsBottom(); newMessagesPill.style.display = 'none'; });
 const MESSAGE_PAGE_SIZE = 25;
 let activeMessagesChannel = null;
 let messagePages = [];
@@ -226,6 +228,8 @@ chatMessageContainer.addEventListener('scroll', () => {
   if (isPinning) return;
   if (userScrolling) msgsPinned = chatMessageContainer.scrollHeight - chatMessageContainer.scrollTop - chatMessageContainer.clientHeight < 80;
   if (userScrolling && chatMessageContainer.scrollTop <= 80) loadOlderMessages();
+  const pill = document.getElementById('new-messages-pill');
+  if (pill && msgsPinned) pill.style.display = 'none';
 }, { passive: true });
 
 function pinMsgsBottom() {
@@ -331,13 +335,26 @@ function interactiveSvgDocument(markup) {
 let pendingFiles = []; // array of {file, preview}
 
 function resetMessagePages(channel) {
+  // Save scroll state for previous channel
+  try {
+    if (activeMessagesChannel) {
+      localStorage.setItem('froggocord-pinned-' + activeMessagesChannel, String(msgsPinned));
+      localStorage.setItem('froggocord-scroll-' + activeMessagesChannel, String(chatMessageContainer.scrollTop));
+    }
+  } catch (e) {}
   messagePages.forEach(page => page.unsubscribe && page.unsubscribe());
   messagePages = [];
   activeMessagesChannel = channel;
   loadingOlderMessages = false;
   hasOlderMessages = true;
   messageHistoryError = '';
-  msgsPinned = true;
+  let savedPinned = true;
+  try {
+    const v = localStorage.getItem('froggocord-pinned-' + channel);
+    if (v !== null) savedPinned = (v === 'true');
+  } catch (e) {}
+  msgsPinned = (channel ? savedPinned : true);
+  window._restoredScrollFor = null;
   if (chatMessageContainer._ro) { chatMessageContainer._ro.disconnect(); chatMessageContainer._ro = null; }
 }
 
@@ -375,7 +392,12 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
     ? 'Loading older messages…'
     : messageHistoryError || (!hasOlderMessages && docs.length ? 'Beginning of conversation' : (docs.length ? 'Scroll up for older messages' : ''));
   const isPendingMsg = (m) => m && m.clientId && String(m.clientId).startsWith('pending_');
-  chatMessageContainer.innerHTML = '<div class="msgs-inner"><div class="message-history-status" aria-live="polite">' + escHtml(historyText) + '</div>' + docs.map(m => {
+  const lastReadAt = (typeof lastRead !== 'undefined' && activeMessagesChannel) ? (lastRead[activeMessagesChannel] || 0) : 0;
+  let firstUnreadIdx = -1;
+  docs.forEach((m, i) => {
+    if (firstUnreadIdx === -1 && !(m && m.clientId && String(m.clientId).startsWith('pending_')) && m.user !== user && m.timestamp && typeof m.timestamp.toMillis === 'function' && m.timestamp.toMillis() > lastReadAt) firstUnreadIdx = i;
+  });
+  chatMessageContainer.innerHTML = '<div class="msgs-inner"><div class="message-history-status" aria-live="polite">' + escHtml(historyText) + '</div>' + docs.map((m, index) => {
     const pending = isPendingMsg(m);
     const me = pending ? true : (m.user === user);
     const safeUser = escHtml(m.user);
@@ -390,6 +412,8 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
     let btns = (me && !pending) ? `<span data-action="edit" data-id="${m.id}" data-text="${escHtml(textVal)}" style="color:var(--bl);">Edit</span><span data-action="delete" data-id="${m.id}" style="color:var(--danger);">Delete</span>` : '';
     const pinBtn = (!pending && (typeof canPinMessages === 'function' && canPinMessages())) ? `<span data-action="pin" data-id="${m.id}" style="color:var(--mut);">Pin</span>` : '';
     if (pinBtn) btns = btns + pinBtn;
+    const copyLinkBtn = (!pending) ? `<span data-action="copylink" data-id="${m.id}" style="color:var(--mut);">Copy link</span>` : '';
+    if (copyLinkBtn) btns = btns + copyLinkBtn;
     const reportBtn = (!pending) ? `<span data-action="report" data-id="${m.id}" style="color:var(--mut);">Report</span>` : '';
     if (reportBtn) btns = btns + reportBtn;
     const rBtn = `<span data-action="reply" data-id="${m.id}" data-user="${safeUser}" style="color:var(--mut);">Reply</span>`;
@@ -400,7 +424,8 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
       else if (m.status === 'sent') statusHtml = '<div class="msg-status sent">✓ Sent</div>';
       else statusHtml = '<div class="msg-status failed">⚠️ Failed <button class="retry-btn" onclick="retryMessage(\'' + m.clientId + '\')">Retry</button></div>';
     }
-    return `
+    const unreadDivider = (index === firstUnreadIdx) ? '<div class="unread-divider" style="display:flex;align-items:center;gap:8px;margin:8px 0;color:var(--danger);font-size:11px;font-weight:700;letter-spacing:.05em;"><span style="flex:1;height:1px;background:var(--danger);opacity:.6;"></span>NEW MESSAGES<span style="flex:1;height:1px;background:var(--danger);opacity:.6;"></span></div>' : '';
+    return unreadDivider + `
       <div class="msg ${me ? 'me' : ''} ${isP ? 'mention' : ''} ${pending ? 'msg-pending' : ''} ${m.status === 'failed' ? 'msg-failed' : ''} ${m.replyTo ? 'has-reply' : ''}" data-id="${msgId}" data-user="${safeUser}" data-date="${m.timestamp && m.timestamp.toDate ? m.timestamp.toDate().toISOString().slice(0, 10) : ''}">
         <div class="pfp" ${av} onclick="openProfile('${safeUser}')">${safeUser ? safeUser[0].toUpperCase() : '?'}</div>
         <div class="msg-content">
@@ -456,6 +481,19 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
   if (forceBottom) {
     msgsPinned = true;
     pinMsgsBottom();
+    const pill = document.getElementById('new-messages-pill');
+    if (pill) pill.style.display = 'none';
+  } else if (!msgsPinned) {
+    const pill = document.getElementById('new-messages-pill');
+    if (pill) pill.style.display = 'block';
+  }
+  // Restore saved scroll position per channel (once per channel load)
+  if (!forceBottom && !msgsPinned && activeMessagesChannel && window._restoredScrollFor !== activeMessagesChannel) {
+    window._restoredScrollFor = activeMessagesChannel;
+    const saved = parseInt((() => { try { return localStorage.getItem('froggocord-scroll-' + activeMessagesChannel); } catch (e) { return null; } })() || '0', 10);
+    requestAnimationFrame(() => {
+      try { chatMessageContainer.scrollTop = Math.min(saved, chatMessageContainer.scrollHeight); } catch (e) {}
+    });
   }
 }
 
@@ -733,7 +771,11 @@ document.getElementById('auth-switch-btn').addEventListener('click', () => {
   document.getElementById('auth-switch-btn').textContent = isSignUpMode ? 'Login' : 'Sign up';
 });
 
-document.getElementById('logout-btn').addEventListener('click', () => signOut(window.auth));
+document.getElementById('logout-btn').addEventListener('click', () => {
+  if (!confirm('Are you sure you want to log out?')) return;
+  // Save any pending draft is already persisted; just sign out
+  signOut(window.auth);
+});
 
 const statusSel = document.getElementById('status-select');
 if (statusSel) {

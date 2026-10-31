@@ -965,6 +965,40 @@ window.db = db;
       }
     };
 
+    // ---------- Download your data ----------
+    window.downloadMyData = async () => {
+      if (!user) { appAlert('Sign in first.'); return; }
+      try {
+        const out = { user, exportedAt: new Date().toISOString() };
+        // profile
+        try {
+          const snap = await getDoc(doc(db, 'users', user));
+          out.profile = snap.exists() ? snap.data() : null;
+        } catch (e) {}
+        // messages authored by user
+        try {
+          const ms = await getDocs(query(collection(db, 'messages'), where('user', '==', user)));
+          out.messages = ms.docs.map(d => ({ id: d.id, ...d.data() }));
+        } catch (e) { out.messages = []; }
+        // friends
+        try {
+          const f1 = await getDocs(query(collection(db, 'friends'), where('from', '==', user)));
+          const f2 = await getDocs(query(collection(db, 'friends'), where('to', '==', user)));
+          out.friends = [...f1.docs, ...f2.docs].map(d => ({ id: d.id, ...d.data() }));
+        } catch (e) { out.friends = []; }
+        const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'froggocord-data-' + user + '.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        appAlert('Your data export has started.');
+      } catch (e) { console.error(e); appAlert('Export failed.'); }
+    };
+
     loadCustomTheme();
     loadSettings();
     loadBlockedUsers();
@@ -1042,7 +1076,12 @@ window.db = db;
     const escHtml = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     const SAFE_IMG = /^https:\/\/media\d*\.giphy\.com\/[\w\-\.\/]+(\?.*)?$/i;
     const renderText = (t) => {
-      const raw = String(t ?? '');
+      const raw0 = String(t ?? '');
+      const msgLinks = [];
+      let raw = raw0.replace(/https?:\/\/[^\s]+(?:[?#&]msg=|#msg-)([A-Za-z0-9_-]+)/g, (m, id) => {
+        msgLinks.push(id);
+        return '@@MSGLINK' + (msgLinks.length - 1) + '@@';
+      });
       const gif = raw.match(/^\s*<img src="([^"]+)"\s*style="max-width:[^;]+; border-radius:8px; display:block;">\s*$/i);
       if (gif && SAFE_IMG.test(gif[1])) {
         const u = gif[1];
@@ -1091,7 +1130,11 @@ window.db = db;
           });
         }
       } catch (ex) {}
-      return renderMarkdown(raw);
+      let _out = renderMarkdown(raw);
+      msgLinks.forEach((id, i) => {
+        _out = _out.replace('@@MSGLINK' + i + '@@', '<span class="msg-link-chip" onclick="window.jumpToMessage(\'' + escHtml(id) + '\')" style="display:inline-block;padding:2px 8px;border-radius:10px;background:var(--bg-t);color:var(--bl);cursor:pointer;font-size:12px;border:1px solid var(--hover);">🔗 Jump to message</span>');
+      });
+      return _out;
     };
     function renderInviteCard(name, icon, banner, desc, link) {
       let html = '<div class="invite-msg-card">';
@@ -1281,7 +1324,33 @@ window.toggleGifBlock = (u) => {
     window.jumpToMessage = (msgId) => {
       const el = document.querySelector(`[data-id="${msgId}"]`);
       if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.background = 'var(--mention-bg)'; setTimeout(() => { el.style.background = ''; }, 2000); }
+      else {
+        // Message not loaded; try to load older pages then retry
+        if (typeof loadOlderMessages === 'function') {
+          let attempts = 0;
+          const tryAgain = () => {
+            const el2 = document.querySelector(`[data-id="${msgId}"]`);
+            if (el2) { el2.scrollIntoView({ behavior: 'smooth', block: 'center' }); el2.style.background = 'var(--mention-bg)'; setTimeout(() => { el2.style.background = ''; }, 2000); return; }
+            if (attempts < 10) { attempts++; loadOlderMessages(); setTimeout(tryAgain, 400); }
+          };
+          tryAgain();
+        }
+      }
     };
+    window.copyMessageLink = (msgId) => {
+      const url = window.location.origin + window.location.pathname + '#msg-' + encodeURIComponent(msgId);
+      const done = () => { if (typeof appAlert === 'function') appAlert('Message link copied.'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done).catch(() => { prompt('Copy this link:', url); });
+      } else {
+        prompt('Copy this link:', url);
+      }
+    };
+    // Jump to message on load if hash present
+    window.addEventListener('load', () => {
+      const m = window.location.hash.match(/^#msg-(.+)$/);
+      if (m) setTimeout(() => window.jumpToMessage(decodeURIComponent(m[1])), 1200);
+    });
 
     // Call renderPinnedBar when channel changes
     const _origListen = (typeof listen === 'function') ? listen : null;

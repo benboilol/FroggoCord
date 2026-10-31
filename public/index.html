@@ -71,6 +71,21 @@
         <label class="field-label">Members &amp; Roles</label>
         <div id="ss-members"></div>
         </div>
+        <div id="ss-audit-section">
+        <label class="field-label">Audit Log</label>
+        <button type="button" class="btn btn-secondary" onclick="viewAuditLog()" style="margin-bottom:8px;">View Audit Log</button>
+        <div id="ss-audit" style="max-height:160px;overflow:auto;font-size:12px;color:var(--mut);"></div>
+        </div>
+        <div id="ss-webhook-section">
+        <label class="field-label">Webhooks</label>
+        <button type="button" class="btn btn-secondary" onclick="createWebhook()" style="margin-bottom:8px;">Create Webhook</button>
+        <div id="ss-webhooks" style="max-height:160px;overflow:auto;font-size:12px;color:var(--mut);"></div>
+        </div>
+        <div id="ss-appeals-section">
+        <label class="field-label">Ban Appeals</label>
+        <button type="button" class="btn btn-secondary" onclick="viewBanAppeals()" style="margin-bottom:8px;">View Appeals</button>
+        <div id="ss-appeals" style="max-height:160px;overflow:auto;font-size:12px;color:var(--mut);"></div>
+        </div>
         <div class="modal-actions">
         <button id="ss-delete-btn" class="btn btn-danger" onclick="deleteServer()" style="display:none;margin-right:auto;">Delete Server</button>
         <button class="btn btn-secondary" onclick="closeServerSettings()">Cancel</button>
@@ -177,6 +192,7 @@
         <label class="field-label">Avatar</label>
         <input id="sa-avatar-file" type="file" accept="image/*" style="width:100%;margin:4px 0 8px;color:var(--txt);">
         <div id="sa-avatar-preview" style="margin:8px 0;width:80px;height:80px;border-radius:50%;background:var(--bg-t);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--accent-contrast);">U</div>
+        <button type="button" class="btn btn-secondary" onclick="downloadMyData()" style="margin-top:8px;">Download my data</button>
         </section>
         <section id="settings-notifications-panel" class="settings-panel-section" role="tabpanel" aria-labelledby="settings-notifications-tab">
         <p class="settings-description">Choose how and when you're notified.</p>
@@ -422,6 +438,7 @@
       <div id="search-results" style="max-height:160px;overflow:auto;"></div>
     </div>
     <div class="msgs" id="message-container"></div>
+    <div id="new-messages-pill" style="display:none; position:absolute; bottom:90px; left:50%; transform:translateX(-50%); background:var(--bl); color:var(--accent-contrast); padding:6px 14px; border-radius:16px; cursor:pointer; font-size:13px; font-weight:600; z-index:10; box-shadow:0 4px 12px rgba(0,0,0,.3);">New messages ↓</div>
     <div id="reply-preview">
         <div class="reply-bar">
         <span>Replying to <span id="reply-user" style="font-weight:600;color:var(--bl);"></span></span>

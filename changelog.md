@@ -126,3 +126,4 @@
  - 1da20-2026.10.31-11.40.00-0700: Added moderation actions (kick, ban, unban, revoke invite) for owners and admins.
  - 1da20-2026.10.31-11.45.00-0700: Fixed GIF scroll restart flicker, message send lag, theme switching errors, DM icon, asset paths, and stray BOM.
  - 1da20-2026.10.31-11.50.00-0700: Moved invite codes to separate collection for security. Locked down server ownership in Firestore rules. Deployed hosting and rules.
+ - 20a6d-2026.10.31-15.00.00-0700: Added Discord/Yapper-parity features: unread "New messages" divider, new-messages pill, per-channel scroll memory, copy-message-link with jump-to-message chips, recent emojis in reaction picker, confirm-before-logout, download-my-data export, audit log for moderation actions, webhook creation/posting, ban appeals, banned-list rendering for object ban records. Verified node --check for all scripts.

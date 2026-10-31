@@ -341,8 +341,18 @@ async function joinServer(codeParam) {
     switchServer(s.id);
     return;
   }
-  if (Array.isArray(data.banned) && data.banned.includes(user)) {
+  if (Array.isArray(data.banned) && data.banned.some(b => (typeof b === 'string' ? b === user : (b && b.user === user)))) {
     appAlert('You are banned from this server.');
+    const appeal = await appConfirm('Would you like to submit a ban appeal?');
+    if (appeal) {
+      const reason = await appPrompt('Appeal reason:');
+      if (reason) {
+        try {
+          await addDoc(collection(db, 'banAppeals'), { serverId: s.id, user, reason, status: 'pending', timestamp: serverTimestamp() });
+          appAlert('Your appeal has been submitted.');
+        } catch (e) { appAlert('Failed to submit appeal.'); }
+      }
+    }
     return;
   }
 
@@ -389,6 +399,20 @@ function getServerById(id) {
   return servers.find(s => s.id === id) || null;
 }
 
+async function logAudit(serverId, action, target, details) {
+  try {
+    await addDoc(collection(db, 'auditLog'), {
+      serverId: serverId || null,
+      actor: user,
+      action: action,
+      target: target || null,
+      details: details || '',
+      timestamp: serverTimestamp()
+    });
+  } catch (e) { console.error('audit log failed', e); }
+}
+window.logAudit = logAudit;
+
 function canManageServer(server) {
   if (!server || !user) return false;
   const { isOwner, isAdmin } = getServerRole(server);
@@ -404,6 +428,7 @@ async function deleteChannel(sid, cname) {
   if (!(await appConfirm('Delete #' + cname + '? Messages in this channel will no longer be accessible.'))) return;
   const channels = (s.channels || []).filter(c => c.name !== cname);
   await updateDoc(doc(db, 'servers', sid), { channels });
+  logAudit(sid, 'channel.delete', cname, 'Channel deleted');
   await loadServers();
   if (currentServer === sid) switchServer(sid);
 }
@@ -576,7 +601,11 @@ function renderMembersList(s) {
   // Show banned users
   const banned = Array.isArray(s.banned) ? s.banned : [];
   if (banned.length && (s.owner === user || (s.admins || []).includes(user))) {
-    el.innerHTML += '<div style="margin-top:8px;font-size:11px;color:var(--mut);">Banned:</div>' + banned.map(b => `<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;font-size:12px;color:var(--mut);"><span>${escHtml(b)}</span><button onclick="unbanMember('${escHtml(b)}')" style="font-size:10px;padding:2px 6px;border:none;border-radius:4px;background:var(--bl);color:var(--accent-contrast);cursor:pointer;">Unban</button></div>`).join('');
+    el.innerHTML += '<div style="margin-top:8px;font-size:11px;color:var(--mut);">Banned:</div>' + banned.map(b => {
+      const name = (typeof b === 'string') ? b : (b && b.user) || '';
+      const reason = (typeof b === 'string') ? '' : (b && b.reason) || '';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;font-size:12px;color:var(--mut);"><span>${escHtml(name)}${reason ? ' \u2014 ' + escHtml(reason) : ''}</span><button onclick="unbanMember('${escHtml(name)}')" style="font-size:10px;padding:2px 6px;border:none;border-radius:4px;background:var(--bl);color:var(--accent-contrast);cursor:pointer;">Unban</button></div>`;
+    }).join('');
   }
 }
 
@@ -654,6 +683,7 @@ async function deleteServer() {
   if (!(await appConfirm('Delete server "' + s.name + '"? This cannot be undone.'))) return;
 
   await window.deleteServerMessages(s);
+  logAudit(ctxServerId, 'server.delete', s.name, 'Server deleted');
   await deleteDoc(doc(db, 'servers', ctxServerId));
   if (currentServer === ctxServerId) { currentServer = null; chan = null; mode = 'channels'; dmWith = null; }
   await loadServers();
@@ -670,6 +700,84 @@ async function deleteServer() {
 }
 
 window.deleteServer = deleteServer;
+window.createWebhook = async () => {
+  const sid = ctxServerId || currentServer;
+  const s = getServerById(sid);
+  if (!s) { appAlert('No server selected.'); return; }
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner && !isAdmin) { appAlert('No permission.'); return; }
+  const name = await appPrompt('Webhook name:', 'Webhook');
+  if (name === null) return;
+  const channels = (s.channels || []).map(c => c.name);
+  const cname = await appPrompt('Channel name (one of: ' + channels.join(', ') + '):', channels[0] || 'general');
+  if (!cname || !channels.includes(cname)) { appAlert('Invalid channel.'); return; }
+  const token = 'wh_' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  try {
+    await addDoc(collection(db, 'webhooks'), { serverId: sid, channel: cname, name: name || 'Webhook', token, creator: user, createdAt: serverTimestamp() });
+    appAlert('Webhook created. Token: ' + token + '\\nSave this token; it will not be shown again.');
+    viewWebhooks();
+  } catch (e) { console.error(e); appAlert('Failed to create webhook.'); }
+};
+window.viewBanAppeals = async () => {
+  const sid = ctxServerId || currentServer;
+  const el = document.getElementById('ss-appeals');
+  if (!el) return;
+  if (!sid) { el.textContent = 'No server selected.'; return; }
+  try {
+    const snap = await getDocs(query(collection(db, 'banAppeals'), where('serverId', '==', sid)));
+    const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!rows.length) { el.textContent = 'No appeals.'; return; }
+    el.innerHTML = rows.map(a => '<div style="padding:4px 0;border-bottom:1px solid var(--border);"><b>' + escHtml(a.user) + '</b>: ' + escHtml(a.reason || '') + '<div style="font-size:10px;color:var(--mut);">' + (a.status || 'pending') + '</div>' +
+      (a.status !== 'resolved' ? '<button type="button" class="btn btn-secondary" style="font-size:10px;padding:2px 6px;margin-top:4px;" onclick="resolveBanAppeal(\'' + a.id + '\')">Mark Resolved</button>' : '') +
+      '</div>').join('');
+  } catch (e) { el.textContent = 'Failed to load appeals.'; }
+};
+window.resolveBanAppeal = async (id) => {
+  try { await updateDoc(doc(db, 'banAppeals', id), { status: 'resolved' }); viewBanAppeals(); } catch (e) { appAlert('Failed.'); }
+};
+
+window.viewWebhooks = async () => {
+  const sid = ctxServerId || currentServer;
+  const el = document.getElementById('ss-webhooks');
+  if (!el) return;
+  if (!sid) { el.textContent = 'No server selected.'; return; }
+  try {
+    const snap = await getDocs(query(collection(db, 'webhooks'), where('serverId', '==', sid)));
+    const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!rows.length) { el.textContent = 'No webhooks yet.'; return; }
+    el.innerHTML = rows.map(w => '<div style="padding:4px 0;border-bottom:1px solid var(--border);"><b>' + escHtml(w.name) + '</b> \u2192 #' + escHtml(w.channel) + '<div style="font-size:10px;color:var(--mut);word-break:break-all;">token: ' + escHtml(w.token) + '</div><button type="button" class="btn btn-secondary" style="font-size:10px;padding:2px 6px;margin-top:4px;" onclick="deleteWebhook(\'' + w.id + '\')">Delete</button></div>').join('');
+  } catch (e) { el.textContent = 'Failed to load webhooks.'; }
+};
+window.deleteWebhook = async (id) => {
+  try { await deleteDoc(doc(db, 'webhooks', id)); viewWebhooks(); } catch (e) { appAlert('Failed to delete webhook.'); }
+};
+window.postWebhookMessage = async (token, text) => {
+  try {
+    const snap = await getDocs(query(collection(db, 'webhooks'), where('token', '==', token)));
+    if (snap.empty) { return false; }
+    const w = snap.docs[0].data();
+    const channel = 'srv_' + w.serverId + '_' + w.channel;
+    await addDoc(collection(db, 'messages'), { text: text || '', user: w.name, uid: null, channel, pfp: '', timestamp: serverTimestamp(), webhook: true, webhookToken: token });
+    return true;
+  } catch (e) { console.error(e); return false; }
+};
+window.viewWebhooks();
+
+window.viewAuditLog = async () => {
+  const sid = ctxServerId || currentServer;
+  const el = document.getElementById('ss-audit');
+  if (!el) return;
+  if (!sid) { el.textContent = 'No server selected.'; return; }
+  try {
+    const snap = await getDocs(query(collection(db, 'auditLog'), where('serverId', '==', sid)));
+    const rows = snap.docs.map(d => d.data()).sort((a,b) => (b.timestamp?.toMillis?.()||0) - (a.timestamp?.toMillis?.()||0)).slice(0, 50);
+    if (!rows.length) { el.textContent = 'No audit entries yet.'; return; }
+    el.innerHTML = rows.map(r => {
+      const t = r.timestamp && r.timestamp.toDate ? r.timestamp.toDate().toLocaleString() : '';
+      return '<div style="padding:4px 0;border-bottom:1px solid var(--border);"><b>' + escHtml(r.actor || '') + '</b> ' + escHtml(r.action || '') + (r.target ? ' \u2192 ' + escHtml(r.target) : '') + (r.details ? ' \u2014 ' + escHtml(r.details) : '') + '<div style="font-size:10px;color:var(--mut);">' + escHtml(t) + '</div></div>';
+    }).join('');
+  } catch (e) { el.textContent = 'Failed to load audit log.'; console.error(e); }
+};
 async function kickMember(member) {
   const s = getServerById(ctxServerId);
   if (!s) return;
@@ -680,6 +788,7 @@ async function kickMember(member) {
   const members = (s.members || []).filter(m => m !== member);
   const memberUids = (s.memberUids || []).filter((_, i) => (s.members || [])[i] !== member);
   await updateDoc(doc(db, 'servers', ctxServerId), { members, memberUids });
+  logAudit(ctxServerId, 'member.kick', member, 'Kicked from server');
   await loadServers();
   if (currentServer === ctxServerId) switchServer(ctxServerId);
   appAlert(member + ' has been kicked.');
@@ -698,6 +807,7 @@ async function banMember(member) {
   const memberUids = (s.memberUids || []).filter((_, i) => (s.members || [])[i] !== member);
   const banned = Array.isArray(s.banned) ? [...s.banned, { user: member, reason: banReason || 'No reason provided', bannedAt: serverTimestamp() }] : [{ user: member, reason: banReason || 'No reason provided', bannedAt: serverTimestamp() }];
   await updateDoc(doc(db, 'servers', ctxServerId), { members, memberUids, banned });
+  logAudit(ctxServerId, 'member.ban', member, 'Reason: ' + (banReason || 'No reason provided'));
   await loadServers();
   if (currentServer === ctxServerId) switchServer(ctxServerId);
   appAlert(member + ' has been banned.');
@@ -708,7 +818,7 @@ async function unbanMember(member) {
   if (!s) return;
   const { isOwner, isAdmin } = getServerRole(s);
   if (!isOwner && !isAdmin) { appAlert('No permission.'); return; }
-  const banned = (s.banned || []).filter(m => m !== member);
+  const banned = (s.banned || []).filter(m => (typeof m === 'string' ? m !== member : (m && m.user !== member)));
   await updateDoc(doc(db, 'servers', ctxServerId), { banned });
   await loadServers();
   appAlert(member + ' has been unbanned.');
