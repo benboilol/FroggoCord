@@ -374,7 +374,81 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
      }
      function getLastRead(c) { return lastRead[c] || 0; }
 
-    document.getElementById('message-container').addEventListener('click', (e) => {
+    // Right-click context menu for messages
+const ctxMenu = document.createElement('div');
+ctxMenu.id = 'msg-ctx-menu';
+ctxMenu.style.cssText = 'position:fixed;z-index:9999;display:none;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:4px 0;min-width:160px;box-shadow:0 4px 12px rgba(0,0,0,.3);';
+ctxMenu.innerHTML = `
+<div data-action="reply" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--txt);">Reply</div>
+<div data-action="quote" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--txt);">Quote</div>
+<div data-action="thread" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--txt);">Start Thread</div>
+<div style="height:1px;background:var(--border);margin:4px 0;"></div>
+<div data-action="edit" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--bl);">Edit</div>
+<div data-action="delete" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--danger);">Delete</div>
+<div style="height:1px;background:var(--border);margin:4px 0;"></div>
+<div data-action="pin" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">Pin</div>
+<div data-action="copylink" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">Copy Message Link</div>
+<div data-action="bookmark" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">Bookmark</div>
+<div data-action="report" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">Report</div>
+`;
+document.body.appendChild(ctxMenu);
+
+let ctxMsgId = null;
+document.addEventListener('contextmenu', (e) => {
+  const msg = e.target.closest('.msg');
+  if (!msg) return;
+  e.preventDefault();
+  ctxMsgId = msg.dataset.id || msg.dataset.msgid;
+  if (!ctxMsgId) return;
+  ctxMenu.style.left = e.clientX + 'px';
+  ctxMenu.style.top = e.clientY + 'px';
+  ctxMenu.style.display = 'block';
+  // Hide edit/delete for others' messages
+  const isAuthor = msg.querySelector('.msg-author')?.textContent === user;
+  const editBtn = ctxMenu.querySelector('[data-action="edit"]');
+  const delBtn = ctxMenu.querySelector('[data-action="delete"]');
+  if (editBtn) editBtn.style.display = isAuthor ? 'block' : 'none';
+  if (delBtn) delBtn.style.display = isAuthor ? 'block' : 'none';
+});
+
+document.addEventListener('click', (e) => {
+  if (!ctxMenu.contains(e.target) && !e.target.closest('.msg')) {
+    ctxMenu.style.display = 'none';
+  }
+});
+
+ctxMenu.addEventListener('click', (e) => {
+  const act = e.target.dataset.action;
+  if (!act || !ctxMsgId) return;
+  ctxMenu.style.display = 'none';
+  if (act === 'reply') {
+    const msg = document.querySelector(`[data-id="${ctxMsgId}"]`);
+    const body = msg ? msg.querySelector('.msg-bubble') : null;
+    if (typeof window.setReply === 'function') window.setReply(ctxMsgId, msg?.querySelector('.msg-author')?.textContent || '', body ? body.textContent : '');
+  } else if (act === 'quote') {
+    if (typeof window.quoteMessage === 'function') window.quoteMessage(ctxMsgId);
+  } else if (act === 'thread') {
+    if (typeof window.createThread === 'function') window.createThread(ctxMsgId);
+  } else if (act === 'edit') {
+    const msg = document.querySelector(`[data-id="${ctxMsgId}"]`);
+    if (typeof window.editMsg === 'function') window.editMsg(ctxMsgId, msg?.dataset.text || '');
+  } else if (act === 'delete') {
+    if (typeof window.deleteMsg === 'function') window.deleteMsg(ctxMsgId);
+  } else if (act === 'pin') {
+    if (typeof window.pinMessage === 'function') window.pinMessage(ctxMsgId);
+  } else if (act === 'copylink') {
+    if (typeof window.copyMessageLink === 'function') window.copyMessageLink(ctxMsgId);
+  } else if (act === 'bookmark') {
+    if (typeof window.toggleBookmark === 'function') {
+      const added = window.toggleBookmark(ctxMsgId);
+      if (typeof appAlert === 'function') appAlert(added ? 'Bookmarked.' : 'Bookmark removed.');
+    }
+  } else if (act === 'report') {
+    if (typeof window.reportMessage === 'function') window.reportMessage(ctxMsgId);
+  }
+});
+
+document.getElementById('message-container').addEventListener('click', (e) => {
       const el = e.target.closest('[data-action]'); if (!el) return;
       const act = el.dataset.action, id = el.dataset.id || el.dataset.msgid;
       if (act === 'edit') window.editMsg(id, el.dataset.text || '');
