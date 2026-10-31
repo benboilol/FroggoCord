@@ -656,6 +656,11 @@ window.db = db;
     if (autoThemeCb) autoThemeCb.addEventListener('change', (e) => { settings.accessibility.autoTheme = settings.accessibility.autoTheme || Object.assign({}, SETTINGS_DEFAULTS.accessibility.autoTheme); settings.accessibility.autoTheme.enabled = e.target.checked; saveSettings(); applyAutoTheme(); });
     ['sa-timezone','sa-day-theme','sa-night-theme','sa-day-start','sa-night-start'].forEach(id => { const el = document.getElementById(id); if (!el) return; el.addEventListener('change', () => { const at = settings.accessibility.autoTheme = settings.accessibility.autoTheme || Object.assign({}, SETTINGS_DEFAULTS.accessibility.autoTheme); at.timezone = document.getElementById('sa-timezone').value; at.dayTheme = document.getElementById('sa-day-theme').value; at.nightTheme = document.getElementById('sa-night-theme').value; at.dayStart = parseInt(document.getElementById('sa-day-start').value, 10); at.nightStart = parseInt(document.getElementById('sa-night-start').value, 10); saveSettings(); applyAutoTheme(); }); });
     document.getElementById('sa-status').addEventListener('change', (e) => { settings.status = e.target.value; applySettings(); });
+    // Mark profile as customized on any profile change
+    ['sp-profile-color','sp-profile-grad-from','sp-profile-grad-to','sp-profile-grad-dir','sp-profile-bg','sp-profile-bg-color','sp-profile-accent','sp-profile-decoration','sp-profile-layout','sp-app-bg','sp-custom-status','sp-pronouns','sp-bio','sp-profile-text-color'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('change', () => { if (typeof markProfileCustomized === 'function') markProfileCustomized(); });
+    });
     // No accessibility theme toggles - themes are selected from the Theme tab
     const bannerFile = document.getElementById('sp-profile-banner-file');
     if (bannerFile) bannerFile.addEventListener('change', async (e) => {
@@ -765,6 +770,63 @@ window.db = db;
         if (count >= 100) await awardBadge('active-chatter');
       } catch (e) {}
     }
+
+
+
+    // ---------- Additional achievement badges ----------
+    async function checkAchievementBadges() {
+      if (!user) return;
+      try {
+        // Server creator
+        if (typeof servers !== 'undefined' && servers.some(srv => srv.owner === user)) {
+          await awardBadge('server-creator');
+        }
+        // Popular: 10+ friends
+        try {
+          const snap = await getDocs(query(collection(db, 'friends'), where('from', '==', user)));
+          const snap2 = await getDocs(query(collection(db, 'friends'), where('to', '==', user)));
+          const all = [...snap.docs, ...snap2.docs];
+          const accepted = all.filter(d => d.data().status === 'accepted');
+          const friends = new Set();
+          accepted.forEach(d => { friends.add(d.data().from); friends.add(d.data().to); });
+          friends.delete(user);
+          if (friends.size >= 10) await awardBadge('popular');
+          if (friends.size >= 1) await awardBadge('first-friend');
+        } catch (e) {}
+        // Message count badges
+        const msgCount = parseInt(localStorage.getItem('froggocord-msg-count') || '0', 10);
+        if (msgCount >= 10) await awardBadge('chatter');
+        if (msgCount >= 50) await awardBadge('active-chatter');
+        if (msgCount >= 100) await awardBadge('super-chatter');
+        // Theme explorer: changed theme at least once
+        const themeChanges = parseInt(localStorage.getItem('froggocord-theme-changes') || '0', 10);
+        if (themeChanges >= 1) await awardBadge('theme-explorer');
+        // Profile customizer: customized profile
+        const profileCustomized = localStorage.getItem('froggocord-profile-customized');
+        if (profileCustomized === 'true') await awardBadge('profile-customizer');
+      } catch (e) { console.error('Achievement check failed', e); }
+    }
+    window.checkAchievementBadges = checkAchievementBadges;
+
+    // Track theme changes
+    const _origApplyTheme = (typeof applyTheme === 'function') ? applyTheme : null;
+    if (_origApplyTheme) {
+      const wrappedApplyTheme = function(theme, persist) {
+        try {
+          const count = parseInt(localStorage.getItem('froggocord-theme-changes') || '0', 10) + 1;
+          localStorage.setItem('froggocord-theme-changes', String(count));
+        } catch (e) {}
+        return _origApplyTheme(theme, persist);
+      };
+      // Replace applyTheme reference
+      window.applyTheme = wrappedApplyTheme;
+    }
+
+    // Track profile customization
+    function markProfileCustomized() {
+      try { localStorage.setItem('froggocord-profile-customized', 'true'); } catch (e) {}
+    }
+    window.markProfileCustomized = markProfileCustomized;
 
     // Pending message tracking for sending/sent/failed states
     let pendingMessages = [];

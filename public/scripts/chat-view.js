@@ -852,6 +852,7 @@ onAuthStateChanged(window.auth, async (u) => {
     renderUserList();
     updateHeader();
     listen();
+    if (typeof checkAchievementBadges === 'function') checkAchievementBadges().catch(() => {});
 
     loadServers().then(() => {
       const params = new URLSearchParams(window.location.search);
