@@ -257,6 +257,7 @@ async function createServerFromModal() {
     adminUids: [],
     banned: [],
     welcomeMessage: '',
+    public: false,
     channels: [{ name: 'general', id: 'general' }],
     createdAt: serverTimestamp()
   });
@@ -310,6 +311,7 @@ async function createServer() {
     adminUids: [],
     banned: [],
     welcomeMessage: '',
+    public: false,
     channels: [{ name: 'general', id: 'general' }],
     createdAt: serverTimestamp()
   });
@@ -540,6 +542,8 @@ function openServerSettings(sid) {
   document.getElementById('ss-icon-url').value = s.icon || '';
   document.getElementById('ss-banner-url').value = s.banner || '';
   document.getElementById('ss-accent').value = s.accent || '#57f287';
+  const ssPublic = document.getElementById('ss-public');
+  if (ssPublic) ssPublic.checked = !!s.public;
 
   const ssEmojis = document.getElementById('ss-emojis');
   if (ssEmojis) ssEmojis.value = (s.emojis || []).map(e => e.name + ':' + e.url).join('\n');
@@ -852,7 +856,18 @@ window.toggleAdmin = toggleAdmin;
 window.kickMember = kickMember;
 window.banMember = banMember;
 window.unbanMember = unbanMember;
+async function togglePublicServer() {
+  const s = getServerById(ctxServerId);
+  if (!s) return;
+  if (s.owner !== user) { appAlert('Only the owner can change server visibility.'); return; }
+  const isPublic = !s.public;
+  await updateDoc(doc(db, 'servers', ctxServerId), { public: isPublic });
+  await loadServers();
+  appAlert(isPublic ? 'Server is now public and discoverable.' : 'Server is now private.');
+}
+
 window.transferOwnership = transferOwnership;
+window.togglePublicServer = togglePublicServer;
 
 function closeServerSettings() {
   const m = document.getElementById('server-settings-modal');
@@ -881,6 +896,7 @@ async function saveServerSettings() {
   let icon = document.getElementById('ss-icon-url').value.trim();
   let banner = document.getElementById('ss-banner-url').value.trim();
   const accent = document.getElementById('ss-accent').value.trim() || '#57f287';
+  const isPublic = document.getElementById('ss-public').checked;
 
   const iconFile = document.getElementById('ss-icon-file').files[0];
   const bannerFile = document.getElementById('ss-banner-file').files[0];
@@ -908,7 +924,8 @@ async function saveServerSettings() {
     emojis,
     stickers,
     rules,
-    welcomeMessage
+    welcomeMessage,
+    public: isPublic
   });
   const stickersRaw = (document.getElementById('ss-stickers').value || '').trim();
   const stickers = stickersRaw.split('\n').map(line => {
@@ -1354,3 +1371,41 @@ window.sendInvites = async () => {
 window.openInviteModal = openInviteModal;
 window.closeInviteModal = closeInviteModal;
 window.sendInvites = sendInvites;
+
+async function openDiscoverModal() {
+  const modal = document.getElementById('discover-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => {
+    modal.classList.add('visible');
+    modal.querySelector('.modal-card').classList.add('visible');
+  });
+  const list = document.getElementById('discover-list');
+  if (list) list.innerHTML = '<div style="color:var(--mut);padding:12px;">Loading...</div>';
+  try {
+    const snap = await getDocs(query(collection(db, 'servers'), where('public', '==', true)));
+    const servers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!servers.length) { if (list) list.innerHTML = '<div style="color:var(--mut);padding:12px;">No public servers yet.</div>'; return; }
+    if (list) list.innerHTML = servers.map(s => `
+      <div style="padding:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+        <div style="width:40px;height:40px;border-radius:8px;background:var(--bg-t);background-image:url('${escHtml(s.icon || '')}');background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--bright);">${s.icon ? '' : escHtml(s.name)[0].toUpperCase()}</div>
+        <div style="flex:1;">
+          <div style="font-weight:600;color:var(--bright);">${escHtml(s.name)}</div>
+          <div style="font-size:11px;color:var(--mut);">${(s.members || []).length} members</div>
+        </div>
+        <button class="btn btn-primary" style="font-size:11px;padding:4px 8px;" onclick="joinServer('${escHtml(s.inviteCode)}'); closeDiscoverModal();">Join</button>
+      </div>
+    `).join('');
+  } catch (e) { if (list) list.innerHTML = '<div style="color:var(--danger);padding:12px;">Failed to load servers.</div>'; }
+}
+
+function closeDiscoverModal() {
+  const modal = document.getElementById('discover-modal');
+  if (!modal) return;
+  modal.classList.remove('visible');
+  modal.querySelector('.modal-card').classList.remove('visible');
+  setTimeout(() => { modal.style.display = 'none'; }, 180);
+}
+
+window.openDiscoverModal = openDiscoverModal;
+window.closeDiscoverModal = closeDiscoverModal;

@@ -62,6 +62,10 @@
         <input id="ss-chat-bg" class="inp2" placeholder="https://...">
         <label class="field-label" for="ss-accent">Server accent color</label>
         <input type="color" id="ss-accent" value="#57f287" style="width:60px;height:36px;border:none;background:none;cursor:pointer;">
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+        <input type="checkbox" id="ss-public" style="margin:0;">
+        <span>Make server discoverable (public)</span>
+        </label>
         <div id="ss-preview"></div>
         <div id="ss-rules-display" style="margin-top:8px;padding:8px;background:var(--bg-t);border-radius:6px;font-size:12px;color:var(--mut);"></div>
         <div id="ss-emojis-section">
@@ -380,6 +384,16 @@
     </div>
     </div>
 
+    <div id="discover-modal" class="modal">
+    <div class="modal-card">
+        <h3>Discover Servers</h3>
+        <div id="discover-list" style="max-height:400px;overflow-y:auto;"></div>
+        <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeDiscoverModal()">Close</button>
+        </div>
+    </div>
+    </div>
+
     <div id="auth-overlay">
     <div class="auth-card">
         <h2 id="auth-title">Welcome Back!</h2>
@@ -399,6 +413,7 @@
     <div id="mobile-nav-backdrop" aria-hidden="true"></div>
     <div class="sv" id="server-bar">
     <div class="si" id="dm-btn" onclick="toggleDMView()" title="Direct Messages" style="font-size:22px;"><img src="/froggocord_logo.svg" alt="Direct Messages" style="width: 22px; height: 22px;"></div>
+    <div class="si" id="discover-btn" onclick="openDiscoverModal()" title="Discover Servers" style="font-size:18px;background:var(--bg-t);display:flex;align-items:center;justify-content:center;cursor:pointer;">🔍</div>
     <div class="rail-divider"></div>
     <div id="server-list"></div>
     <div class="si add" id="add-server-btn" onclick="openServerModal()" title="Add a Server">+</div>
