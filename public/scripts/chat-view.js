@@ -731,6 +731,16 @@ document.getElementById('auth-submit-btn').addEventListener('click', () => {
   else { signInWithEmailAndPassword(window.auth, u + "@friends.com", p).catch(err => appAlert(err.message)); }
 });
 
+document.getElementById('auth-password-toggle').addEventListener('click', () => {
+  const passwordInput = document.getElementById('auth-password');
+  const toggle = document.getElementById('auth-password-toggle');
+  const isVisible = passwordInput.type === 'text';
+  passwordInput.type = isVisible ? 'password' : 'text';
+  toggle.textContent = isVisible ? 'Show' : 'Hide';
+  toggle.setAttribute('aria-label', isVisible ? 'Show password' : 'Hide password');
+  toggle.setAttribute('aria-pressed', String(!isVisible));
+});
+
 document.getElementById('auth-switch-btn').addEventListener('click', () => {
   isSignUpMode = !isSignUpMode;
   document.getElementById('auth-title').textContent = isSignUpMode ? 'Create Account' : 'Welcome Back';

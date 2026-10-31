@@ -239,6 +239,11 @@ textarea.inp2 { resize: vertical; }
 .auth-label { display: block; text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--mut); margin-bottom: 8px; letter-spacing: .02em; }
 .auth-input { width: 100%; padding: 10px; margin-bottom: 16px; border-radius: 4px; border: none; background: var(--code-bg); color: var(--txt); box-sizing: border-box; outline: none; font-size: 16px; }
 .auth-input:focus { box-shadow: 0 0 0 2px var(--bl); }
+.auth-password-wrap { position: relative; }
+.auth-password-wrap .auth-input { padding-right: 64px; }
+.auth-password-toggle { position: absolute; top: 0; right: 0; height: 38px; padding: 0 10px; border: none; background: transparent; color: var(--link); font-size: 13px; font-weight: 600; cursor: pointer; }
+.auth-password-toggle:hover { text-decoration: underline; }
+.auth-password-toggle:focus-visible { outline: 2px solid var(--bl); outline-offset: -2px; border-radius: 4px; }
 #auth-submit-btn { width: 100%; padding: 12px; border-radius: 4px; border: none; background: var(--bl); color: var(--accent-contrast); font-weight: 600; font-size: 16px; cursor: pointer; }
 #auth-submit-btn:hover { filter: brightness(1.08); }
 #auth-switch-prompt { color: var(--mut); font-size: 14px; }
