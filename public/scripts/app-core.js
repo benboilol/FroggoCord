@@ -850,6 +850,24 @@ window.db = db;
       const t = input.value.trim();
       if (!t && pendingFiles.length === 0) return;
       if (!user) return;
+      // Slow mode check
+      if (chan && chan.startsWith('srv_')) {
+        const parts = chan.split('_');
+        const sid = parts[1];
+        const cname = parts.slice(2).join('_');
+        const s = (typeof servers !== 'undefined') ? servers.find(x => x.id === sid) : null;
+        const ch = s && s.channels ? s.channels.find(c => c.name === cname) : null;
+        if (ch && ch.slowMode > 0) {
+          const lastSend = parseInt(localStorage.getItem('froggocord-lastsend-' + chan) || '0', 10);
+          const elapsed = Date.now() - lastSend;
+          if (elapsed < ch.slowMode * 1000) {
+            const remaining = Math.ceil((ch.slowMode * 1000 - elapsed) / 1000);
+            appAlert('Slow mode: wait ' + remaining + 's before sending again.');
+            return;
+          }
+          localStorage.setItem('froggocord-lastsend-' + chan, String(Date.now()));
+        }
+      }
 
       const clientId = 'pending_' + Date.now() + '_' + Math.random().toString(36).slice(2);
       const pending = {
@@ -1680,4 +1698,23 @@ window.toggleGifBlock = (u) => {
       const readTime = getChannelReadTime(channel);
       const msgTime = msg.timestamp && msg.timestamp.toMillis ? msg.timestamp.toMillis() : (msg.timestamp || 0);
       return msgTime <= readTime;
+    };
+
+    // ---------- Text-to-Speech ----------
+    let ttsEnabled = false;
+    try { ttsEnabled = localStorage.getItem('froggocord-tts') === 'true'; } catch (e) {}
+    window.toggleTTS = () => {
+      ttsEnabled = !ttsEnabled;
+      try { localStorage.setItem('froggocord-tts', String(ttsEnabled)); } catch (e) {}
+      appAlert(ttsEnabled ? 'Text-to-speech enabled.' : 'Text-to-speech disabled.');
+    };
+    window.speakMessage = (text) => {
+      if (!ttsEnabled) return;
+      if (!('speechSynthesis' in window)) return;
+      try {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        speechSynthesis.speak(utterance);
+      } catch (e) {}
     };

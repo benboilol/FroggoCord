@@ -549,6 +549,7 @@ function openServerSettings(sid) {
   if (ssEmojis) ssEmojis.value = (s.emojis || []).map(e => e.name + ':' + e.url).join('\n');
   const ssStickers = document.getElementById('ss-stickers');
   if (ssStickers) ssStickers.value = (s.stickers || []).map(e => e.name + ':' + e.url).join('\n');
+  if (typeof viewEvents === 'function') viewEvents();
 
   document.getElementById('ss-preview').innerHTML = s.banner
     ? `<img src="${escHtml(s.banner)}" style="width:100%;height:60px;object-fit:cover;border-radius:6px;">`
@@ -877,6 +878,80 @@ window.viewServerRules = () => {
   }
 };
 
+// ---------- Server Events ----------
+window.createEvent = async () => {
+  const s = getServerById(ctxServerId || currentServer);
+  if (!s) { appAlert('No server selected.'); return; }
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner && !isAdmin) { appAlert('Only owner or admins can create events.'); return; }
+  const name = await appPrompt('Event name:');
+  if (!name) return;
+  const desc = await appPrompt('Event description:');
+  const dateStr = await appPrompt('Event date/time (e.g. 2026-11-01 18:00):');
+  if (!dateStr) return;
+  const eventDate = new Date(dateStr);
+  if (isNaN(eventDate.getTime())) { appAlert('Invalid date.'); return; }
+  try {
+    await addDoc(collection(db, 'events'), {
+      serverId: s.id,
+      name: name.trim(),
+      description: (desc || '').trim(),
+      date: eventDate.toISOString(),
+      creator: user,
+      attendees: [user],
+      timestamp: serverTimestamp()
+    });
+    appAlert('Event created!');
+    viewEvents();
+  } catch (e) { appAlert('Failed to create event.'); }
+};
+
+window.viewEvents = async () => {
+  const s = getServerById(ctxServerId || currentServer);
+  if (!s) return;
+  const container = document.getElementById('ss-events');
+  if (!container) return;
+  try {
+    const snap = await getDocs(query(collection(db, 'events'), where('serverId', '==', s.id)));
+    const events = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => new Date(a.date) - new Date(b.date));
+    if (!events.length) { container.innerHTML = '<div style="color:var(--mut);">No events.</div>'; return; }
+    container.innerHTML = events.map(e => {
+      const date = new Date(e.date);
+      const dateStr = date.toLocaleString();
+      const attending = (e.attendees || []).includes(user);
+      return `<div style="padding:6px;border-bottom:1px solid var(--border);">
+        <div style="font-weight:600;color:var(--bright);">${escHtml(e.name)}</div>
+        <div style="font-size:11px;color:var(--mut);">${escHtml(dateStr)} · ${e.attendees.length} attending</div>
+        ${e.description ? '<div style="font-size:11px;color:var(--mut);margin-top:2px;">' + escHtml(e.description) + '</div>' : ''}
+        <button class="btn btn-secondary" style="font-size:10px;padding:2px 6px;margin-top:4px;" onclick="rsvpEvent('${e.id}', ${attending})">${attending ? 'Leave' : 'RSVP'}</button>
+      </div>`;
+    }).join('');
+  } catch (e) { container.innerHTML = '<div style="color:var(--danger);">Failed to load events.</div>'; }
+};
+
+window.rsvpEvent = async (eventId, isAttending) => {
+  if (!eventId) return;
+  try {
+    const ref = doc(db, 'events', eventId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const data = snap.data();
+    let attendees = data.attendees || [];
+    if (isAttending) {
+      attendees = attendees.filter(a => a !== user);
+    } else {
+      if (!attendees.includes(user)) attendees.push(user);
+    }
+    await updateDoc(ref, { attendees });
+    viewEvents();
+  } catch (e) { appAlert('Failed to RSVP.'); }
+};
+
+// Load events when server settings opens
+const _origOpenSS = window.openServerSettings;
+// We'll hook into openServerSettings via a wrapper
+const _origOpenServerSettings = (typeof openServerSettings === 'function') ? openServerSettings : null;
+
 window.togglePublicServer = togglePublicServer;
 
 function closeServerSettings() {
@@ -1189,8 +1264,10 @@ async function createChannel(sid) {
   if (channels.some(c => c.name === name)) { appAlert('Channel already exists'); return; }
 
   const isPrivate = await appConfirm('Make this channel private?');
+  const isNsfw = await appConfirm('Mark as NSFW (age-restricted)?');
   const category = await appPrompt('Category (leave blank for none):');
-  channels.push({ name, id: name, private: !!isPrivate, category: category || '', topic: '', description: '' });
+  const slowMode = await appPrompt('Slow mode seconds (0 for none):');
+  channels.push({ name, id: name, private: !!isPrivate, nsfw: !!isNsfw, category: category || '', topic: '', description: '', slowMode: parseInt(slowMode || '0', 10) || 0 });
   await updateDoc(doc(db, 'servers', sid), { channels });
   await loadServers();
   switchServerChannel(sid, name);

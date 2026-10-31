@@ -81,6 +81,11 @@
         <label class="field-label">Members &amp; Roles</label>
         <div id="ss-members"></div>
         </div>
+        <div id="ss-events-section">
+        <label class="field-label">Events</label>
+        <button type="button" class="btn btn-secondary" onclick="createEvent()" style="margin-bottom:8px;">Create Event</button>
+        <div id="ss-events" style="max-height:160px;overflow:auto;font-size:12px;color:var(--mut);"></div>
+        </div>
         <div id="ss-audit-section">
         <label class="field-label">Audit Log</label>
         <button type="button" class="btn btn-secondary" onclick="viewAuditLog()" style="margin-bottom:8px;">View Audit Log</button>
@@ -89,6 +94,7 @@
         <div id="ss-webhook-section">
         <label class="field-label">Webhooks</label>
         <button type="button" class="btn btn-secondary" onclick="createWebhook()" style="margin-bottom:8px;">Create Webhook</button>
+        <button type="button" class="btn btn-secondary" onclick="toggleTTS()" style="margin-bottom:8px;margin-left:4px;">Toggle TTS</button>
         <div id="ss-webhooks" style="max-height:160px;overflow:auto;font-size:12px;color:var(--mut);"></div>
         </div>
         <div id="ss-appeals-section">

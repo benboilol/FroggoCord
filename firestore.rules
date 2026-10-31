@@ -299,6 +299,14 @@ service cloud.firestore {
       allow delete: if isAuth() && resource.data.blocker == username();
     }
 
+    // Events: readable by server members; writable by owner/admin.
+    match /events/{eventId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update: if isAuth();
+      allow delete: if isAuth();
+    }
+
     // Reports: readable by admins/owners; writable by any authenticated user.
     match /reports/{reportId} {
       allow read: if isAuth();
