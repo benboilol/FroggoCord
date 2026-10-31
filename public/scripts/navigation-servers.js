@@ -952,6 +952,73 @@ const _origOpenSS = window.openServerSettings;
 // We'll hook into openServerSettings via a wrapper
 const _origOpenServerSettings = (typeof openServerSettings === 'function') ? openServerSettings : null;
 
+// ---------- Server Templates ----------
+window.saveServerTemplate = async () => {
+  const s = getServerById(ctxServerId || currentServer);
+  if (!s) { appAlert('No server selected.'); return; }
+  const { isOwner } = getServerRole(s);
+  if (!isOwner) { appAlert('Only the owner can save templates.'); return; }
+  const template = {
+    name: s.name,
+    description: s.description || '',
+    icon: s.icon || '',
+    banner: s.banner || '',
+    accent: s.accent || '#57f287',
+    channels: (s.channels || []).map(c => ({ name: c.name, private: !!c.private, nsfw: !!c.nsfw, category: c.category || '', topic: c.topic || '', slowMode: c.slowMode || 0 })),
+    emojis: s.emojis || [],
+    stickers: s.stickers || [],
+    rules: s.rules || [],
+    welcomeMessage: s.welcomeMessage || '',
+    savedAt: new Date().toISOString()
+  };
+  try {
+    localStorage.setItem('froggocord-template-' + s.id, JSON.stringify(template));
+    appAlert('Server template saved locally.');
+  } catch (e) { appAlert('Failed to save template.'); }
+};
+
+window.applyServerTemplate = async () => {
+  const s = getServerById(ctxServerId || currentServer);
+  if (!s) { appAlert('No server selected.'); return; }
+  const { isOwner } = getServerRole(s);
+  if (!isOwner) { appAlert('Only the owner can apply templates.'); return; }
+  // Find available templates
+  const templates = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('froggocord-template-')) {
+      try { templates.push({ key, data: JSON.parse(localStorage.getItem(key)) }); } catch (e) {}
+    }
+  }
+  if (!templates.length) { appAlert('No saved templates found.'); return; }
+  // Use the first template (or let user choose via prompt)
+  const choice = await appPrompt('Template name to apply (or leave blank for first):');
+  let template = templates[0].data;
+  if (choice) {
+    const found = templates.find(t => t.data.name.toLowerCase().includes(choice.toLowerCase()));
+    if (found) template = found.data;
+  }
+  if (!template) { appAlert('Template not found.'); return; }
+  const confirm = await appConfirm('Apply template "' + template.name + '" to this server? This will update channels, emojis, stickers, rules, and welcome message.');
+  if (!confirm) return;
+  try {
+    await updateDoc(doc(db, 'servers', s.id), {
+      description: template.description,
+      icon: template.icon,
+      banner: template.banner,
+      accent: template.accent,
+      channels: template.channels,
+      emojis: template.emojis,
+      stickers: template.stickers,
+      rules: template.rules,
+      welcomeMessage: template.welcomeMessage
+    });
+    await loadServers();
+    if (currentServer === s.id) switchServer(s.id);
+    appAlert('Template applied!');
+  } catch (e) { appAlert('Failed to apply template.'); }
+};
+
 window.togglePublicServer = togglePublicServer;
 
 function closeServerSettings() {
