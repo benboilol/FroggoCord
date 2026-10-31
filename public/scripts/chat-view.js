@@ -453,7 +453,27 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
   }
 }
 
-window.refreshMessageTimestamps = () => renderMessagePages();
+    // Render pinned messages bar
+    window.renderPinnedBar = async () => {
+      const bar = document.getElementById('pinned-bar');
+      if (!bar || !chan) { if (bar) bar.style.display = 'none'; return; }
+      try {
+        const snap = await getDocs(query(collection(db, 'pins'), where('channel', '==', chan)));
+        const pins = snap.docs.map(d => d.data());
+        if (!pins.length) { bar.style.display = 'none'; return; }
+        bar.style.display = 'block';
+        bar.innerHTML = '<span style="font-weight:600;margin-right:8px;">📌 Pinned:</span>' + pins.map(p => {
+          const msg = messagePages[0]?.messages.get(p.messageId);
+          const text = msg ? (msg.text || '').slice(0, 50) : 'Message';
+          return '<span style="cursor:pointer;color:var(--bl);margin-right:8px;" onclick="window.jumpToMessage(' + p.messageId + ')">' + escHtml(text) + '</span>';
+        }).join('');
+      } catch (e) { bar.style.display = 'none'; }
+    };
+
+    window.refreshMessageTimestamps = () => {
+      renderMessagePages();
+      renderPinnedBar();
+    };
 
     // Async link preview loader
     window.loadLinkPreviews = async () => {
