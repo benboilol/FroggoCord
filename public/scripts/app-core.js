@@ -1130,6 +1130,22 @@ window.db = db;
           });
         }
       } catch (ex) {}
+      // Handle poll cards
+      const pollMatch = raw.match(/^<poll q="([^"]*)" multi="([^"]*)" opts="([^"]*)"><\/poll>$/i);
+      if (pollMatch) {
+        const q = pollMatch[1];
+        const multi = pollMatch[2] === '1';
+        const opts = pollMatch[3].split('|');
+        const pollId = 'poll_' + Date.now();
+        let html = '<div class="poll-card" style="margin:8px 0;padding:12px;background:var(--panel);border-radius:8px;border:1px solid var(--border);">';
+        html += '<div style="font-weight:600;color:var(--bright);margin-bottom:8px;">' + escHtml(q) + '</div>';
+        opts.forEach((opt, i) => {
+          html += '<div style="display:flex;align-items:center;gap:8px;margin:4px 0;"><button onclick="votePoll(\'' + pollId + '\',' + i + ',' + (multi ? 'true' : 'false') + ')" style="flex:1;padding:6px 10px;background:var(--bg-t);border:1px solid var(--border);border-radius:6px;color:var(--txt);cursor:pointer;text-align:left;font-size:13px;">' + escHtml(opt) + '</button><span id="poll-' + pollId + '-' + i + '" style="font-size:12px;color:var(--mut);min-width:30px;text-align:right;">0</span></div>';
+        });
+        html += '<div style="font-size:11px;color:var(--mut);margin-top:8px;">' + (multi ? 'Multiple choice' : 'Single choice') + '</div>';
+        html += '</div>';
+        return html;
+      }
       let _out = renderMarkdown(raw);
       msgLinks.forEach((id, i) => {
         _out = _out.replace('@@MSGLINK' + i + '@@', '<span class="msg-link-chip" onclick="window.jumpToMessage(\'' + escHtml(id) + '\')" style="display:inline-block;padding:2px 8px;border-radius:10px;background:var(--bg-t);color:var(--bl);cursor:pointer;font-size:12px;border:1px solid var(--hover);">🔗 Jump to message</span>');
@@ -1568,4 +1584,32 @@ window.toggleGifBlock = (u) => {
       const firstUrl = matches[0];
       const data = await fetchLinkPreview(firstUrl);
       return data ? renderLinkPreview(firstUrl, data) : '';
+    };
+
+
+    // ---------- Polls ----------
+    window.createPoll = async () => {
+      const question = await appPrompt('Poll question:');
+      if (!question) return;
+      const optionsStr = await appPrompt('Poll options (comma-separated):');
+      if (!optionsStr) return;
+      const options = optionsStr.split(',').map(o => o.trim()).filter(Boolean);
+      if (options.length < 2) { appAlert('Need at least 2 options.'); return; }
+      const multi = await appConfirm('Allow multiple choices?');
+      const poll = '<poll q="' + escHtml(question) + '" multi="' + (multi ? '1' : '0') + '" opts="' + options.map(o => escHtml(o)).join('|') + '"></poll>';
+      await addDoc(collection(db, "messages"), { text: poll, user, uid: (auth.currentUser && auth.currentUser.uid) || null, channel: chan, pfp, timestamp: serverTimestamp() });
+    };
+
+    window.votePoll = (pollId, optionIdx, multi) => {
+      const key = 'poll_' + pollId + '_' + optionIdx;
+      const voted = localStorage.getItem('poll_voted_' + pollId);
+      if (voted && !multi) {
+        appAlert('You already voted on this poll.');
+        return;
+      }
+      const current = parseInt(localStorage.getItem(key) || '0', 10);
+      localStorage.setItem(key, String(current + 1));
+      localStorage.setItem('poll_voted_' + pollId, '1');
+      const el = document.getElementById('poll-' + pollId + '-' + optionIdx);
+      if (el) el.textContent = current + 1;
     };
