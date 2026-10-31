@@ -1655,6 +1655,22 @@ window.toggleGifBlock = (u) => {
     };
 
 
+    // ---------- Message Bookmarks ----------
+    window.getBookmarks = () => {
+      try { return JSON.parse(localStorage.getItem('froggocord-bookmarks') || '[]'); } catch (e) { return []; }
+    };
+    window.saveBookmarks = (b) => {
+      try { localStorage.setItem('froggocord-bookmarks', JSON.stringify(b)); } catch (e) {}
+    };
+    window.toggleBookmark = (msgId) => {
+      const b = getBookmarks();
+      const idx = b.indexOf(msgId);
+      if (idx >= 0) b.splice(idx, 1); else b.push(msgId);
+      saveBookmarks(b);
+      return idx < 0;
+    };
+    window.isBookmarked = (msgId) => getBookmarks().includes(msgId);
+
     // ---------- New messages pill ----------
     window.showNewMessagesPill = () => {
       const pill = document.getElementById('new-messages-pill');

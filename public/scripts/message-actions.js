@@ -388,6 +388,12 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
       else if (act === 'copylink') {
         if (typeof window.copyMessageLink === 'function') window.copyMessageLink(id);
       }
+      else if (act === 'bookmark') {
+        if (typeof window.toggleBookmark === 'function') {
+          const added = window.toggleBookmark(id);
+          if (typeof appAlert === 'function') appAlert(added ? 'Message bookmarked.' : 'Bookmark removed.');
+        }
+      }
     });
 
 window.showFavoriteGifs = () => {
