@@ -129,6 +129,14 @@ window.openProfile = async (u) => {
     }).join('');
   }
   const actions = document.getElementById('prof-actions');
+  const note = (typeof getUserNote === 'function') ? getUserNote(u) : '';
+  if (note) {
+    const noteDiv = document.createElement('div');
+    noteDiv.style.cssText = 'color:var(--mut);font-size:13px;margin:8px 0;white-space:pre-wrap;';
+    noteDiv.textContent = 'Note: ' + note;
+    const mc = modal.querySelector('.modal-card');
+    if (mc) mc.appendChild(noteDiv);
+  }
   actions.innerHTML = '<div style="color:var(--mut);font-size:12px;">Loading...</div>';
   modal.style.display = 'flex';
   requestAnimationFrame(() => {
@@ -175,6 +183,7 @@ window.openProfile = async (u) => {
       html += btnHtml;
     }
     html += `<button onclick="openDM('${escHtml(u)}'); closeProfile();" style="background:var(--bg-t);color:var(--white);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;">Message</button>`;
+    html += `<button onclick="editUserNote('${escHtml(u)}'); closeProfile();" style="background:var(--bg-t);color:var(--white);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;">Note</button>`;
   } else {
     html += `<div style="color:var(--mut);font-size:12px;">This is you</div>`;
   }

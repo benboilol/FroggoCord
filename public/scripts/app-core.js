@@ -1613,3 +1613,25 @@ window.toggleGifBlock = (u) => {
       const el = document.getElementById('poll-' + pollId + '-' + optionIdx);
       if (el) el.textContent = current + 1;
     };
+
+
+    // ---------- User Notes ----------
+    window.getUserNote = (u) => {
+      try { return localStorage.getItem('froggocord-note-' + u) || ''; } catch (e) { return ''; }
+    };
+    window.setUserNote = (u, note) => {
+      try {
+        if (note && note.trim()) {
+          localStorage.setItem('froggocord-note-' + u, note.trim());
+        } else {
+          localStorage.removeItem('froggocord-note-' + u);
+        }
+      } catch (e) {}
+    };
+    window.editUserNote = async (u) => {
+      const current = getUserNote(u);
+      const note = await appPrompt('Note for ' + u + ':', current);
+      if (note === null) return;
+      setUserNote(u, note);
+      appAlert('Note saved.');
+    };
