@@ -117,6 +117,12 @@ window.openProfile = async (u) => {
     } catch (e) {}
     const dec = (typeof userDecorationMap !== 'undefined') ? userDecorationMap.get(u) : null;
     if (dec) badges.push('<img src="'+escHtml(dec)+'" alt="decoration" style="width:20px;height:20px;border-radius:4px;display:block;">');
+    // Achievement badges from Firestore
+    const achievementBadges = (typeof userBadgesMap !== 'undefined') ? (userBadgesMap.get(u) || []) : [];
+    achievementBadges.forEach(b => {
+      const label = b.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      if (!badges.includes(label)) badges.push(label);
+    });
     badgesEl.innerHTML = badges.map(b => {
       if (b.startsWith('<img')) return '<span style="display:inline-block;margin:2px;">'+b+'</span>';
       return '<span style="background:var(--bg-t);color:var(--bright);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;border:1px solid var(--hover);display:inline-block;margin:2px;">'+escHtml(b)+'</span>';
@@ -773,6 +779,7 @@ onAuthStateChanged(window.auth, async (u) => {
         if (data.user && data.background) userBackgroundMap.set(data.user, data.background);
         if (data.user && data.accent) userAccentMap.set(data.user, data.accent);
         if (data.user && data.decoration) userDecorationMap.set(data.user, data.decoration);
+        if (data.user && data.badges) userBadgesMap.set(data.user, data.badges);
         if (data.user && data.bgColor) userBgColorMap.set(data.user, data.bgColor);
         if (data.user && data.textColor) userTextColorMap.set(data.user, data.textColor);
         if (data.user && data.customStatus) userCustomStatusMap.set(data.user, data.customStatus);
