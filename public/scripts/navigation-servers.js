@@ -1072,7 +1072,13 @@ function switchServer(id) {
     if (s.accent) { banner.style.borderLeft = `4px solid ${escHtml(s.accent)}`; bannerName.style.color = s.accent; }
 
     const visibleChs = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (s.admins || []).includes(user));
-    const chBtns = `<div class="cat">Text Channels</div>` + visibleChs.map(c => renderChannelItem(s, c)).join('');
+    // Group by category
+    const cats = {};
+    const uncat = [];
+    visibleChs.forEach(c => { if (c.category) { if (!cats[c.category]) cats[c.category] = []; cats[c.category].push(c); } else { uncat.push(c); } });
+    let chBtns = '';
+    if (uncat.length) chBtns += `<div class="cat">Text Channels</div>` + uncat.map(c => renderChannelItem(s, c)).join('');
+    Object.keys(cats).sort().forEach(cat => { chBtns += `<div class="cat" style="margin-top:8px;font-size:11px;color:var(--mut);text-transform:uppercase;">${escHtml(cat)}</div>` + cats[cat].map(c => renderChannelItem(s, c)).join(''); });
     document.querySelector('.ch').innerHTML = chBtns +
       `<button class="cb muted" onclick="createChannel('${s.id}')" style="color:var(--bl);">+ Add Channel</button>` +
       `<button class="cb muted" onclick="shareInvite('${s.id}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
@@ -1112,7 +1118,13 @@ window.switchServerChannel = (sid, cname) => {
 
   chan = 'srv_' + sid + '_' + cname;
       const visibleChs2 = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (s.admins || []).includes(user));
-      document.querySelector('.ch').innerHTML = `<div class="cat">Text Channels</div>` + visibleChs2.map(c => renderChannelItem(s, c)).join('') +
+      const cats2 = {};
+      const uncat2 = [];
+      visibleChs2.forEach(c => { if (c.category) { if (!cats2[c.category]) cats2[c.category] = []; cats2[c.category].push(c); } else { uncat2.push(c); } });
+      let chBtns2 = '';
+      if (uncat2.length) chBtns2 += `<div class="cat">Text Channels</div>` + uncat2.map(c => renderChannelItem(s, c)).join('');
+      Object.keys(cats2).sort().forEach(cat => { chBtns2 += `<div class="cat" style="margin-top:8px;font-size:11px;color:var(--mut);text-transform:uppercase;">${escHtml(cat)}</div>` + cats2[cat].map(c => renderChannelItem(s, c)).join(''); });
+      document.querySelector('.ch').innerHTML = chBtns2 +
     `<button class="cb muted" onclick="createChannel('${sid}')" style="color:var(--bl);">+ Add Channel</button>` +
     `<button class="cb muted" onclick="shareInvite('${sid}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
     `<button class="cb muted" onclick="revokeInvite('${sid}')" style="color:var(--danger);">Revoke Invite</button>`;
@@ -1149,7 +1161,9 @@ async function createChannel(sid) {
   const channels = s.channels || [{ name: 'general', id: 'general' }];
   if (channels.some(c => c.name === name)) { appAlert('Channel already exists'); return; }
 
-  channels.push({ name, id: name });
+  const isPrivate = await appConfirm('Make this channel private?');
+  const category = await appPrompt('Category (leave blank for none):');
+  channels.push({ name, id: name, private: !!isPrivate, category: category || '', topic: '', description: '' });
   await updateDoc(doc(db, 'servers', sid), { channels });
   await loadServers();
   switchServerChannel(sid, name);
