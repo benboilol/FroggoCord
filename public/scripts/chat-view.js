@@ -881,6 +881,19 @@ onAuthStateChanged(window.auth, async (u) => {
 
 window.acceptReq = async (id) => {
   await updateDoc(doc(db,"friends",id),{status:"accepted"});
+  // Check for popular badge
+  try {
+    const snap = await getDocs(query(collection(db,"friends"), where("to","==",user)));
+    const snap2 = await getDocs(query(collection(db,"friends"), where("from","==",user)));
+    const all = [...snap.docs, ...snap2.docs];
+    const accepted = all.filter(d => d.data().status === "accepted");
+    const friends = new Set();
+    accepted.forEach(d => { friends.add(d.data().from); friends.add(d.data().to); });
+    friends.delete(user);
+    if (friends.size >= 10 && typeof awardBadge === 'function') {
+      awardBadge('popular');
+    }
+  } catch (e) {}
 };
 
 window.declineReq = async (id) => {

@@ -262,6 +262,7 @@ async function createServerFromModal() {
 
   await setDoc(doc(db, 'invites', code), { serverId: ref.id, createdBy: user, createdAt: serverTimestamp() });
   document.getElementById('sm-result').textContent = 'Created! Invite code: ' + code;
+  if (typeof awardBadge === 'function') awardBadge('server-creator');
   await loadServers();
   switchServer(ref.id);
 }
@@ -313,6 +314,7 @@ async function createServer() {
 
   await setDoc(doc(db, 'invites', code), { serverId: ref.id, createdBy: user, createdAt: serverTimestamp() });
   appAlert('Server created! Invite code: ' + code);
+  if (typeof awardBadge === 'function') awardBadge('server-creator');
   await loadServers();
   switchServer(ref.id);
 }

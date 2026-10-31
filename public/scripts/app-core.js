@@ -735,6 +735,37 @@ window.db = db;
       } catch (err) { appAlert('Failed to process image.'); }
     });
 
+
+
+    // ---------- Client-side achievement badges ----------
+    async function awardBadge(badgeName) {
+      if (!user) return;
+      try {
+        const userRef = doc(db, 'users', user);
+        const snap = await getDoc(userRef);
+        const badges = snap.exists() ? (snap.data().badges || []) : [];
+        if (badges.includes(badgeName)) return; // already has it
+        badges.push(badgeName);
+        await setDoc(userRef, { badges }, { merge: true });
+        console.log('Badge awarded:', badgeName, 'to', user);
+      } catch (e) {
+        console.error('Badge award failed', e);
+      }
+    }
+    window.awardBadge = awardBadge;
+
+    async function checkMessageBadges() {
+      if (!user) return;
+      // First message badge
+      await awardBadge('first-message');
+      // Active chatter: 100+ messages (approximate via localStorage counter)
+      try {
+        const count = parseInt(localStorage.getItem('froggocord-msg-count') || '0', 10) + 1;
+        localStorage.setItem('froggocord-msg-count', String(count));
+        if (count >= 100) await awardBadge('active-chatter');
+      } catch (e) {}
+    }
+
     // Pending message tracking for sending/sent/failed states
     let pendingMessages = [];
 
@@ -819,6 +850,8 @@ window.db = db;
         await addDoc(collection(db, "messages"), payload);
         pending.status = 'sent';
         notifyPendingChanged();
+        // Award achievement badges
+        checkMessageBadges().catch(() => {});
 
         // Remove pending message after delay (real message from snapshot will take over)
         setTimeout(() => {
