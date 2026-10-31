@@ -99,3 +99,6 @@
  - 20a6d-2026.10.30-20.08.34-0400: Fixed the duplicate global message-container binding that prevented authentication startup from loading, and removed a stray draft-script expression.
  - 20a6d-2026.10.30-20.08.34-0400: Added cache-busting for the loader and feature scripts so deployed clients cannot mix stale JavaScript versions.
  - 1f89a-2026.10.30-20.12.01-0400: Added a show password button to the login screen.
+ - 20a6d-2026.10.30-20.14.34-0400: Fixed the update notice button to force a cache-busted reload and made asset comparisons stable across query strings.
+ - 20a6d-2026.10.30-20.15.27-0400: Made update checks run after ten seconds and exposed the check for reliable live verification instead of waiting a full minute.
+ - 20a6d-2026.10.30-20.16.38-0400: Removed the duplicate message sender that bypassed optimistic delivery and reduced update-check overhead to prevent chat lag.

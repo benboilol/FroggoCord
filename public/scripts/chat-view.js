@@ -673,50 +673,7 @@ window.insertAt = (u) => {
   chatInput.focus();
 };
 
-window.sendMessage = async () => {
-  const input = document.getElementById('chat-input');
-  if (!input) return;
-
-  const text = (input.value || '').trim();
-  if (!text) return;
-
-  const channel = chan;
-  if (!channel) {
-    appAlert('No channel selected.');
-    return;
-  }
-
-  if (channel.startsWith('srv_')) {
-    const serverId = channel.split('_')[1];
-    const server = servers.find(s => s.id === serverId);
-    if (!server || !(server.members || []).includes(user)) {
-      appAlert('You are not a member of this server.');
-      return;
-    }
-  }
-
-  if (channel.startsWith('dm_')) {
-    const participants = channel.split('_').slice(1);
-    if (!participants.includes(user)) {
-      appAlert('You cannot send a message to a DM channel you are not in.');
-      return;
-    }
-  }
-
-  await addDoc(collection(db, 'messages'), {
-    text,
-    user,
-    uid: (auth.currentUser && auth.currentUser.uid) || null,
-    channel,
-    pfp,
-    timestamp: serverTimestamp()
-  });
-
-  input.value = '';
-  if (typeof listen === 'function') listen();
-};
-
-window.handleKeyPress = async (e) => {
+window.handleKeyPress = (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     window.sendMessage();

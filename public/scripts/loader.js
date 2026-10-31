@@ -9,11 +9,11 @@ const appScripts=[
     'message-actions.js',
     'chat-view.js'
 ];
-for (const file of appScripts){
+for(const file of appScripts){
     await new Promise((resolve,reject)=>{
         const script=document.createElement('script');
         const scriptUrl=new URL(file,import.meta.url);
-        scriptUrl.searchParams.set('v', Date.now().toString());
+        scriptUrl.searchParams.set('v',Date.now().toString());
         script.src=scriptUrl;
         script.onload=resolve;
         script.onerror=()=>reject(new Error(`Could not load ${file}`));
@@ -27,7 +27,11 @@ function showUpdateNotice(){
     notice.setAttribute('role','status');
     notice.setAttribute('aria-live','polite');
     notice.innerHTML='<span>A newer version of FroggoCord is available.</span><button type="button">Reload to update</button>';
-    notice.querySelector('button').addEventListener('click',()=>window.location.reload());
+    notice.querySelector('button').addEventListener('click',()=>{
+        const updateUrl=new URL(window.location.href);
+        updateUrl.searchParams.set('app-update',Date.now().toString());
+        window.location.replace(updateUrl.href);
+    });
     document.body.append(notice);
 }
 
@@ -51,19 +55,28 @@ async function fetchAsset(url) {
 }
 
 const initialAssetContents = new Map(
-    await Promise.all(monitoredAssets.map(async (url) => [url.href, await fetchAsset(url)]))
+    await Promise.all(monitoredAssets.map(async (url) => [url.pathname, await fetchAsset(url)]))
 );
 
+const UPDATE_CHECK_INTERVAL_MS = 60000;
+let updateCheckInProgress = false;
+
 async function checkForAppUpdate(){
+    if (updateCheckInProgress) return;
+    updateCheckInProgress = true;
     try{
         const currentAssetContents = await Promise.all(
-            monitoredAssets.map(async (url) => [url.href, await fetchAsset(url)])
+            monitoredAssets.map(async (url) => [url.pathname, await fetchAsset(url)])
         );
         if (currentAssetContents.some(([url, contents]) => contents !== initialAssetContents.get(url))) {
             showUpdateNotice();
         }
     }
     catch(error){console.warn('Could not check for a FroggoCord update:',error);}
+    finally{updateCheckInProgress = false;}
 }
-checkForAppUpdate();
-window.setInterval(checkForAppUpdate,60000);
+window.froggocordCheckForUpdate = checkForAppUpdate;
+window.setTimeout(() => {
+    checkForAppUpdate();
+    window.setInterval(checkForAppUpdate, UPDATE_CHECK_INTERVAL_MS);
+}, 10000);
