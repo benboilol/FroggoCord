@@ -1034,6 +1034,29 @@ window.copyInviteLink = (sid) => {
   }
 };
 
+// ---------- Server Rules Modal ----------
+window.acceptServerRules = () => {
+  const modal = document.getElementById('server-rules-modal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.showServerRules = async (serverId) => {
+  const s = getServerById(serverId);
+  if (!s || !s.rules || !s.rules.length) return;
+  const key = 'froggocord-rules-accepted-' + serverId;
+  if (localStorage.getItem(key)) return;
+  const modal = document.getElementById('server-rules-modal');
+  const title = document.getElementById('rules-title');
+  const content = document.getElementById('rules-content');
+  if (!modal || !title || !content) return;
+  title.textContent = 'Rules for ' + s.name;
+  content.textContent = s.rules.map((r, i) => (i + 1) + '. ' + r).join('\n');
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => { modal.classList.add('visible'); modal.querySelector('.modal-card').classList.add('visible'); });
+  // Mark as accepted after showing (simplified - in production this would be a checkbox)
+  localStorage.setItem(key, '1');
+};
+
 window.togglePublicServer = togglePublicServer;
 
 function closeServerSettings() {
@@ -1229,14 +1252,6 @@ function switchServer(id) {
 
     bannerName.textContent = s.name;
     if (s.description) banner.title = s.description;
-    // Show server rules on first join
-    if (s.rules && s.rules.length) {
-      const rulesKey = 'froggocord-rules-seen-' + s.id;
-      if (!localStorage.getItem(rulesKey)) {
-        localStorage.setItem(rulesKey, '1');
-        setTimeout(() => { appAlert('Server Rules:\n\n' + s.rules.map((r, i) => (i+1) + '. ' + r).join('\n')); }, 500);
-      }
-    }
     // Show welcome message for new members
     if (s.welcomeMessage) {
       const welcomeKey = 'froggocord-welcome-seen-' + s.id;
@@ -1245,13 +1260,9 @@ function switchServer(id) {
         setTimeout(() => { appAlert('Welcome to ' + s.name + '!\n\n' + s.welcomeMessage); }, 1000);
       }
     }
-    // Show server rules on first join
-    if (s.rules && s.rules.length) {
-      const rulesKey = 'froggocord-rules-seen-' + s.id;
-      if (!localStorage.getItem(rulesKey)) {
-        localStorage.setItem(rulesKey, '1');
-        setTimeout(() => { appAlert('Server Rules:\n\n' + s.rules.map((r, i) => (i+1) + '. ' + r).join('\n')); }, 500);
-      }
+    // Show server rules modal on first join
+    if (s.rules && s.rules.length && typeof showServerRules === 'function') {
+      showServerRules(s.id);
     }
     if (s.accent) { banner.style.borderLeft = `4px solid ${escHtml(s.accent)}`; bannerName.style.color = s.accent; }
 
