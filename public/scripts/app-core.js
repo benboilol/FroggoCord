@@ -1654,3 +1654,30 @@ window.toggleGifBlock = (u) => {
         hideNewMessagesPill();
       });
     }
+
+    // ---------- Read Receipts ----------
+    window.markChannelRead = (channel) => {
+      if (!channel || !user) return;
+      try {
+        const key = 'froggocord-read-' + channel;
+        localStorage.setItem(key, String(Date.now()));
+      } catch (e) {}
+      try {
+        setDoc(doc(db, 'reads', user + '__' + channel), { user, channel, timestamp: serverTimestamp() }, { merge: true }).catch(() => {});
+      } catch (e) {}
+    };
+
+    window.getChannelReadTime = (channel) => {
+      try {
+        const key = 'froggocord-read-' + channel;
+        const val = localStorage.getItem(key);
+        return val ? parseInt(val, 10) : 0;
+      } catch (e) { return 0; }
+    };
+
+    window.isMessageRead = (msg, channel) => {
+      if (!msg || !msg.timestamp) return true;
+      const readTime = getChannelReadTime(channel);
+      const msgTime = msg.timestamp && msg.timestamp.toMillis ? msg.timestamp.toMillis() : (msg.timestamp || 0);
+      return msgTime <= readTime;
+    };
