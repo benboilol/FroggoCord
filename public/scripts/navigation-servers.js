@@ -161,9 +161,11 @@ function renderUserList() {
     const avStyle = hasPfp ? `style="background-image:url('${escHtml(upfp)}');"` : '';
     const avContent = hasPfp ? '' : escHtml((name || '?')[0].toUpperCase());
 
+    const act = p && p.activity ? escHtml(p.activity) : '';
     return `<div class="member ${status === 'offline' ? 'off' : ''}" data-user="${escHtml(name)}" onclick="openProfile(this.dataset.user)">` +
       `<div class="member-avatar" ${avStyle}>${avContent}<span class="status-dot" title="${labels[status] || 'Online'}" style="background:${colors[status] || 'var(--mut)'}"></span></div>` +
       `<div class="member-name">${escHtml(name)}</div>` +
+      (act ? `<div class="member-activity" style="font-size:11px;color:var(--mut);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${act}</div>` : '') +
       `</div>`;
   };
 

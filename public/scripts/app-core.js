@@ -30,7 +30,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 window.auth = auth;
 window.db = db;
-    let chan = null, user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'dms', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {};
+    let chan = null, user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'dms', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {}, curActivity = '';
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
     let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map(), userBgColorMap = new Map(), userTextColorMap = new Map(), userCustomStatusMap = new Map(), userPronounsMap = new Map(), userBioMap = new Map(), userDisplayNameMap = new Map(), userBadgesMap = new Map();
     let blockedUsers = new Set();
@@ -250,6 +250,8 @@ window.db = db;
     function populateSettingsForm() {
       document.getElementById('sa-username').value = user || '';
       document.getElementById('sa-status').value = settings.status || curStat || 'online';
+      const actEl = document.getElementById('sa-activity');
+      if (actEl) actEl.value = curActivity || '';
       setThemeSelection(settings.theme || activeTheme);
       document.getElementById('sn-desktop').checked = settings.notifications.desktop;
       document.getElementById('sn-sound').checked = settings.notifications.sound;
@@ -656,6 +658,7 @@ window.db = db;
     if (autoThemeCb) autoThemeCb.addEventListener('change', (e) => { settings.accessibility.autoTheme = settings.accessibility.autoTheme || Object.assign({}, SETTINGS_DEFAULTS.accessibility.autoTheme); settings.accessibility.autoTheme.enabled = e.target.checked; saveSettings(); applyAutoTheme(); });
     ['sa-timezone','sa-day-theme','sa-night-theme','sa-day-start','sa-night-start'].forEach(id => { const el = document.getElementById(id); if (!el) return; el.addEventListener('change', () => { const at = settings.accessibility.autoTheme = settings.accessibility.autoTheme || Object.assign({}, SETTINGS_DEFAULTS.accessibility.autoTheme); at.timezone = document.getElementById('sa-timezone').value; at.dayTheme = document.getElementById('sa-day-theme').value; at.nightTheme = document.getElementById('sa-night-theme').value; at.dayStart = parseInt(document.getElementById('sa-day-start').value, 10); at.nightStart = parseInt(document.getElementById('sa-night-start').value, 10); saveSettings(); applyAutoTheme(); }); });
     document.getElementById('sa-status').addEventListener('change', (e) => { settings.status = e.target.value; applySettings(); });
+    document.getElementById('sa-activity').addEventListener('change', (e) => { settings.activity = e.target.value.trim(); curActivity = settings.activity; saveSettings(); if (user) setDoc(doc(db,'presence',user),{activity:curActivity,lastActive:serverTimestamp()},{merge:true}).catch(()=>{}); });
     // Mark profile as customized on any profile change
     ['sp-profile-color','sp-profile-grad-from','sp-profile-grad-to','sp-profile-grad-dir','sp-profile-bg','sp-profile-bg-color','sp-profile-accent','sp-profile-decoration','sp-profile-layout','sp-app-bg','sp-custom-status','sp-pronouns','sp-bio','sp-profile-text-color'].forEach(id => {
       const el = document.getElementById(id);
@@ -983,6 +986,59 @@ window.db = db;
       }
     };
 
+    // ---------- Announcement Support ----------
+    window.announceChannel = async (channelId, messageId) => {
+      if (!channelId || !channelId.startsWith('srv_')) return;
+      const parts = channelId.split('_');
+      const sid = parts[1];
+      const s = servers.find(x => x.id === sid);
+      if (!s) return;
+      const ch = s.channels && s.channels.find(c => c.id === channelId.split('_').slice(2).join('_') || c.name === channelId.split('_').slice(2).join('_'));
+      if (!ch || !ch.announcement) return;
+      // Notify all server members via presence update
+      try {
+        const memberList = s.members || [];
+        const mentions = memberList.filter(m => m !== user);
+        if (mentions.length) {
+          await addDoc(collection(db, 'messages'), {
+            text: '@everyone New announcement in #' + (ch.name || channelId),
+            user: user,
+            uid: (auth.currentUser && auth.currentUser.uid) || null,
+            channel: channelId,
+            pfp: pfp,
+            timestamp: serverTimestamp(),
+            announcement: true,
+            announcementFor: messageId
+          });
+        }
+      } catch (e) { console.error('Announce failed', e); }
+    };
+
+    // ---------- @everyone Notifications ----------
+    window.notifyEveryone = async (channelId, messageId) => {
+      if (!channelId || !channelId.startsWith('srv_')) return;
+      const parts = channelId.split('_');
+      const sid = parts[1];
+      const s = servers.find(x => x.id === sid);
+      if (!s) return;
+      const chName = channelId.split('_').slice(2).join('_');
+      const memberList = s.members || [];
+      const mentions = memberList.filter(m => m !== user);
+      if (!mentions.length) return;
+      try {
+        await addDoc(collection(db, 'messages'), {
+          text: '@everyone ' + (chName || channelId),
+          user: user,
+          uid: (auth.currentUser && auth.currentUser.uid) || null,
+          channel: channelId,
+          pfp: pfp,
+          timestamp: serverTimestamp(),
+          everyoneMention: true,
+          mentionFor: messageId
+        });
+      } catch (e) { console.error('Everyone notify failed', e); }
+    };
+
     // ---------- Download your data ----------
     window.downloadMyData = async () => {
       if (!user) { appAlert('Sign in first.'); return; }
@@ -1283,7 +1339,8 @@ window.db = db;
 
 
     // Periodically re-evaluate auto theme
-    setInterval(() => { try { applyAutoTheme(); } catch (e) {} }, 60000);const GIF_FAV_KEY = 'froggocord-gif-favorites';
+    setInterval(() => { try { applyAutoTheme(); } catch (e) {} }, 60000);
+    setInterval(() => { try { if (typeof window.processScheduledMessages === 'function') window.processScheduledMessages(); } catch (e) {} }, 30000);const GIF_FAV_KEY = 'froggocord-gif-favorites';
 const GIF_BLK_KEY = 'froggocord-gif-blocked';
 function loadGifSets() {
   try { window.gifFavorites = new Set(JSON.parse(localStorage.getItem(GIF_FAV_KEY) || '[]')); } catch(e){ window.gifFavorites = new Set(); }
@@ -1670,6 +1727,49 @@ window.toggleGifBlock = (u) => {
       return idx < 0;
     };
     window.isBookmarked = (msgId) => getBookmarks().includes(msgId);
+
+    // ---------- Scheduled Messages ----------
+    window.scheduleMessage = async (text, sendAt, channelId) => {
+      if (!user || !text || !sendAt || !channelId) return;
+      const clientId = 'scheduled_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      try {
+        const payload = {
+          text: text,
+          user: user,
+          uid: (auth.currentUser && auth.currentUser.uid) || null,
+          channel: channelId || chan,
+          pfp: pfp,
+          timestamp: serverTimestamp(),
+          clientMsgId: clientId,
+          scheduledFor: new Date(sendAt).toISOString(),
+          status: 'scheduled'
+        };
+        await addDoc(collection(db, "messages"), payload);
+        appAlert('Message scheduled for ' + new Date(sendAt).toLocaleString());
+      } catch (e) { appAlert('Failed to schedule message.'); }
+    };
+
+    // Process any pending scheduled messages (client-side fallback)
+    window.processScheduledMessages = async () => {
+      if (!user) return;
+      try {
+        const now = new Date().toISOString();
+        const snap = await getDocs(query(collection(db, 'messages'), where('status', '==', 'scheduled')));
+        for (const d of snap.docs) {
+          const data = d.data();
+          if (data.user === user && data.scheduledFor && data.scheduledFor <= now) {
+            await setDoc(doc(db, 'messages', d.id), { status: 'sending' }, { merge: true });
+            // Actually send it by removing the scheduled flag
+            const schedPayload = { ...data };
+            delete schedPayload.status;
+            delete schedPayload.scheduledFor;
+            await addDoc(collection(db, "messages"), schedPayload);
+            await deleteDoc(doc(db, 'messages', d.id));
+            appAlert('Sent scheduled message.');
+          }
+        }
+      } catch (e) { console.error('Scheduled message processing failed', e); }
+    };
 
     // ---------- New messages pill ----------
     window.showNewMessagesPill = () => {

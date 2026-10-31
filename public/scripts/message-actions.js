@@ -350,7 +350,8 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
       }
     });
 
-    async function updatePresence(s) { if (user) { curStat = s; await setDoc(doc(db,"presence",user),{user,status:s,lastActive:serverTimestamp()},{merge:true}); } }
+    async function updatePresence(s) { if (user) { curStat = s; await setDoc(doc(db,"presence",user),{user,status:s,lastActive:serverTimestamp(),activity:curActivity || ''},{merge:true}); } }
+    window.setActivity = async (activity) => { curActivity = activity || ''; if (user) await setDoc(doc(db,"presence",user),{user,activity:curActivity,lastActive:serverTimestamp()},{merge:true}); };
      function setTyping(active) {
        if (!user || !chan) return;
        const tid = chan + '__' + user;

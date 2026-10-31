@@ -260,7 +260,8 @@ function renderReactions(m) {
       const emoji = pair[0];
       const users = pair[1];
       const mine = Array.isArray(users) && users.indexOf(user) >= 0;
-      return '<button data-action="toggle-reaction" data-msgid="' + escHtml(m.id) + '" data-emoji="' + escHtml(emoji) + '" style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;border:1px solid ' + (mine ? 'var(--bl)' : 'var(--reply-line)') + ';background:' + (mine ? 'var(--mention-bg)' : 'var(--bg-t)') + ';color:var(--txt);font-size:13px;cursor:pointer;line-height:1.4;">' +
+      const userNames = Array.isArray(users) ? users.map(function(u){ return '<span style="white-space:nowrap;">' + escHtml(u) + '</span>'; }).join(', ') : '';
+      return '<button data-action="toggle-reaction" data-msgid="' + escHtml(m.id) + '" data-emoji="' + escHtml(emoji) + '" style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;border:1px solid ' + (mine ? 'var(--bl)' : 'var(--reply-line)') + ';background:' + (mine ? 'var(--mention-bg)' : 'var(--bg-t)') + ';color:var(--txt);font-size:13px;cursor:pointer;line-height:1.4;" title="' + (userNames || '') + '">' +
         '<span>' + emoji + '</span><span style="font-weight:600;">' + users.length + '</span>' +
       '</button>';
     }).join('') +
@@ -808,6 +809,7 @@ onAuthStateChanged(window.auth, async (u) => {
       user,
       uid:(auth.currentUser&&auth.currentUser.uid)||null,
       status:'online',
+      activity:curActivity || '',
       lastActive:serverTimestamp()
     }, {merge:true}).catch((e)=>{ console.error('presence write failed', e); });
 
