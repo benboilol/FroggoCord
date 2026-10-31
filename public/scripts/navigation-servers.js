@@ -531,6 +531,8 @@ function openServerSettings(sid) {
 
   document.getElementById('ss-name').value = s.name || '';
   document.getElementById('ss-desc').value = s.description || '';
+  const ssRules = document.getElementById('ss-rules');
+  if (ssRules) ssRules.value = (s.rules || []).join('\n');
   document.getElementById('ss-icon-url').value = s.icon || '';
   document.getElementById('ss-banner-url').value = s.banner || '';
   document.getElementById('ss-accent').value = s.accent || '#57f287';
@@ -868,6 +870,8 @@ async function saveServerSettings() {
 
   const name = document.getElementById('ss-name').value.trim() || s.name;
   const description = document.getElementById('ss-desc').value.trim();
+  const rulesRaw = (document.getElementById('ss-rules').value || '').trim();
+  const rules = rulesRaw ? rulesRaw.split('\n').map(r => r.trim()).filter(Boolean) : [];
   let icon = document.getElementById('ss-icon-url').value.trim();
   let banner = document.getElementById('ss-banner-url').value.trim();
   const accent = document.getElementById('ss-accent').value.trim() || '#57f287';
@@ -896,7 +900,8 @@ async function saveServerSettings() {
     banner,
     accent,
     emojis,
-    stickers
+    stickers,
+    rules
   });
   const stickersRaw = (document.getElementById('ss-stickers').value || '').trim();
   const stickers = stickersRaw.split('\n').map(line => {
@@ -1033,6 +1038,14 @@ function switchServer(id) {
 
     bannerName.textContent = s.name;
     if (s.description) banner.title = s.description;
+    // Show server rules on first join
+    if (s.rules && s.rules.length) {
+      const rulesKey = 'froggocord-rules-seen-' + s.id;
+      if (!localStorage.getItem(rulesKey)) {
+        localStorage.setItem(rulesKey, '1');
+        setTimeout(() => { appAlert('Server Rules:\n\n' + s.rules.map((r, i) => (i+1) + '. ' + r).join('\n')); }, 500);
+      }
+    }
     if (s.accent) { banner.style.borderLeft = `4px solid ${escHtml(s.accent)}`; bannerName.style.color = s.accent; }
 
     const visibleChs = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (s.admins || []).includes(user));
