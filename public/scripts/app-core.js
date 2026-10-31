@@ -1759,6 +1759,20 @@ window.toggleGifBlock = (u) => {
     };
     window.isBookmarked = (msgId) => getBookmarks().includes(msgId);
 
+    // ---------- Message Quoting ----------
+    window.quoteMessage = async (msgId) => {
+      if (!msgId) return;
+      const input = document.getElementById('chat-input');
+      if (!input) return;
+      // Find the message in the DOM
+      const msgEl = document.querySelector(`[data-id="${msgId}"]`);
+      const text = msgEl ? msgEl.textContent.trim() : '';
+      const prefix = '> ' + text.split('\n').join('\n> ') + '\n\n';
+      input.value = prefix + input.value;
+      input.focus();
+      appAlert('Message quoted.');
+    };
+
     // ---------- Scheduled Messages ----------
     window.scheduleMessage = async (text, sendAt, channelId) => {
       if (!user || !text || !sendAt || !channelId) return;

@@ -389,6 +389,9 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
       else if (act === 'copylink') {
         if (typeof window.copyMessageLink === 'function') window.copyMessageLink(id);
       }
+      else if (act === 'quote') {
+        if (typeof window.quoteMessage === 'function') window.quoteMessage(id);
+      }
       else if (act === 'thread') {
         if (typeof window.createThread === 'function') window.createThread(id);
       }
