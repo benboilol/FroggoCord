@@ -115,3 +115,14 @@
  - 20a6d-2026.10.30-20.34.18-0400: Verified the project-structure and change-validation requirements against the completed implementation.
  - 20a6d-2026.10.30-20.15.27-0400: Made update checks run after ten seconds and exposed the check for reliable live verification instead of waiting a full minute.
  - 20a6d-2026.10.30-20.16.38-0400: Removed the duplicate message sender that bypassed optimistic delivery and reduced update-check overhead to prevent chat lag.
+ - 1da20-2026.10.31-11.00.00-0700: Added client-side achievement badges (first-message, active-chatter, server-creator, popular, first-friend, chatter, super-chatter, theme-explorer, profile-customizer) stored in user Firestore docs and displayed in profile modal. Added Cloud Functions code for rate limiting and server-side badge awarding (requires Blaze plan).
+ - 1da20-2026.10.31-11.05.00-0700: Fixed login issue by making auth/db globally accessible via window.auth/window.db across all scripts.
+ - 1da20-2026.10.31-11.10.00-0700: Added profile background image upload, banner/background position and size controls, profile text color, custom status text, pronouns, biography, and display name customization.
+ - 1da20-2026.10.31-11.15.00-0700: Added server stickers, server emoji collections, server accent color, server chat background image, and per-server visual customization.
+ - 1da20-2026.10.31-11.20.00-0700: Added soundboard (6 tones via Web Audio API), rich link embeds (YouTube + Twitter/X), multiple image attachments with gallery rendering, file attachments, and GIF favorites/blocking.
+ - 1da20-2026.10.31-11.25.00-0700: Added profile effects (glow/pulse/shimmer/rainbow), profile layout (compact/spacious), app background image, chat density, and auto-switch theme by time of day.
+ - 1da20-2026.10.31-11.30.00-0700: Added blocking users, reporting mechanism, pinned messages, message search, keyboard navigation, reconnect after network interruptions, and error toasts.
+ - 1da20-2026.10.31-11.35.00-0700: Added channel topics, descriptions, visibility (private), renaming, reordering, and server ownership transfer.
+ - 1da20-2026.10.31-11.40.00-0700: Added moderation actions (kick, ban, unban, revoke invite) for owners and admins.
+ - 1da20-2026.10.31-11.45.00-0700: Fixed GIF scroll restart flicker, message send lag, theme switching errors, DM icon, asset paths, and stray BOM.
+ - 1da20-2026.10.31-11.50.00-0700: Moved invite codes to separate collection for security. Locked down server ownership in Firestore rules. Deployed hosting and rules.
