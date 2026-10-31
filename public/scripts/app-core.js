@@ -1039,6 +1039,37 @@ window.db = db;
       } catch (e) { console.error('Everyone notify failed', e); }
     };
 
+    // ---------- Message Threads ----------
+    window.createThread = async (rootMsgId) => {
+      if (!rootMsgId) { appAlert('No message to thread.'); return; }
+      const channelForThread = chan;
+      if (!channelForThread) { appAlert('No channel selected.'); return; }
+      const threadName = await appPrompt('Thread name:', '');
+      const threadId = 'thread_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      try {
+        await addDoc(collection(db, 'threads'), {
+          id: threadId,
+          name: (threadName || 'Thread').trim(),
+          parentMessageId: rootMsgId,
+          channel: channelForThread,
+          creator: user,
+          messageCount: 0,
+          lastActivity: serverTimestamp(),
+          archived: false
+        });
+        appAlert('Thread created!');
+        openThread(threadId);
+      } catch (e) { appAlert('Failed to create thread.'); }
+    };
+
+    window.openThread = (threadId) => {
+      // Store thread context and switch view
+      sessionStorage.setItem('froggocord-active-thread', threadId);
+      appAlert('Thread opened: ' + threadId + ' (view in thread panel)');
+    };
+
+    window.getActiveThread = () => sessionStorage.getItem('froggocord-active-thread') || null;
+
     // ---------- Download your data ----------
     window.downloadMyData = async () => {
       if (!user) { appAlert('Sign in first.'); return; }

@@ -424,6 +424,8 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
     if (pinBtn) btns = btns + pinBtn;
     const copyLinkBtn = (!pending) ? `<span data-action="copylink" data-id="${m.id}" style="color:var(--mut);">Copy link</span>` : '';
     if (copyLinkBtn) btns = btns + copyLinkBtn;
+    const threadBtn = (!pending) ? `<span data-action="thread" data-id="${m.id}" style="color:var(--mut);">Thread</span>` : '';
+    if (threadBtn) btns = btns + threadBtn;
     const reportBtn = (!pending) ? `<span data-action="report" data-id="${m.id}" style="color:var(--mut);">Report</span>` : '';
     if (reportBtn) btns = btns + reportBtn;
     const rBtn = `<span data-action="reply" data-id="${m.id}" data-user="${safeUser}" style="color:var(--mut);">Reply</span>`;

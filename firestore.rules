@@ -299,6 +299,14 @@ service cloud.firestore {
       allow delete: if isAuth() && resource.data.blocker == username();
     }
 
+    // Threads: readable/writable by channel members.
+    match /threads/{threadId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update: if isAuth() && request.resource.data.creator == username();
+      allow delete: if isAuth() && resource.data.creator == username();
+    }
+
     // Events: readable by server members; writable by owner/admin.
     match /events/{eventId} {
       allow read: if isAuth();
