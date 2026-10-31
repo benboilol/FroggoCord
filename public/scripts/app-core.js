@@ -1635,3 +1635,22 @@ window.toggleGifBlock = (u) => {
       setUserNote(u, note);
       appAlert('Note saved.');
     };
+
+
+    // ---------- New messages pill ----------
+    window.showNewMessagesPill = () => {
+      const pill = document.getElementById('new-messages-pill');
+      if (pill) pill.style.display = 'block';
+    };
+    window.hideNewMessagesPill = () => {
+      const pill = document.getElementById('new-messages-pill');
+      if (pill) pill.style.display = 'none';
+    };
+    const pillEl = document.getElementById('new-messages-pill');
+    if (pillEl) {
+      pillEl.addEventListener('click', () => {
+        const msgBox = document.getElementById('message-container');
+        if (msgBox) { msgBox.scrollTop = msgBox.scrollHeight; }
+        hideNewMessagesPill();
+      });
+    }
