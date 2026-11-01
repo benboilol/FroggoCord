@@ -143,44 +143,25 @@ if (fileInputEl) {
   };
   const preferAvif = async (file) => {
     if (file.type === 'image/avif') return file;
-    if (await hasAnimation(file)) {
-      const converted = typeof window.convertMediaToAvif === 'function'
-        ? await window.convertMediaToAvif(file)
-        : null;
-      if (converted) return converted;
-      return file;
-    }
-    let bitmap;
-    try {
-      bitmap = await createImageBitmap(file);
-      const canvas = document.createElement('canvas');
-      canvas.width = bitmap.width;
-      canvas.height = bitmap.height;
-      const context = canvas.getContext('2d');
-      if (!context) return file;
-      context.drawImage(bitmap, 0, 0);
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/avif', 0.85));
-      if (!blob || blob.type !== 'image/avif' || blob.size > 700000) return file;
-      return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.avif', { type: 'image/avif' });
-    } catch (error) {
-      return file;
-    } finally {
-      if (bitmap) bitmap.close();
-    }
+    const converted = await window.convertImageToAvif(file);
+    if (!converted) throw new Error('This browser cannot encode images as AVIF.');
+    return converted;
   };
   fileInputEl.addEventListener('change', async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     const allowedTypes = new Set(['application/pdf', 'text/plain', 'text/csv', 'application/zip', 'application/json']);
-    const valid = files.filter(f => f.type.startsWith('image/') || allowedTypes.has(f.type)).slice(0, 3);
-    if (valid.length !== files.length) appAlert(files.length > 3 ? 'You can attach up to 3 files per message.' : 'Unsupported file type. Use images, PDF, TXT, CSV, JSON, or ZIP files.');
+    const valid = files.filter(f => f.type.startsWith('image/') || f.type.startsWith('video/') || allowedTypes.has(f.type)).slice(0, 3);
+    if (valid.length !== files.length) appAlert(files.length > 3 ? 'You can attach up to 3 files per message.' : 'Unsupported file type. Use images, videos, PDF, TXT, CSV, JSON, or ZIP files.');
     if (!valid.length) { fileInputEl.value = ''; return; }
     fileInputEl.value = '';
     try {
       const results = [];
       for (const f of valid) {
         if (f.size > 4 * 1024 * 1024) { appAlert('File too large (max 4MB): ' + f.name); continue; }
-        const pf = f.type.startsWith('image/') ? await preferAvif(f) : f;
+        let pf = f;
+        if (f.type.startsWith('image/')) pf = await preferAvif(f);
+        if (f.type.startsWith('video/')) pf = await window.convertVideoToAv1Mkv(f);
         const preview = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
@@ -195,7 +176,7 @@ if (fileInputEl) {
       document.getElementById('file-preview-name').textContent = results.length + ' image(s) selected';
       document.getElementById('file-preview').style.display = 'block';
     } catch (error) {
-      appAlert('Failed to read file.');
+      appAlert(error.message || 'Failed to process file.');
       pendingFiles = [];
     }
   });

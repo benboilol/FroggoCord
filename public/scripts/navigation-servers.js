@@ -1192,13 +1192,14 @@ async function saveServerSettings() {
 }
 
 function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    if (file.size > 250000) { reject(new Error('Image too large (max 250KB)')); return; }
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = reject;
-    r.readAsDataURL(file);
-    r.readAsDataURL(file);
+  return window.convertImageToAvif(file, { maxSize: 1024, maxBytes: 250000 }).then(converted => {
+    if (!converted) throw new Error('This browser cannot encode images as AVIF.');
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(converted);
+    });
   });
 }
 

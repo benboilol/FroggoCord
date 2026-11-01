@@ -33,26 +33,59 @@ window.db = db;
     let chan = null, user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'dms', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {}, curActivity = '';
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
     let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map(), userBgColorMap = new Map(), userTextColorMap = new Map(), userCustomStatusMap = new Map(), userPronounsMap = new Map(), userBioMap = new Map(), userDisplayNameMap = new Map(), userBadgesMap = new Map();
-    window.convertMediaToAvif = async (file) => {
-      if (!file || file.size > 4 * 1024 * 1024 || typeof createImageBitmap !== 'function') return null;
+    window.convertImageToAvif = async (file, options = {}) => {
+      if (!file || !file.type.startsWith('image/') || file.size > 4 * 1024 * 1024 || typeof createImageBitmap !== 'function') return null;
       try {
         const bitmap = await createImageBitmap(file);
+        const maxSize = Number(options.maxSize) > 0 ? Number(options.maxSize) : Math.max(bitmap.width, bitmap.height);
+        const scale = Math.min(maxSize / bitmap.width, maxSize / bitmap.height, 1);
         const canvas = typeof OffscreenCanvas === 'function'
-          ? new OffscreenCanvas(bitmap.width, bitmap.height)
-          : Object.assign(document.createElement('canvas'), { width: bitmap.width, height: bitmap.height });
+          ? new OffscreenCanvas(Math.max(1, Math.round(bitmap.width * scale)), Math.max(1, Math.round(bitmap.height * scale)))
+          : Object.assign(document.createElement('canvas'), { width: Math.max(1, Math.round(bitmap.width * scale)), height: Math.max(1, Math.round(bitmap.height * scale)) });
         const context = canvas.getContext('2d');
         if (!context) return null;
         context.drawImage(bitmap, 0, 0);
         bitmap.close();
         const blob = canvas.convertToBlob
-          ? await canvas.convertToBlob({ type: 'image/avif', quality: 0.8 })
-          : await new Promise(resolve => canvas.toBlob(resolve, 'image/avif', 0.8));
-        if (!blob || blob.type !== 'image/avif' || blob.size > 4 * 1024 * 1024) return null;
+          ? await canvas.convertToBlob({ type: 'image/avif', quality: Number(options.quality) || 0.85 })
+          : await new Promise(resolve => canvas.toBlob(resolve, 'image/avif', Number(options.quality) || 0.85));
+        if (!blob || blob.type !== 'image/avif' || blob.size > (Number(options.maxBytes) || 4 * 1024 * 1024)) return null;
         return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.avif', { type: 'image/avif' });
       } catch (error) {
         console.warn('Browser AVIF conversion unavailable; preserving original media.', error);
         return null;
       }
+    };
+    window.convertMediaToAvif = window.convertImageToAvif;
+    window.convertVideoToAv1Mkv = async (file) => {
+      if (!file || !file.type.startsWith('video/')) return null;
+      const mime = ['video/x-matroska;codecs=av01', 'video/x-matroska'].find(type => window.MediaRecorder && MediaRecorder.isTypeSupported(type));
+      if (!mime) throw new Error('This browser cannot encode AV1 MKV locally.');
+      const video = document.createElement('video');
+      video.muted = true;
+      video.playsInline = true;
+      video.src = URL.createObjectURL(file);
+      await new Promise((resolve, reject) => {
+        video.onloadedmetadata = resolve;
+        video.onerror = () => reject(new Error('Could not read video.'));
+      });
+      const stream = video.captureStream();
+      const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 2_500_000 });
+      const chunks = [];
+      recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+      const stopped = new Promise((resolve, reject) => {
+        recorder.onerror = () => reject(new Error('AV1 MKV encoding failed.'));
+        recorder.onstop = resolve;
+      });
+      video.onended = () => recorder.stop();
+      recorder.start(250);
+      await video.play();
+      await stopped;
+      stream.getTracks().forEach(track => track.stop());
+      URL.revokeObjectURL(video.src);
+      const blob = new Blob(chunks, { type: 'video/x-matroska' });
+      if (!blob.size) throw new Error('AV1 MKV encoding produced no data.');
+      return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.mkv', { type: 'video/x-matroska' });
     };
     let blockedUsers = new Set();
     function loadBlockedUsers() { try { const raw = localStorage.getItem('froggocord-blocked'); if (raw) blockedUsers = new Set(JSON.parse(raw)); } catch (e) {} }
@@ -1413,37 +1446,14 @@ window.db = db;
     window.addEventListener('touchstart', rst, { passive: true });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) rst(); });
 
-    const compressImage = async (file, maxSize = 512, animated = false) => {
-      // Preserve animated images (GIF/APNG/WebP animation) without canvas conversion.
-      if (animated && /image\/(gif|apng|webp)/i.test(file.type || '')) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-      }
+    const compressImage = async (file, maxSize = 512) => {
+      const converted = await window.convertImageToAvif(file, { maxSize, maxBytes: 2 * 1024 * 1024 });
+      if (!converted) throw new Error('This browser cannot encode images as AVIF.');
       return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let w = img.width, h = img.height;
-          const scale = Math.min(maxSize / w, maxSize / h, 1);
-          w = Math.round(w * scale); h = Math.round(h * scale);
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          const types = ['image/avif', 'image/webp', 'image/jpeg'];
-          let i = 0;
-          const tryNext = () => {
-            if (i >= types.length) { resolve(canvas.toDataURL('image/jpeg', 0.85)); return; }
-            const url = canvas.toDataURL(types[i], 0.85);
-            if (url.startsWith('data:' + types[i] + ';')) { resolve(url); }
-            else { i++; tryNext(); }
-          };
-          tryNext();
-        };
-        img.onerror = reject;
-        img.src = URL.createObjectURL(file);
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(converted);
       });
     };
     const drop = document.getElementById('pfp-dropzone');
