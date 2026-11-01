@@ -143,3 +143,4 @@
  - 20a6d-2026.11.01-00.40.00-0400: Fixed server creation by initializing the creator as an administrator and enforcing a signed-in identity before writing; added a safe fallback when browser AVIF conversion is unavailable.
  - 20a6d-2026.11.01-10.15.00-0500: Normalized all client-uploaded images, including GIF/APNG/WebP and profile/server artwork, to AVIF before sending; added client-side AV1 MKV conversion for video attachments with an explicit unsupported-browser error instead of uploading the original.
  - 20a6d-2026.11.01-10.25.00-0500: Fixed image processing failures by adding an Image-element decode fallback and bounded AVIF quality/size retries for browsers without createImageBitmap or oversized encodes.
+ - 20a6d-2026.11.01-10.35.00-0500: Added a WASM AVIF encoder fallback for browsers whose native canvas AVIF encoding returns PNG or another non-AVIF format.

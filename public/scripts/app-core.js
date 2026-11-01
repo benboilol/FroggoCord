@@ -33,6 +33,13 @@ window.db = db;
     let chan = null, user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'dms', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {}, curActivity = '';
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
     let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map(), userBgColorMap = new Map(), userTextColorMap = new Map(), userCustomStatusMap = new Map(), userPronounsMap = new Map(), userBioMap = new Map(), userDisplayNameMap = new Map(), userBadgesMap = new Map();
+    let avifEncoderPromise = null;
+    const encodeAvifWithWasm = async (imageData, quality) => {
+      avifEncoderPromise ||= import('https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/+esm');
+      const { encode } = await avifEncoderPromise;
+      const buffer = await encode(imageData, { cqLevel: Math.round(63 - quality * 45) });
+      return new Blob([buffer], { type: 'image/avif' });
+    };
     window.convertImageToAvif = async (file, options = {}) => {
       if (!file || !file.type.startsWith('image/') || file.size > 4 * 1024 * 1024) return null;
       let sourceUrl = null;
@@ -66,6 +73,9 @@ window.db = db;
           blob = canvas.convertToBlob
             ? await canvas.convertToBlob({ type: 'image/avif', quality })
             : await new Promise(resolve => canvas.toBlob(resolve, 'image/avif', quality));
+          if (!blob || blob.type !== 'image/avif') {
+            blob = await encodeAvifWithWasm(context.getImageData(0, 0, width, height), quality);
+          }
           if (blob && blob.type === 'image/avif' && blob.size <= maxBytes) break;
           scale *= 0.75;
         }
