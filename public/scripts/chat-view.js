@@ -716,11 +716,23 @@ function listen() {
       names.push(t.user);
     });
     const el = document.getElementById('typing-indicator');
-    if (!el) return;
-    if (names.length === 0) { el.style.display = 'none'; el.textContent = ''; }
-    else if (names.length === 1) { el.style.display = 'block'; el.textContent = names[0] + ' is typing...'; }
-    else if (names.length === 2) { el.style.display = 'block'; el.textContent = names[0] + ' and ' + names[1] + ' are typing...'; }
-    else { el.style.display = 'block'; el.textContent = names.length + ' people are typing...'; }
+    const hel = document.getElementById('header-typing');
+    if (names.length === 0) {
+      if (el) { el.style.display = 'none'; el.textContent = ''; }
+      if (hel) hel.textContent = '';
+    }
+    else if (names.length === 1) {
+      if (el) { el.style.display = 'block'; el.textContent = names[0] + ' is typing...'; }
+      if (hel) hel.textContent = names[0] + ' is typing...';
+    }
+    else if (names.length === 2) {
+      if (el) { el.style.display = 'block'; el.textContent = names[0] + ' and ' + names[1] + ' are typing...'; }
+      if (hel) hel.textContent = names[0] + ' and ' + names[1] + ' are typing...';
+    }
+    else {
+      if (el) { el.style.display = 'block'; el.textContent = names.length + ' people are typing...'; }
+      if (hel) hel.textContent = names.length + ' people are typing...';
+    }
   }
 
   typingUnsub = onSnapshot(typingQuery, (snap) => {

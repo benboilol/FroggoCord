@@ -393,6 +393,7 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
          setDoc(doc(db,'typing',tid), { channel: chan, user, timestamp: serverTimestamp() }, { merge: true }).catch(()=>{});
          if (typingTimer) clearTimeout(typingTimer);
          typingTimer = setTimeout(() => setTyping(false), 3000);
+         if (typeof window.showTyping === 'function') window.showTyping(user, user);
        } else {
          if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
          deleteDoc(doc(db,'typing',tid)).catch(()=>{});

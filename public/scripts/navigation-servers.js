@@ -194,7 +194,7 @@ function updateHeader() {
   h.style.display = 'flex';
 
   if (mode === 'dms' && dmWith) {
-    h.innerHTML = `<span class="hash">@</span><span class="hname">${escHtml(dmWith)}</span>`;
+    h.innerHTML = `<span class="hash">@</span><span class="hname">${escHtml(dmWith)}</span><span id="header-typing" style="margin-left:8px;font-size:11px;color:var(--mut);"></span>`;
   } else if (mode === 'dms') {
     h.innerHTML = `<span class="hname">Direct Messages</span>`;
   } else {
@@ -206,13 +206,38 @@ function updateHeader() {
     const canEdit = s && (s.owner === user || (s.admins || []).includes(user));
     const topicBtn = canEdit ? `<button onclick="setChannelTopic('${currentServer}','${escHtml(label)}')" style="margin-left:8px;background:transparent;border:none;color:var(--mut);cursor:pointer;font-size:11px;" title="Set topic">✎</button>` : '';
     const descBtn = canEdit ? `<button onclick="setChannelDescription('${currentServer}','${escHtml(label)}')" style="margin-left:4px;background:transparent;border:none;color:var(--mut);cursor:pointer;font-size:11px;" title="Set description">📝</button>` : '';
-    h.innerHTML = `<span class="hash">#</span><span class="hname">${escHtml(label)}</span>${topic ? `<span class="channel-topic" style="margin-left:12px;color:var(--mut);font-size:12px;font-weight:400;">${escHtml(topic)}</span>` : ''}${topicBtn}${descBtn}${desc ? `<div style="width:100%;color:var(--mut);font-size:11px;margin-top:2px;">${escHtml(desc)}</div>` : ''}`;
+    h.innerHTML = `<span class="hash">#</span><span class="hname">${escHtml(label)}</span><span id="header-typing" style="margin-left:8px;font-size:11px;color:var(--mut);"></span>${topic ? `<span class="channel-topic" style="margin-left:12px;color:var(--mut);font-size:12px;font-weight:400;">${escHtml(topic)}</span>` : ''}${topicBtn}${descBtn}${desc ? `<div style="width:100%;color:var(--mut);font-size:11px;margin-top:2px;">${escHtml(desc)}</div>` : ''}`;
   }
 
   document.body.classList.toggle('dm-mode', mode === 'dms');
   const placeholderLabel = (mode === 'dms' && dmWith) ? 'Message @' + dmWith : 'Message #' + (chan && chan.startsWith('srv_') ? chan.split('_').slice(2).join('_') : (chan || 'general'));
   document.getElementById('chat-input').placeholder = placeholderLabel;
 }
+
+// ---------- Typing indicators ----------
+const typingUsers = new Map(); // userId => timestamp
+function showTyping(userId, userName) {
+  typingUsers.set(userId, Date.now());
+  renderTypingIndicator();
+  setTimeout(() => { typingUsers.delete(userId); renderTypingIndicator(); }, 5000);
+}
+function renderTypingIndicator() {
+  const el = document.getElementById('header-typing');
+  if (!el) return;
+  const now = Date.now();
+  const active = [...typingUsers.entries()].filter(([, ts]) => now - ts < 5000);
+  if (active.length === 0) {
+    el.textContent = '';
+  } else if (active.length === 1) {
+    el.textContent = active[0][1] ? '...' : '';
+    // Show username
+    const name = active[0][0];
+    el.textContent = name + ' is typing...';
+  } else {
+    el.textContent = active.length + ' people are typing...';
+  }
+}
+window.showTyping = showTyping;
 
 function serverMenu() { openServerModal(); }
 
