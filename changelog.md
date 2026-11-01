@@ -1,4 +1,5 @@
 # Changelog
+ - 20a6d-2026.10.31-22.40.00-0400: Restored message sending by implementing the missing typing-status helper introduced with typing indicators; validated frontend syntax and deployed the hosting update.
  - 20a6d-2026.10.31-22.30.00-0400: Fixed Firestore server membership checks to remain compatible with older servers that do not yet have a `memberUids` list, restoring message access for username-based members. Firestore rules compiled and deployed successfully.
  - 1f89a-2026.10.23-16.16.37-0400: Added changelog
  - 20a6d-2026.10.23-22.30.59-0400: Added a settings overlay with five persisted, hot-swappable themes (Ash, Obsidian, Magma, Fulgurite, Plasma); moved the full color palette into theme stylesheets and converted shared stylesheet color literals to theme variables. Verified JavaScript syntax and theme variable coverage; no known issues, though visual browser testing remains to be done.

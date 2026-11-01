@@ -224,6 +224,28 @@ let isPinning = false;
 let userScrolling = false;
 let userScrollTimer = null;
 
+function setTyping(isTyping) {
+  if (!user || !chan) return;
+  const typingId = user + '__' + chan;
+  if (typingTimer) {
+    clearTimeout(typingTimer);
+    typingTimer = null;
+  }
+
+  const write = isTyping
+    ? setDoc(doc(db, 'typing', typingId), {
+      user,
+      channel: chan,
+      timestamp: serverTimestamp()
+    }, { merge: true })
+    : deleteDoc(doc(db, 'typing', typingId));
+
+  write.catch((error) => console.error('typing status update failed', error));
+  if (isTyping) {
+    typingTimer = setTimeout(() => setTyping(false), 5000);
+  }
+}
+
 function markUserScroll() {
   userScrolling = true;
   clearTimeout(userScrollTimer);
