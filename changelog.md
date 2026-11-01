@@ -1,4 +1,5 @@
 # Changelog
+ - 20a6d-2026.11.01-00.28.41-0400: Implemented the restored TODO gaps: authenticated animated-media AVIF conversion, chunked attachments up to 4MB with Firestore stitching, SVG control icons, high-contrast palette cleanup, and protected developer profile badges. Removed the completed task entries; JavaScript and media conversion checks passed locally.
  - 20a6d-2026.10.31-23.08.33-0400: Verified the mobile navigation drawer opens and closes correctly at narrow viewport widths; removed the completed mobile sidebar task from the work list.
  - 20a6d-2026.10.31-23.09.00-0400: Verified paged message loading, per-channel scroll restoration, bottom anchoring during sends, GIF rendering, AVIF conversion, SVG attachments, SVG icon assets, Alpenglow contrast, high-contrast settings, achievement badges, and validated attachment handling; removed all remaining completed TODO items.
  - 1f89a-2026.10.23-16.16.37-0400: Added changelog

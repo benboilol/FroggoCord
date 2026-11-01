@@ -62,6 +62,11 @@ service cloud.firestore {
       allow delete: if isAuth() && resource.data.uid == request.auth.uid;
     }
 
+    match /developerBadges/{userId} {
+      allow read: if isAuth();
+      allow write: if false;
+    }
+
     match /presence/{userId} {
       allow read: if isAuth();
       allow write: if isAuth()
@@ -78,6 +83,10 @@ service cloud.firestore {
         && request.resource.data.text is string
         && request.resource.data.text.size() <= 4000
         && (!('files' in request.resource.data) || (request.resource.data.files is list && request.resource.data.files.size() <= 3))
+        && (!('attachments' in request.resource.data) || (request.resource.data.attachments is list && request.resource.data.attachments.size() <= 3))
+        && (!('images' in request.resource.data) || request.resource.data.images is list)
+        && (!('images' in request.resource.data) || !('files' in request.resource.data) || !('attachments' in request.resource.data)
+          || request.resource.data.images.size() + request.resource.data.files.size() + request.resource.data.attachments.size() <= 3)
         && request.resource.data.channel is string
         && (
           (
@@ -98,7 +107,7 @@ service cloud.firestore {
             && request.resource.data.user == resource.data.user
             && request.resource.data.text is string
             && request.resource.data.text.size() <= 4000
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'editedAt', 'replyTo', 'images', 'files', 'imageW', 'imageH', 'clientMsgId'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'editedAt', 'replyTo', 'images', 'files', 'attachments', 'imageW', 'imageH', 'clientMsgId'])
           )
           ||
           (
@@ -138,6 +147,26 @@ service cloud.firestore {
             && isDmChannelForUser(resource.data.channel)
           )
         );
+    }
+
+    match /messageChunks/{chunkId} {
+      allow read: if isAuth()
+        && (
+          (resource.data.channel is string && isChannelForServer(resource.data.channel) && canAccessServerChannel(resource.data.channel))
+          || (resource.data.channel is string && isDmChannelForUser(resource.data.channel))
+        );
+      allow create: if isAuth()
+        && request.resource.data.user == username()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.data is string
+        && request.resource.data.data.size() <= 350000
+        && request.resource.data.messageId is string
+        && request.resource.data.channel is string
+        && (
+          (isChannelForServer(request.resource.data.channel) && canAccessServerChannel(request.resource.data.channel))
+          || isDmChannelForUser(request.resource.data.channel)
+        );
+      allow delete: if isAuth() && resource.data.user == username();
     }
 
     match /friends/{friendId} {

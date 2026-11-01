@@ -223,6 +223,35 @@ let msgsPinned = true;
 let isPinning = false;
 let userScrolling = false;
 let userScrollTimer = null;
+async function hydrateChunkedAttachments(message) {
+  if (!message || !message.id || !Array.isArray(message.attachments) || message._chunkedHydrated) return;
+  message._chunkedHydrated = true;
+  try {
+    const snapshot = await getDocs(query(collection(db, 'messageChunks'), where('messageId', '==', message.id)));
+    const byAttachment = new Map();
+    snapshot.docs.forEach(chunk => {
+      const data = chunk.data();
+      if (!byAttachment.has(data.attachmentId)) byAttachment.set(data.attachmentId, []);
+      byAttachment.get(data.attachmentId).push(data);
+    });
+    message.attachments.forEach(attachment => {
+      const chunks = (byAttachment.get(attachment.id) || []).sort((a, b) => a.index - b.index);
+      if (chunks.length !== attachment.chunks) return;
+      const dataUrl = chunks.map(chunk => chunk.data).join('');
+      if (attachment.isImage) {
+        if (!Array.isArray(message.images)) message.images = [];
+        message.images.push(dataUrl);
+      } else {
+        if (!Array.isArray(message.files)) message.files = [];
+        message.files.push({ name: attachment.name, size: attachment.size, type: attachment.type, preview: dataUrl });
+      }
+    });
+    renderMessagePages({ preserveScroll: true });
+  } catch (error) {
+    message._chunkedHydrated = false;
+    console.error('Could not load attachment chunks', error);
+  }
+}
 
 function setTyping(isTyping) {
   if (!user || !chan) return;
@@ -508,6 +537,8 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
     chatMessageContainer._ro = observer;
   }
   observeChatImages();
+  docs.filter(message => Array.isArray(message.attachments) && !message._chunkedHydrated)
+    .forEach(message => { hydrateChunkedAttachments(message); });
 
   const msgContainer = document.getElementById('message-container');
   chatMessageContainer.querySelectorAll('img').forEach(img => {
@@ -871,6 +902,7 @@ onAuthStateChanged(window.auth, async (u) => {
       lastSeen:serverTimestamp()
     }, {merge:true}).catch(()=>{});
 
+    const developerBadgeUsers = new Set();
     onSnapshot(collection(db,"users"),(snap)=>{
       allUsers = [];
       userPfpMap.clear();
@@ -885,6 +917,10 @@ onAuthStateChanged(window.auth, async (u) => {
         if (data.user && data.accent) userAccentMap.set(data.user, data.accent);
         if (data.user && data.decoration) userDecorationMap.set(data.user, data.decoration);
         if (data.user && data.badges) userBadgesMap.set(data.user, data.badges);
+        if (data.user && developerBadgeUsers.has(data.user)) {
+          const badges = userBadgesMap.get(data.user) || [];
+          if (!badges.includes('developer')) userBadgesMap.set(data.user, badges.concat('developer'));
+        }
         if (data.user && data.bgColor) userBgColorMap.set(data.user, data.bgColor);
         if (data.user && data.textColor) userTextColorMap.set(data.user, data.textColor);
         if (data.user && data.customStatus) userCustomStatusMap.set(data.user, data.customStatus);
@@ -897,6 +933,16 @@ onAuthStateChanged(window.auth, async (u) => {
       renderUserList();
       if (mode === 'dms') renderSidebar();
     }, (err) => { console.error('users snapshot failed', err); });
+    onSnapshot(collection(db, 'developerBadges'), (snap) => {
+      snap.docs.forEach(d => {
+        const data = d.data();
+        if (!data.user) return;
+        developerBadgeUsers.add(data.user);
+        const badges = userBadgesMap.get(data.user) || [];
+        if (!badges.includes('developer')) userBadgesMap.set(data.user, badges.concat('developer'));
+      });
+      if (typeof renderUserList === 'function') renderUserList();
+    }, (err) => { console.error('developer badge snapshot failed', err); });
 
     lastActivity = Date.now();
     if (heartbeat) clearInterval(heartbeat);

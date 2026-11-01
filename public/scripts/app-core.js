@@ -21,7 +21,9 @@ const {
   setDoc,
   where,
   getDocs,
-  getDoc
+  getDoc,
+  getFunctions,
+  httpsCallable
 } = window.froggocordFirebase;
 
     const config = { apiKey: "AIzaSyBdcQW56DH7tM37elwMYFQdzfpfCdEkzMs", authDomain: "froggocord.firebaseapp.com", projectId: "froggocord", storageBucket: "froggocord.firebasestorage.app", messagingSenderId: "237791448036", appId: "1:237791448036:web:82886ca5b0ce6dafa6d5f1", measurementId: "G-J7CRQ9D4VD" };
@@ -30,6 +32,27 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 window.auth = auth;
 window.db = db;
+const functions = getFunctions(app);
+const convertAnimatedMedia = httpsCallable(functions, 'convertAnimatedMedia');
+window.convertAnimatedMedia = async (file) => {
+  if (!file || !file.type || file.size > 4 * 1024 * 1024) return null;
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+  const result = await convertAnimatedMedia({
+    name: file.name,
+    type: file.type,
+    data: dataUrl
+  });
+  const output = result.data;
+  if (!output || typeof output.data !== 'string' || output.type !== 'image/avif') return null;
+  const binary = atob(output.data.split(',')[1] || '');
+  const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+  return new File([bytes], file.name.replace(/\.[^.]+$/, '') + '.avif', { type: 'image/avif' });
+};
     let chan = null, user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'dms', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {}, curActivity = '';
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
     let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map(), userBgColorMap = new Map(), userTextColorMap = new Map(), userCustomStatusMap = new Map(), userPronounsMap = new Map(), userBioMap = new Map(), userDisplayNameMap = new Map(), userBadgesMap = new Map();
@@ -832,7 +855,28 @@ window.db = db;
     window.markProfileCustomized = markProfileCustomized;
 
     // Pending message tracking for sending/sent/failed states
+    const INLINE_ATTACHMENT_LIMIT = 700000;
+    const MAX_ATTACHMENT_SIZE = 4 * 1024 * 1024;
+    const ATTACHMENT_CHUNK_SIZE = 300000;
     let pendingMessages = [];
+
+    async function writeAttachmentChunks(messageId, attachments) {
+      for (const attachment of attachments || []) {
+        const chunks = [];
+        for (let offset = 0; offset < attachment.data.length; offset += ATTACHMENT_CHUNK_SIZE) {
+          chunks.push(setDoc(doc(db, 'messageChunks', messageId + '_' + attachment.id + '_' + chunks.length), {
+            messageId,
+            attachmentId: attachment.id,
+            index: chunks.length,
+            data: attachment.data.slice(offset, offset + ATTACHMENT_CHUNK_SIZE),
+            channel: attachment.channel,
+            user,
+            uid: auth.currentUser.uid
+          }));
+        }
+        await Promise.all(chunks);
+      }
+    }
 
     let _notifyDebounce = null;
     function notifyPendingChanged() {
@@ -884,8 +928,8 @@ window.db = db;
       const pending = {
         clientId: clientId,
         text: t,
-        images: pendingFiles.filter(p => p.isImage).map(p => p.preview),
-        files: pendingFiles.filter(p => !p.isImage).map(p => ({ name: p.name, size: p.size, type: p.type, preview: p.preview })),
+        images: pendingFiles.filter(p => p.isImage && p.file.size <= INLINE_ATTACHMENT_LIMIT).map(p => p.preview),
+        files: pendingFiles.filter(p => !p.isImage && p.file.size <= INLINE_ATTACHMENT_LIMIT).map(p => ({ name: p.name, size: p.size, type: p.type, preview: p.preview })),
         imageW: null,
         imageH: null,
         user: user,
@@ -895,6 +939,22 @@ window.db = db;
         status: 'sending',
         _clientTimestamp: Date.now()
       };
+      const chunkedAttachments = [];
+      pendingFiles.forEach((file, index) => {
+        if (file.file && file.file.size > INLINE_ATTACHMENT_LIMIT) {
+          chunkedAttachments.push({
+            id: String(index),
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            isImage: file.isImage,
+            chunks: Math.ceil(file.preview.length / ATTACHMENT_CHUNK_SIZE),
+            data: file.preview,
+            channel: chan
+          });
+        }
+      });
+      pending.chunkedAttachments = chunkedAttachments;
 
       input.value = '';
       if (reply) { window.cancelReply(); }
@@ -935,10 +995,12 @@ window.db = db;
         const payload = { text: t, user, uid: (auth.currentUser && auth.currentUser.uid) || null, channel: chan, pfp, timestamp: serverTimestamp(), clientMsgId: clientId };
         if (pending.images && pending.images.length) payload.images = pending.images;
         if (pending.files && pending.files.length) payload.files = pending.files;
+        if (chunkedAttachments.length) payload.attachments = chunkedAttachments.map(({ data, channel, ...attachment }) => attachment);
         if (pending.imageW) { payload.imageW = pending.imageW; payload.imageH = pending.imageH; }
         if (pending.replyTo) payload.replyTo = pending.replyTo;
 
-        await addDoc(collection(db, "messages"), payload);
+        const messageRef = await addDoc(collection(db, "messages"), payload);
+        await writeAttachmentChunks(messageRef.id, chunkedAttachments);
         pending.status = 'sent';
         notifyPendingChanged();
         // Award achievement badges
@@ -977,7 +1039,11 @@ window.db = db;
         if (pending.imageW) { payload.imageW = pending.imageW; payload.imageH = pending.imageH; }
         if (pending.replyTo) payload.replyTo = pending.replyTo;
 
-        await addDoc(collection(db, "messages"), payload);
+        if (pending.chunkedAttachments && pending.chunkedAttachments.length) {
+          payload.attachments = pending.chunkedAttachments.map(({ data, channel, ...attachment }) => attachment);
+        }
+        const messageRef = await addDoc(collection(db, "messages"), payload);
+        await writeAttachmentChunks(messageRef.id, pending.chunkedAttachments || []);
         pending.status = 'sent';
         notifyPendingChanged();
 

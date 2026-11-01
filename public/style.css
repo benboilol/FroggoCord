@@ -10,6 +10,7 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 button { font-family: inherit; }
 img, button, span, input { border: none; outline: none; }
+.control-icon { width: 20px; height: 20px; display: block; color: currentColor; }
 
 /* ---------- server rail ---------- */
 .sv { width: 72px; background: var(--bg-p); display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 8px; flex-shrink: 0; overflow-y: auto; overflow-x: hidden; }
@@ -288,14 +289,15 @@ textarea.inp2 { resize: vertical; }
 .custom-swatch { --swatch-a:#555; --swatch-b:#888; --swatch-c:#aaa; }
 
 /* High contrast mode */
-body.high-contrast { --mut:#fff; --txt:#fff; --bright:#fff; --bl:#fff; --pr:#fff; --danger:#fff; --yellow:#fff; --border:#fff; }
+body.high-contrast {
+  --bg-p:#000; --bg-s:#111; --bg-t:#1b1b1b; --chat:#000; --chat-hover:#222;
+  --hover:#333; --active:#444; --panel:#111; --input:#000; --txt:#fff;
+  --bright:#fff; --mut:#eee; --bl:#fff; --pr:#fff; --danger:#fff;
+  --yellow:#fff; --border:#fff; --accent-contrast:#000; --link:#fff;
+}
 body.high-contrast .mut { color:#fff !important; }
 body.high-contrast button { border:1px solid #fff; }
 body.high-contrast .msg-bubble .spoiler { background:#000; color:#fff; text-shadow:none; }
-/* High contrast mode */
-body.high-contrast { --mut:#fff; --txt:#fff; --bright:#fff; --bl:#fff; --pr:#fff; --danger:#fff; --yellow:#fff; }
-body.high-contrast .mut { color:#fff !important; }
-body.high-contrast button { border:1px solid #fff; }
 
 @media (max-width: 480px) { .settings-card { padding: 18px; } .theme-options { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 

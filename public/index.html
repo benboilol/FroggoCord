@@ -442,7 +442,7 @@
     <div id="mobile-nav-backdrop" aria-hidden="true"></div>
     <div class="sv" id="server-bar">
     <div class="si" id="dm-btn" onclick="toggleDMView()" title="Direct Messages" style="font-size:22px;"><img src="/froggocord_logo.svg" alt="Direct Messages" style="width: 22px; height: 22px;"></div>
-    <div class="si" id="discover-btn" onclick="openDiscoverModal()" title="Discover Servers" style="font-size:18px;background:var(--bg-t);display:flex;align-items:center;justify-content:center;cursor:pointer;">🔍</div>
+    <div class="si" id="discover-btn" onclick="openDiscoverModal()" title="Discover Servers" style="font-size:18px;background:var(--bg-t);display:flex;align-items:center;justify-content:center;cursor:pointer;"><img class="control-icon" src="/discover_icon.svg" alt="Discover Servers"></div>
     <div class="rail-divider"></div>
     <div id="server-list"></div>
     <div class="si add" id="add-server-btn" onclick="openServerModal()" title="Add a Server">+</div>
@@ -525,13 +525,13 @@
         </div>
         <div class="composer">
         <input type="file" id="file-input" accept="image/*,.pdf,.txt,.csv,.zip,.json" multiple style="display:none;">
-        <button class="attach" title="Upload image or file" onclick="document.getElementById('file-input').click()">📎</button>
+        <button class="attach" title="Upload image or file" onclick="document.getElementById('file-input').click()"><img class="control-icon" src="/attachment_icon.svg" alt="Upload image or file"></button>
         <button class="plus" title="GIFs" onclick="document.getElementById('media-picker').style.display='flex';showTab('gifs')">+</button>
         <textarea id="chat-input" placeholder="Message #general" rows="1" onkeydown="handleKeyPress(event)"></textarea>
-        <button id="emoji-btn" class="emoji" title="Emoji">😀</button>
-        <button id="fav-gifs-btn" class="emoji" title="Favorite GIFs" onclick="showFavoriteGifs()">⭐</button>
-        <button id="soundboard-btn" class="emoji" title="Soundboard" onclick="toggleSoundboard()">🔊</button>
-        <button id="search-btn" class="emoji" title="Search messages" onclick="toggleSearch()">🔍</button>
+        <button id="emoji-btn" class="emoji" title="Emoji"><img class="control-icon" src="/emoji_icon.svg" alt="Emoji"></button>
+        <button id="fav-gifs-btn" class="emoji" title="Favorite GIFs" onclick="showFavoriteGifs()"><img class="control-icon" src="/star_icon.svg" alt="Favorite GIFs"></button>
+        <button id="soundboard-btn" class="emoji" title="Soundboard" onclick="toggleSoundboard()"><img class="control-icon" src="/soundboard_icon.svg" alt="Soundboard"></button>
+        <button id="search-btn" class="emoji" title="Search messages" onclick="toggleSearch()"><img class="control-icon" src="/search_icon.svg" alt="Search messages"></button>
         <div id="soundboard-panel" style="display:none; position:absolute; bottom:60px; right:70px; width:260px; max-height:300px; overflow-y:auto; background:var(--bg-s); border-radius:8px; padding:8px; box-shadow:0 4px 16px rgba(0,0,0,.4); z-index:1000; border:1px solid var(--border);"></div>
         <div id="fav-gifs-tooltip" style="display:none; position:absolute; bottom:60px; right:20px; width:320px; max-height:400px; overflow:auto; background:var(--bg-s); border-radius:8px; padding:8px; box-shadow:0 4px 16px rgba(0,0,0,.4); z-index:1000;"></div>
         <button id="send-btn" class="send-btn" title="Send message" onclick="sendMessage()"><img src="/send_message_icon.svg" alt="Send message" style="width: 22px; height: 22px;"></button>

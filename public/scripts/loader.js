@@ -1,7 +1,8 @@
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js';
 import {getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,onAuthStateChanged,signOut} from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js';
 import {getFirestore,collection,addDoc,onSnapshot,query,orderBy,limit,startAfter,serverTimestamp,doc,updateDoc,deleteDoc,setDoc,where,getDocs,getDoc} from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js';
-window.froggocordFirebase={initializeApp,getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,onAuthStateChanged,signOut,getFirestore,collection,addDoc,onSnapshot,query,orderBy,limit,startAfter,serverTimestamp,doc,updateDoc,deleteDoc,setDoc,where,getDocs,getDoc};
+import {getFunctions,httpsCallable} from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-functions.js';
+window.froggocordFirebase={initializeApp,getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,onAuthStateChanged,signOut,getFirestore,collection,addDoc,onSnapshot,query,orderBy,limit,startAfter,serverTimestamp,doc,updateDoc,deleteDoc,setDoc,where,getDocs,getDoc,getFunctions,httpsCallable};
 const appScripts=[
     'app-core.js',
     'navigation-servers.js',
