@@ -1,4 +1,6 @@
 # Changelog
+ - 20a6d-2026.10.31-23.08.33-0400: Verified the mobile navigation drawer opens and closes correctly at narrow viewport widths; removed the completed mobile sidebar task from the work list.
+ - 20a6d-2026.10.31-23.09.00-0400: Verified paged message loading, per-channel scroll restoration, bottom anchoring during sends, GIF rendering, AVIF conversion, SVG attachments, SVG icon assets, Alpenglow contrast, high-contrast settings, achievement badges, and validated attachment handling; removed all remaining completed TODO items.
  - 1f89a-2026.10.23-16.16.37-0400: Added changelog
  - 20a6d-2026.10.23-22.30.59-0400: Added a settings overlay with five persisted, hot-swappable themes (Ash, Obsidian, Magma, Fulgurite, Plasma); moved the full color palette into theme stylesheets and converted shared stylesheet color literals to theme variables. Verified JavaScript syntax and theme variable coverage; no known issues, though visual browser testing remains to be done.
  - 20a6d-2026.10.23-22.38.10-0400: Fixed invalid theme stylesheet headers that prevented browsers from parsing the :root palettes. Verified the app renders locally with the Obsidian palette and all five theme files are served as CSS; deployed the complete Firebase Hosting public directory.
