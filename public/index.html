@@ -91,6 +91,11 @@
         <button type="button" class="btn btn-secondary" onclick="viewAuditLog()" style="margin-bottom:8px;">View Audit Log</button>
         <div id="ss-audit" style="max-height:160px;overflow:auto;font-size:12px;color:var(--mut);"></div>
         </div>
+        <div id="ss-stats-section">
+        <label class="field-label">Server Stats</label>
+        <button type="button" class="btn btn-secondary" onclick="viewServerStats()" style="margin-bottom:8px;">View Stats</button>
+        <div id="ss-stats" style="max-height:160px;overflow:auto;font-size:12px;color:var(--mut);"></div>
+        </div>
         <div id="ss-webhook-section">
         <label class="field-label">Webhooks</label>
         <button type="button" class="btn btn-secondary" onclick="createWebhook()" style="margin-bottom:8px;">Create Webhook</button>
@@ -281,7 +286,10 @@
         <label class="field-label" for="sp-display-name">Display name</label>
         <input id="sp-display-name" class="inp2" placeholder="How your name appears" maxlength="32">
         <label class="field-label" for="sp-custom-status">Custom status text</label>
-        <input id="sp-custom-status" class="inp2" placeholder="What are you up to?" maxlength="128">
+        <div style="display:flex;gap:4px;">
+        <input id="sp-custom-status" class="inp2" placeholder="What are you up to?" maxlength="128" style="flex:1;">
+        <button type="button" onclick="pickStatusEmoji()" style="width:36px;padding:0;font-size:16px;background:var(--bg-t);border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--txt);">😀</button>
+        </div>
         <label class="field-label" for="sp-pronouns">Pronouns</label>
         <input id="sp-pronouns" class="inp2" placeholder="e.g. she/her, he/him, they/them" maxlength="32">
         <label class="field-label" for="sp-bio">Biography</label>

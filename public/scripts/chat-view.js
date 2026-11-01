@@ -251,6 +251,15 @@ function pinMsgsBottom() {
 const chatGifDims = {};
 const REACTION_EMOJIS = ['👍','👎','❤️','😂','👮','😢','😡','🎉','🔥','👀','✅','❌','💯','🤔','😍','🙏','👏','💀','😭','😎','🥳','🤯'];
 const messageEditHistory = new Map(); // msgId => [{ text, timestamp }]
+const RECENT_EMOJIS_KEY = 'froggocord-recent-emojis';
+let recentEmojis = [];
+try { recentEmojis = JSON.parse(localStorage.getItem(RECENT_EMOJIS_KEY) || '[]'); } catch (e) {}
+function addRecentEmoji(emoji) {
+  recentEmojis = recentEmojis.filter(e => e !== emoji);
+  recentEmojis.unshift(emoji);
+  recentEmojis = recentEmojis.slice(0, 10);
+  try { localStorage.setItem(RECENT_EMOJIS_KEY, JSON.stringify(recentEmojis)); } catch (e) {}
+}
 
 function renderReactions(m) {
   const r = (m && m.reactions) || {};

@@ -1058,6 +1058,35 @@ window.showServerRules = async (serverId) => {
 };
 
 window.togglePublicServer = togglePublicServer;
+// ---------- Server Stats ----------
+window.viewServerStats = async () => {
+  const s = getServerById(ctxServerId || currentServer);
+  if (!s) { appAlert('No server selected.'); return; }
+  const container = document.getElementById('ss-stats');
+  if (!container) return;
+  try {
+    const memberCount = (s.members || []).length;
+    const channelCount = (s.channels || []).length;
+    const emojiCount = (s.emojis || []).length;
+    const stickerCount = (s.stickers || []).length;
+    // Count messages in server channels
+    let msgCount = 0;
+    try {
+      const snap = await getDocs(query(collection(db, 'messages')));
+      snap.docs.forEach(d => {
+        const data = d.data();
+        if (data.channel && String(data.channel).startsWith('srv_' + s.id + '_')) msgCount++;
+      });
+    } catch (e) {}
+    container.innerHTML = `
+      <div style="padding:6px;border-bottom:1px solid var(--border);"><strong>Members:</strong> ${memberCount}</div>
+      <div style="padding:6px;border-bottom:1px solid var(--border);"><strong>Channels:</strong> ${channelCount}</div>
+      <div style="padding:6px;border-bottom:1px solid var(--border);"><strong>Messages:</strong> ${msgCount}</div>
+      <div style="padding:6px;border-bottom:1px solid var(--border);"><strong>Emojis:</strong> ${emojiCount}</div>
+      <div style="padding:6px;"><strong>Stickers:</strong> ${stickerCount}</div>
+    `;
+  } catch (e) { container.innerHTML = '<div style="color:var(--danger);">Failed to load stats.</div>'; }
+};
 
 function closeServerSettings() {
   const m = document.getElementById('server-settings-modal');

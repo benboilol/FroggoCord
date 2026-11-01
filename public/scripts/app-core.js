@@ -1070,6 +1070,41 @@ window.db = db;
 
     window.getActiveThread = () => sessionStorage.getItem('froggocord-active-thread') || null;
 
+    // ---------- Custom Status Emoji ----------
+    window.pickStatusEmoji = async () => {
+      const emoji = await appPrompt('Enter emoji for custom status:', '');
+      if (emoji === null) return;
+      const input = document.getElementById('sp-custom-status');
+      if (input) input.value = (input.value + ' ' + emoji).trim();
+    };
+
+    // ---------- Message Translation ----------
+    window.translateMessage = async (msgId) => {
+      const msg = document.querySelector(`[data-id="${msgId}"]`);
+      if (!msg) { appAlert('Message not found.'); return; }
+      const textEl = msg.querySelector('.msg-bubble');
+      if (!textEl) { appAlert('No text to translate.'); return; }
+      const text = textEl.textContent.trim();
+      if (!text) { appAlert('No text to translate.'); return; }
+      const targetLang = await appPrompt('Translate to (language code, e.g. en, es, fr, de, ja):', 'en');
+      if (targetLang === null) return;
+      try {
+        // Use LibreTranslate or similar free API
+        const response = await fetch('https://libretranslate.de/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ q: text, source: 'auto', target: targetLang })
+        });
+        const data = await response.json();
+        const translated = data.translatedText || data.translation || '';
+        if (translated) {
+          appAlert('Translation: ' + translated);
+        } else {
+          appAlert('Translation failed.');
+        }
+      } catch (e) { appAlert('Translation service unavailable.'); }
+    };
+
     // ---------- Download your data ----------
     window.downloadMyData = async () => {
       if (!user) { appAlert('Sign in first.'); return; }

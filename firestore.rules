@@ -307,6 +307,14 @@ service cloud.firestore {
       allow delete: if isAuth() && resource.data.creator == username();
     }
 
+    // Message edit history: readable by any auth user; writable by message author.
+    match /messageHistory/{historyId} {
+      allow read: if isAuth();
+      allow create: if isAuth() && request.resource.data.messageId is string && request.resource.data.user == username();
+      allow update: if false;
+      allow delete: if false;
+    }
+
     // Events: readable by server members; writable by owner/admin.
     match /events/{eventId} {
       allow read: if isAuth();

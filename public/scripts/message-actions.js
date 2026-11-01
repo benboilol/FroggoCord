@@ -1,13 +1,47 @@
 // Message actions, reactions, attachments, emoji, GIF search, and presence updates.
+    const { doc, getDoc, collection, query, where, orderBy, getDocs, setDoc, updateDoc, deleteDoc, addDoc, serverTimestamp } = window.froggocordFirebase;
     window.editMsg = async (id,txt) => { 
       const t = await appPrompt("Edit:", txt); 
       if (!t || t === txt) return; 
       try {
+        // Store previous version for edit history
+        const snap = await getDoc(doc(db,"messages",id));
+        const prev = snap.data();
+        if (prev && prev.text) {
+          const histRef = doc(db, "messageHistory", id + "__" + Date.now());
+          await setDoc(histRef, {
+            messageId: id,
+            text: prev.text,
+            editedAt: prev.editedAt || prev.timestamp,
+            user: user,
+            timestamp: serverTimestamp()
+          });
+        }
         await updateDoc(doc(db,"messages",id),{text:t,editedAt:serverTimestamp()}); 
+        appAlert('Message edited.');
       } catch (e) {
         appAlert('Failed to edit message.');
       }
     }
+    window.viewEditHistory = async (id) => {
+      const histRef = collection(db, "messageHistory");
+      const q = query(histRef, where("messageId", "==", id), orderBy("timestamp", "desc"));
+      try {
+        const snap = await getDocs(q);
+        const versions = snap.docs.map(d => d.data());
+        if (!versions.length) { appAlert('No edit history.'); return; }
+        let html = '<div style="max-height:250px;overflow-y:auto;">';
+        versions.forEach((v, i) => {
+          const dt = new Date(v.timestamp.toMillis ? v.timestamp.toMillis() : v.timestamp);
+          html += `<div style="padding:6px;border-bottom:1px solid var(--border);font-size:12px;">
+            <strong>Edit ${i+1}</strong> · ${dt.toLocaleString()}<br>
+            <span style="color:var(--mut);white-space:pre-wrap;">${escHtml(v.text)}</span>
+          </div>`;
+        });
+        html += '</div>';
+        appAlert(html);
+      } catch (e) { appAlert('Failed to load edit history.'); }
+    };
     window.deleteMsg = async (id) => { 
       if (!(await appConfirm("Delete this message?"))) return;
       try {
@@ -390,6 +424,9 @@ ctxMenu.innerHTML = `
 <div data-action="copylink" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">Copy Message Link</div>
 <div data-action="bookmark" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">Bookmark</div>
 <div data-action="report" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">Report</div>
+<div style="height:1px;background:var(--border);margin:4px 0;"></div>
+<div data-action="edithistory" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">View Edit History</div>
+<div data-action="translate" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">Translate</div>
 `;
 document.body.appendChild(ctxMenu);
 
@@ -445,6 +482,10 @@ ctxMenu.addEventListener('click', (e) => {
     }
   } else if (act === 'report') {
     if (typeof window.reportMessage === 'function') window.reportMessage(ctxMsgId);
+  } else if (act === 'edithistory') {
+    if (typeof window.viewEditHistory === 'function') window.viewEditHistory(ctxMsgId);
+  } else if (act === 'translate') {
+    if (typeof window.translateMessage === 'function') window.translateMessage(ctxMsgId);
   }
 });
 
