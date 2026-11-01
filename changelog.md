@@ -1,6 +1,4 @@
 # Changelog
- - 20a6d-2026.11.01-00.40.00-0400: Fixed server creation by initializing the creator as an administrator and enforcing a signed-in identity before writing; added a safe fallback when browser AVIF conversion is unavailable.
- - 20a6d-2026.11.01-00.35.00-0400: Moved media conversion fully into the browser using local AVIF encoding with original-media fallback, switched developer badges to the immutable `users/{user}.developerBadge` field, and removed the server conversion/badge Functions and Sharp dependency.
  - 20a6d-2026.11.01-00.30.00-0400: Deployed updated Hosting and Firestore rules; Firebase Functions deployment is pending a Blaze-plan upgrade because Cloud Build and Artifact Registry APIs cannot be enabled on the current plan.
  - 20a6d-2026.11.01-00.28.41-0400: Implemented the restored TODO gaps: authenticated animated-media AVIF conversion, chunked attachments up to 4MB with Firestore stitching, SVG control icons, high-contrast palette cleanup, and protected developer profile badges. Removed the completed task entries; JavaScript and media conversion checks passed locally.
  - 20a6d-2026.10.31-23.08.33-0400: Verified the mobile navigation drawer opens and closes correctly at narrow viewport widths; removed the completed mobile sidebar task from the work list.
@@ -141,3 +139,5 @@
  - 20a6d-2026.10.31-23.00.00-0400: Replaced unsupported Firestore rules `slice()` calls in DM and server-channel authorization checks, which could cause valid message and GIF sends to fail with permission denied.
  - 20a6d-2026.10.31-23.10.00-0400: Restored server message authorization using the existing username membership list, avoiding legacy UID/channel-access metadata that was rejecting valid members.
  - 20a6d-2026.10.31-23.15.00-0400: Fixed the composer scroll jump by keeping the message pane anchored to the bottom during optimistic sends while preserving manual scroll positions.
+ - 20a6d-2026.11.01-00.35.00-0400: Moved media conversion fully into the browser using local AVIF encoding with original-media fallback, switched developer badges to the immutable `users/{user}.developerBadge` field, and removed the server conversion/badge Functions and Sharp dependency.
+ - 20a6d-2026.11.01-00.40.00-0400: Fixed server creation by initializing the creator as an administrator and enforcing a signed-in identity before writing; added a safe fallback when browser AVIF conversion is unavailable.
