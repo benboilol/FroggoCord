@@ -12,7 +12,10 @@ service cloud.firestore {
 
     function isMemberOfServer(serverDoc, uid) {
       return serverDoc.members is list
-        && (uid in serverDoc.memberUids || username() in serverDoc.members);
+        && (
+          (serverDoc.memberUids is list && uid in serverDoc.memberUids)
+          || username() in serverDoc.members
+        );
     }
 
     function isChannelForServer(channel) {
