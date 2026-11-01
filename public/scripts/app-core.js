@@ -41,7 +41,7 @@ window.db = db;
       return new Blob([buffer], { type: 'image/avif' });
     };
     window.convertImageToAvif = async (file, options = {}) => {
-      if (!file || !file.type.startsWith('image/') || file.size > 4 * 1024 * 1024) return null;
+      if (!file || !file.type.startsWith('image/')) return null;
       let sourceUrl = null;
       try {
         let source;

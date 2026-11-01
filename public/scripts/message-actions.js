@@ -158,10 +158,10 @@ if (fileInputEl) {
     try {
       const results = [];
       for (const f of valid) {
-        if (f.size > 4 * 1024 * 1024) { appAlert('File too large (max 4MB): ' + f.name); continue; }
         let pf = f;
         if (f.type.startsWith('image/')) pf = await preferAvif(f);
         if (f.type.startsWith('video/')) pf = await window.convertVideoToAv1Mkv(f);
+        if (pf.size > 4 * 1024 * 1024) { appAlert('File too large after conversion (max 4MB): ' + f.name); continue; }
         const preview = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
@@ -173,7 +173,7 @@ if (fileInputEl) {
       if (!results.length) return;
       pendingFiles = results;
       document.getElementById('file-preview-img').src = results[0].preview;
-      document.getElementById('file-preview-name').textContent = results.length + ' image(s) selected';
+      document.getElementById('file-preview-name').textContent = results.length + ' file(s) selected';
       document.getElementById('file-preview').style.display = 'block';
     } catch (error) {
       appAlert(error.message || 'Failed to process file. AVIF/AV1 conversion may not be supported by this browser.');

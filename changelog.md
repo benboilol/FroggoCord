@@ -144,3 +144,4 @@
  - 20a6d-2026.11.01-10.15.00-0500: Normalized all client-uploaded images, including GIF/APNG/WebP and profile/server artwork, to AVIF before sending; added client-side AV1 MKV conversion for video attachments with an explicit unsupported-browser error instead of uploading the original.
  - 20a6d-2026.11.01-10.25.00-0500: Fixed image processing failures by adding an Image-element decode fallback and bounded AVIF quality/size retries for browsers without createImageBitmap or oversized encodes.
  - 20a6d-2026.11.01-10.35.00-0500: Added a WASM AVIF encoder fallback for browsers whose native canvas AVIF encoding returns PNG or another non-AVIF format.
+ - 20a6d-2026.11.01-10.40.00-0500: Attempted image and video conversion before applying the 4MB attachment limit; oversized files are now rejected only after conversion.
