@@ -250,6 +250,7 @@ function pinMsgsBottom() {
 
 const chatGifDims = {};
 const REACTION_EMOJIS = ['👍','👎','❤️','😂','👮','😢','😡','🎉','🔥','👀','✅','❌','💯','🤔','😍','🙏','👏','💀','😭','😎','🥳','🤯'];
+const messageEditHistory = new Map(); // msgId => [{ text, timestamp }]
 
 function renderReactions(m) {
   const r = (m && m.reactions) || {};
