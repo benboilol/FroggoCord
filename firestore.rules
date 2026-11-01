@@ -31,7 +31,8 @@ service cloud.firestore {
       return channel is string
         && channel.matches('^dm_.*$')
         && (
-          username() in channel.split('_').slice(1)
+          channel.split('_')[1] == username()
+          || channel.split('_')[2] == username()
         );
     }
 
@@ -40,9 +41,9 @@ service cloud.firestore {
       return isMemberOfServer(server, request.auth.uid)
         && (
           !(server.channelAccess is map)
-          || !(channel.split('_').slice(2).join('_') in server.channelAccess)
-          || !(server.channelAccess[channel.split('_').slice(2).join('_')].allowedUids is list)
-          || request.auth.uid in server.channelAccess[channel.split('_').slice(2).join('_')].allowedUids
+          || !(channel.split('_')[2] in server.channelAccess)
+          || !(server.channelAccess[channel.split('_')[2]].allowedUids is list)
+          || request.auth.uid in server.channelAccess[channel.split('_')[2]].allowedUids
         );
     }
 
@@ -168,7 +169,9 @@ service cloud.firestore {
     match /servers/{serverId} {
       allow read: if isAuth()
         && (
-          resource.data.members == null
+          resource.data.public == true
+          || resource.data.public == null
+          || resource.data.members == null
           || username() in resource.data.members
           || (resource.data.memberUids is list && request.auth.uid in resource.data.memberUids)
         );

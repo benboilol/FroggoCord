@@ -1,4 +1,5 @@
 // Message actions, reactions, attachments, emoji, GIF search, and presence updates.
+(function () {
     const { doc, getDoc, collection, query, where, orderBy, getDocs, setDoc, updateDoc, deleteDoc, addDoc, serverTimestamp } = window.froggocordFirebase;
     window.editMsg = async (id,txt) => { 
       const t = await appPrompt("Edit:", txt); 
@@ -239,7 +240,8 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
         if (gifs.length) renderGifBatch(gifs, append && offset > 0);
         else if (!append) gifResults.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--mut);padding:20px;">No GIFs found</div>';
       } catch (err) {
-        if (!append) gifResults.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--danger);padding:20px;">Failed to load GIFs</div>';
+        console.error('GIF search failed', err);
+        if (!append) gifResults.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--danger);padding:20px;">Failed to load GIFs. Try again.</div>';
       } finally {
         gifLoading = false;
       }
@@ -408,6 +410,8 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
        renderSidebar();
      }
      function getLastRead(c) { return lastRead[c] || 0; }
+     window.markRead = markRead;
+     window.getLastRead = getLastRead;
 
     // Right-click context menu for messages
 const ctxMenu = document.createElement('div');
@@ -546,3 +550,4 @@ document.addEventListener('click', (e) => {
     tip.style.display = 'none';
   }
 });
+})();

@@ -1,4 +1,6 @@
 # Changelog
+ - 20a6d-2026.10.31-23.00.00-0400: Replaced unsupported Firestore rules `slice()` calls in DM and server-channel authorization checks, which could cause valid message and GIF sends to fail with permission denied.
+ - 20a6d-2026.10.31-22.55.00-0400: Restored discovery reads for public servers, made send failures explicit instead of silently returning, reduced composer scroll jumping during failed sends, and improved GIF failure diagnostics.
  - 20a6d-2026.10.31-22.40.00-0400: Restored message sending by implementing the missing typing-status helper introduced with typing indicators; validated frontend syntax and deployed the hosting update.
  - 20a6d-2026.10.31-22.30.00-0400: Fixed Firestore server membership checks to remain compatible with older servers that do not yet have a `memberUids` list, restoring message access for username-based members. Firestore rules compiled and deployed successfully.
  - 1f89a-2026.10.23-16.16.37-0400: Added changelog
@@ -128,5 +130,6 @@
  - 1da20-2026.10.31-11.40.00-0700: Added moderation actions (kick, ban, unban, revoke invite) for owners and admins.
  - 1da20-2026.10.31-11.45.00-0700: Fixed GIF scroll restart flicker, message send lag, theme switching errors, DM icon, asset paths, and stray BOM.
  - 1da20-2026.10.31-11.50.00-0700: Moved invite codes to separate collection for security. Locked down server ownership in Firestore rules. Deployed hosting and rules.
- - 20a6d-2026.10.31-15.00.00-0700: Added Discord/Yapper-parity features: unread "New messages" divider, new-messages pill, per-channel scroll memory, copy-message-link with jump-to-message chips, recent emojis in reaction picker, confirm-before-logout, download-my-data export, audit log for moderation actions, webhook creation/posting, ban appeals, banned-list rendering for object ban records. Verified node --check for all scripts.
-  - 1da20-2026.10.31-16.00.00-0700: Added read receipt tracking (markChannelRead, getChannelReadTime, isMessageRead) for message read status. Verified JavaScript syntax; deployed to Firebase Hosting.
+ - 1da20-2026.10.31-15.00.00-0700: Added Discord/Yapper-parity features: unread "New messages" divider, new-messages pill, per-channel scroll memory, copy-message-link with jump-to-message chips, recent emojis in reaction picker, confirm-before-logout, download-my-data export, audit log for moderation actions, webhook creation/posting, ban appeals, banned-list rendering for object ban records. Verified node --check for all scripts.
+ - 1da20-2026.10.31-16.00.00-0700: Added read receipt tracking (markChannelRead, getChannelReadTime, isMessageRead) for message read status. Verified JavaScript syntax; deployed to Firebase Hosting.
+ - 20a6d-2026.10.31-22.45.00-0400: Fixed a startup syntax error caused by duplicate top-level Firebase binding declarations, restoring message loading and composer initialization. Verified the deployed page loads without runtime errors and exposes both message sending and read handlers.

@@ -4,6 +4,8 @@ chatting: Replicate everything that a basic chat app like Discord or Stoat has.
 nitro: Idk vro make nitro features not nitro???
 mobile: fix the ui
 Tasks(explicit):
+themes: fix alpenglow(sometimes it makes text the same color as bg)
+themes: fix high contrast
 nitro: support profile badges earned through achievements or participation.
 nitro: support larger attachment limits where infrastructure permits.
 Security: use stable authentication UIDs rather than usernames as security identities.

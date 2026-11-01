@@ -850,9 +850,17 @@ window.db = db;
 
     window.sendMessage = async () => {
       const input = document.getElementById('chat-input');
+      if (!input) return;
       const t = input.value.trim();
       if (!t && pendingFiles.length === 0) return;
-      if (!user) return;
+      if (!user || !auth.currentUser) {
+        appAlert('You must be signed in to send messages.');
+        return;
+      }
+      if (!chan) {
+        appAlert('Select a channel or direct message before sending.');
+        return;
+      }
       // Slow mode check
       if (chan && chan.startsWith('srv_')) {
         const parts = chan.split('_');
@@ -894,7 +902,7 @@ window.db = db;
 
       // Add to pending messages for optimistic rendering
       pendingMessages.push(pending);
-      notifyPendingChanged();
+      notifyPendingChangedNow();
 
       // Handle image dimensions
       if (pendingFiles.some(p => p.isImage)) {
@@ -947,7 +955,8 @@ window.db = db;
       } catch (err) {
         pending.status = 'failed';
         pending.error = (err && err.code === 'permission-denied') ? 'Permission denied - you may not have access to this channel.' : (err.message || 'Send failed');
-        notifyPendingChanged();
+        notifyPendingChangedNow();
+        appAlert('Message failed to send: ' + pending.error);
       }
 
       // Clean up
