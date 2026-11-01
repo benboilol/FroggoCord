@@ -263,9 +263,9 @@ function showServerTab(tab) {
   document.getElementById('sm-create').style.display = tab === 'create' ? 'block' : 'none';
   document.getElementById('sm-join').style.display = tab === 'join' ? 'block' : 'none';
   document.getElementById('sm-create-tab').style.background = tab === 'create' ? 'var(--bl)' : 'var(--bg-t)';
-  document.getElementById('sm-create-tab').style.color = tab === 'create' ? 'var(--accent-contrast)' : 'var(--white)';
+  document.getElementById('sm-create-tab').style.color = tab === 'create' ? 'var(--accent-contrast)' : 'var(--txt)';
   document.getElementById('sm-join-tab').style.background = tab === 'join' ? 'var(--bl)' : 'var(--bg-t)';
-  document.getElementById('sm-join-tab').style.color = tab === 'join' ? 'var(--accent-contrast)' : 'var(--white)';
+  document.getElementById('sm-join-tab').style.color = tab === 'join' ? 'var(--accent-contrast)' : 'var(--txt)';
 }
 
 async function createServerFromModal() {

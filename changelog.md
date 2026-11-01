@@ -146,3 +146,4 @@
  - 20a6d-2026.11.01-10.35.00-0500: Added a WASM AVIF encoder fallback for browsers whose native canvas AVIF encoding returns PNG or another non-AVIF format.
  - 20a6d-2026.11.01-10.40.00-0500: Attempted image and video conversion before applying the 4MB attachment limit; oversized files are now rejected only after conversion.
  - 20a6d-2026.11.01-10.45.00-0500: Improved light Alpenglow contrast for muted, accent, and danger text to meet WCAG AA contrast targets.
+ - 20a6d-2026.11.01-10.50.00-0500: Fixed invisible inactive Create/Join tabs in the new-server modal by using the theme’s readable text color.
