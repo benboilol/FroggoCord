@@ -3,6 +3,7 @@ ui: fix scrolling bug(when you first go to any server, it sends you to the very 
 ui: gifs are broken, they do not load
 ui: speaking of gifs, add avif and svg support(javascript should execute to preserve animations)
 ui: speaking of avif, try to convert gifs to animated avifs before sending. this usually makes for far better compression and you can therfore send bigger gifs
+ui: instead of these emojis, use img tags to load svgs like how we do it in the logo. create the appropriate svgs
 themes: fix alpenglow(sometimes it makes text the same color as bg in dawn mode)
 themes: fix high contrast, with certain themes such as light mode it makes it very hard to see things
 nitro: support profile badges earned through achievements or participation(example: dev badge)
