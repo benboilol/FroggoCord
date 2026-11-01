@@ -15,8 +15,8 @@
  - 20a6d-2026.10.24-18.05.49-0400: Added the composite Firestore index required by message queries (channel ascending, timestamp descending) after confirming the froggocord database had no composite indexes. Added Firebase CLI index configuration.
  - 20a6d-2026.10.24-19.17.45-0400: Deployed the messages composite index to the froggocord project after confirming the live database still had no indexes. Firebase accepted the index and returned it in the live index list; it may need time to finish building.
  - 20a6d-2026.10.24-22.56.20-0400: Added a mobile navigation drawer for server/channel navigation, touch-friendly message actions and composer controls, safe-area spacing, and narrower modal layouts. Deployed to Firebase Hosting; no device browser testing performed.
- - 1da20-2026.10.25-01.00.00-0700: Fixed settings tab panels all showing at once (added settings-panel-section visible class to theme panel, removed inline display:none from other panels). Added Avatar preview background-size/position. Added Send button (paper airplane ??) to composer with sendMessage() function. Settings now load from localStorage on open, apply on close, and include Account/Notifications/Privacy/Accessibility tabs with Reset to defaults. Verified JavaScript syntax for all four script files; not yet browser-tested or deployed.
  - 1da20-2026.10.25-00.00.00-0700: Added settings tabs (Account, Notifications, Privacy, Accessibility) alongside Theme, each with persisted controls. Added Reset to defaults button. Settings load from localStorage on open and apply on close. Verified JavaScript syntax for all four script files; not yet browser-tested or deployed.
+ - 1da20-2026.10.25-01.00.00-0700: Fixed settings tab panels all showing at once (added settings-panel-section visible class to theme panel, removed inline display:none from other panels). Added Avatar preview background-size/position. Added Send button (paper airplane ??) to composer with sendMessage() function. Settings now load from localStorage on open, apply on close, and include Account/Notifications/Privacy/Accessibility tabs with Reset to defaults. Verified JavaScript syntax for all four script files; not yet browser-tested or deployed.
  - 1da20-2026.10.25-01.30.00-0700: Fixed Deltarune theme swatches showing wrong colors when a theme is active (moved all swatch definitions to style.css). Added Ralsei green theme. Changed Kris theme from red to blueish cyan. Gave Deltarune themes proper swatch previews. Verified JavaScript syntax for all four script files.
  - 1da20-2026.10.25-02.00.00-0700: Implemented high contrast mode, custom theme builder with 8 color pickers (Apply & Save), and made all settings functional (theme sync, font size, reduced motion, high contrast, status, privacy/notifications persisted). Added Deltarune character themes (Kris, Susie, Noelle, Ralsei) with proper swatch previews. Settings load from localStorage on open and apply on close. Verified JavaScript syntax for all four script files; deployed to Firebase Hosting.
  - 1da20-2026.10.25-03.00.00-0700: Made Phantom theme brighter (lighter purples, brighter magenta accent), made Crystal theme darker (deep blue backgrounds, muted blue accent). Verified JavaScript syntax for all four script files; deployed to Firebase Hosting.
@@ -42,10 +42,10 @@
  - 1da20-2026.10.27-12.28.39-0700: Added server emoji management, storage, and `:name:` rendering in messages.
  - 1da20-2026.10.27-12.34.09-0700: Added multiple image attachments with gallery rendering and multi-file message composition.
  - 1da20-2026.10.27-12.44.12-0700: Enlarged the settings modal with an X close control and expanded profile customization with banners, backgrounds, accents, decorations, and effects.
- - 1f89a-2026.10.27-16.23.56-0400: Deleted hacked.html again stop readding it
  - 1da20-2026.10.27-12.55.32-0700: Consolidated chat density and automatic theme switching controls into the Profiles settings.
  - 1da20-2026.10.27-13.00.41-0700: Fixed GIFs restarting while scrolling by preserving their loaded sources when they leave the viewport.
  - 1da20-2026.10.27-13.05.35-0700: Fixed GIF scrolling flicker by only pinning the chat to the bottom when the user is already near the bottom.
+ - 1f89a-2026.10.27-16.23.56-0400: Deleted hacked.html again stop readding it
  - 1da20-2026.10.27-13.35.28-0700: Added Nitro rich link embeds for YouTube, per-server accent colors, and a soundboard.
  - 20a6d-2026.10.27-16.36.06-0400: Replaced manual version markers with automatic update detection. The loader compares fresh HTML, JavaScript, and CSS responses without requiring deployment actions or version bumps.
  - 1da20-2026.10.27-16.33.52-0700: Refactored Firestore security rules for clearer server membership, ownership, administration, channel, message, and permission checks.
@@ -100,6 +100,8 @@
  - 20a6d-2026.10.30-20.08.34-0400: Added cache-busting for the loader and feature scripts so deployed clients cannot mix stale JavaScript versions.
  - 1f89a-2026.10.30-20.12.01-0400: Added a show password button to the login screen.
  - 20a6d-2026.10.30-20.14.34-0400: Fixed the update notice button to force a cache-busted reload and made asset comparisons stable across query strings.
+ - 20a6d-2026.10.30-20.15.27-0400: Made update checks run after ten seconds and exposed the check for reliable live verification instead of waiting a full minute.
+ - 20a6d-2026.10.30-20.16.38-0400: Removed the duplicate message sender that bypassed optimistic delivery and reduced update-check overhead to prevent chat lag.
  - 20a6d-2026.10.30-20.23.17-0400: Updated Fulgurite to use the Froggo icon green and refreshed Obsidian with Phantom's lighter surfaces while preserving Obsidian's accents.
  - 20a6d-2026.10.30-20.28.59-0400: Removed verified-complete tasks from to_do.txt while leaving unfinished and uncertain items for follow-up.
  - 20a6d-2026.10.30-20.30.04-0400: Fixed mobile sidebar state by closing it after navigation, resetting it on desktop resize, and preventing hidden panels from intercepting touch input.
@@ -113,8 +115,6 @@
  - 20a6d-2026.10.30-20.34.18-0400: Added server-side attachment-count validation, corrected administrator rule precedence, and deployed Firestore rules as validation.
  - 20a6d-2026.10.30-20.34.18-0400: Verified server-side validation for messages, attachments, reactions, friend requests, and server administration.
  - 20a6d-2026.10.30-20.34.18-0400: Verified the project-structure and change-validation requirements against the completed implementation.
- - 20a6d-2026.10.30-20.15.27-0400: Made update checks run after ten seconds and exposed the check for reliable live verification instead of waiting a full minute.
- - 20a6d-2026.10.30-20.16.38-0400: Removed the duplicate message sender that bypassed optimistic delivery and reduced update-check overhead to prevent chat lag.
  - 1da20-2026.10.31-11.00.00-0700: Added client-side achievement badges (first-message, active-chatter, server-creator, popular, first-friend, chatter, super-chatter, theme-explorer, profile-customizer) stored in user Firestore docs and displayed in profile modal. Added Cloud Functions code for rate limiting and server-side badge awarding (requires Blaze plan).
  - 1da20-2026.10.31-11.05.00-0700: Fixed login issue by making auth/db globally accessible via window.auth/window.db across all scripts.
  - 1da20-2026.10.31-11.10.00-0700: Added profile background image upload, banner/background position and size controls, profile text color, custom status text, pronouns, biography, and display name customization.
