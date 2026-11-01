@@ -34,24 +34,47 @@ window.db = db;
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
     let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map(), userBgColorMap = new Map(), userTextColorMap = new Map(), userCustomStatusMap = new Map(), userPronounsMap = new Map(), userBioMap = new Map(), userDisplayNameMap = new Map(), userBadgesMap = new Map();
     window.convertImageToAvif = async (file, options = {}) => {
-      if (!file || !file.type.startsWith('image/') || file.size > 4 * 1024 * 1024 || typeof createImageBitmap !== 'function') return null;
+      if (!file || !file.type.startsWith('image/') || file.size > 4 * 1024 * 1024) return null;
+      let sourceUrl = null;
       try {
-        const bitmap = await createImageBitmap(file);
-        const maxSize = Number(options.maxSize) > 0 ? Number(options.maxSize) : Math.max(bitmap.width, bitmap.height);
-        const scale = Math.min(maxSize / bitmap.width, maxSize / bitmap.height, 1);
-        const canvas = typeof OffscreenCanvas === 'function'
-          ? new OffscreenCanvas(Math.max(1, Math.round(bitmap.width * scale)), Math.max(1, Math.round(bitmap.height * scale)))
-          : Object.assign(document.createElement('canvas'), { width: Math.max(1, Math.round(bitmap.width * scale)), height: Math.max(1, Math.round(bitmap.height * scale)) });
-        const context = canvas.getContext('2d');
-        if (!context) return null;
-        context.drawImage(bitmap, 0, 0);
-        bitmap.close();
-        const blob = canvas.convertToBlob
-          ? await canvas.convertToBlob({ type: 'image/avif', quality: Number(options.quality) || 0.85 })
-          : await new Promise(resolve => canvas.toBlob(resolve, 'image/avif', Number(options.quality) || 0.85));
-        if (!blob || blob.type !== 'image/avif' || blob.size > (Number(options.maxBytes) || 4 * 1024 * 1024)) return null;
+        let source;
+        if (typeof createImageBitmap === 'function') {
+          source = await createImageBitmap(file);
+        } else {
+          sourceUrl = URL.createObjectURL(file);
+          source = await new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error('Could not decode image.'));
+            image.src = sourceUrl;
+          });
+        }
+        const maxSize = Number(options.maxSize) > 0 ? Number(options.maxSize) : Math.max(source.width, source.height);
+        const maxBytes = Number(options.maxBytes) || 4 * 1024 * 1024;
+        const qualities = [Number(options.quality) || 0.85, 0.7, 0.55];
+        let scale = Math.min(maxSize / source.width, maxSize / source.height, 1);
+        let blob = null;
+        for (const quality of qualities) {
+          const width = Math.max(1, Math.round(source.width * scale));
+          const height = Math.max(1, Math.round(source.height * scale));
+          const canvas = typeof OffscreenCanvas === 'function'
+            ? new OffscreenCanvas(width, height)
+            : Object.assign(document.createElement('canvas'), { width, height });
+          const context = canvas.getContext('2d');
+          if (!context) break;
+          context.drawImage(source, 0, 0, width, height);
+          blob = canvas.convertToBlob
+            ? await canvas.convertToBlob({ type: 'image/avif', quality })
+            : await new Promise(resolve => canvas.toBlob(resolve, 'image/avif', quality));
+          if (blob && blob.type === 'image/avif' && blob.size <= maxBytes) break;
+          scale *= 0.75;
+        }
+        if (source.close) source.close();
+        if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+        if (!blob || blob.type !== 'image/avif' || blob.size > maxBytes) return null;
         return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.avif', { type: 'image/avif' });
       } catch (error) {
+        if (sourceUrl) URL.revokeObjectURL(sourceUrl);
         console.warn('Browser AVIF conversion unavailable; preserving original media.', error);
         return null;
       }
@@ -1463,7 +1486,7 @@ window.db = db;
       if (!f || !f.type.startsWith('image/')) return;
       if (f.size > MAX_PFP_BYTES) { appAlert('PFP too large (max 500KB).'); return; }
       try {
-        pfp = await compressImage(f, 512, true);
+        pfp = await compressImage(f, 512);
         localStorage.setItem('pfp_'+user, pfp);
         await setDoc(doc(db,"users",user),{user,pfp,uid:(auth.currentUser&&auth.currentUser.uid)||null,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
         document.getElementById('my-pfp').style.backgroundImage = `url(${pfp})`;
@@ -1476,7 +1499,7 @@ window.db = db;
       if (!f) return;
       if (f.size > MAX_PFP_BYTES) { appAlert('PFP too large (max 500KB).'); e.target.value = ''; return; }
       try {
-        pfp = await compressImage(f, 512, true);
+        pfp = await compressImage(f, 512);
         localStorage.setItem('pfp_'+user, pfp);
         await setDoc(doc(db,"users",user),{user,pfp,uid:(auth.currentUser&&auth.currentUser.uid)||null,lastSeen:serverTimestamp()},{merge:true}).catch(()=>{});
         document.getElementById('my-pfp').style.backgroundImage = `url(${pfp})`;

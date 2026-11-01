@@ -176,7 +176,7 @@ if (fileInputEl) {
       document.getElementById('file-preview-name').textContent = results.length + ' image(s) selected';
       document.getElementById('file-preview').style.display = 'block';
     } catch (error) {
-      appAlert(error.message || 'Failed to process file.');
+      appAlert(error.message || 'Failed to process file. AVIF/AV1 conversion may not be supported by this browser.');
       pendingFiles = [];
     }
   });
