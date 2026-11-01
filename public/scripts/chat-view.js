@@ -521,7 +521,11 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
 
   if (preserveScroll) {
     requestAnimationFrame(() => {
-      chatMessageContainer.scrollTop = previousTop + (contentAddedAbove ? chatMessageContainer.scrollHeight - previousHeight : 0);
+      if (msgsPinned && !contentAddedAbove) {
+        pinMsgsBottom();
+      } else {
+        chatMessageContainer.scrollTop = previousTop + (contentAddedAbove ? chatMessageContainer.scrollHeight - previousHeight : 0);
+      }
     });
   }
   if (forceBottom) {

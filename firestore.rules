@@ -10,12 +10,9 @@ service cloud.firestore {
       return request.auth.token.email.split('@')[0];
     }
 
-    function isMemberOfServer(serverDoc, uid) {
+    function isMemberOfServer(serverDoc) {
       return serverDoc.members is list
-        && (
-          (serverDoc.memberUids is list && uid in serverDoc.memberUids)
-          || username() in serverDoc.members
-        );
+        && username() in serverDoc.members;
     }
 
     function isChannelForServer(channel) {
@@ -38,13 +35,7 @@ service cloud.firestore {
 
     function canAccessServerChannel(channel) {
       let server = get(/databases/$(database)/documents/servers/$(serverIdFromChannel(channel))).data;
-      return isMemberOfServer(server, request.auth.uid)
-        && (
-          !(server.channelAccess is map)
-          || !(channel.split('_')[2] in server.channelAccess)
-          || !(server.channelAccess[channel.split('_')[2]].allowedUids is list)
-          || request.auth.uid in server.channelAccess[channel.split('_')[2]].allowedUids
-        );
+      return isMemberOfServer(server);
     }
 
     match /users/{userId} {
