@@ -902,7 +902,6 @@ onAuthStateChanged(window.auth, async (u) => {
       lastSeen:serverTimestamp()
     }, {merge:true}).catch(()=>{});
 
-    const developerBadgeUsers = new Set();
     onSnapshot(collection(db,"users"),(snap)=>{
       allUsers = [];
       userPfpMap.clear();
@@ -917,7 +916,7 @@ onAuthStateChanged(window.auth, async (u) => {
         if (data.user && data.accent) userAccentMap.set(data.user, data.accent);
         if (data.user && data.decoration) userDecorationMap.set(data.user, data.decoration);
         if (data.user && data.badges) userBadgesMap.set(data.user, data.badges);
-        if (data.user && developerBadgeUsers.has(data.user)) {
+        if (data.user && data.developerBadge) {
           const badges = userBadgesMap.get(data.user) || [];
           if (!badges.includes('developer')) userBadgesMap.set(data.user, badges.concat('developer'));
         }
@@ -933,16 +932,6 @@ onAuthStateChanged(window.auth, async (u) => {
       renderUserList();
       if (mode === 'dms') renderSidebar();
     }, (err) => { console.error('users snapshot failed', err); });
-    onSnapshot(collection(db, 'developerBadges'), (snap) => {
-      snap.docs.forEach(d => {
-        const data = d.data();
-        if (!data.user) return;
-        developerBadgeUsers.add(data.user);
-        const badges = userBadgesMap.get(data.user) || [];
-        if (!badges.includes('developer')) userBadgesMap.set(data.user, badges.concat('developer'));
-      });
-      if (typeof renderUserList === 'function') renderUserList();
-    }, (err) => { console.error('developer badge snapshot failed', err); });
 
     lastActivity = Date.now();
     if (heartbeat) clearInterval(heartbeat);

@@ -144,14 +144,10 @@ if (fileInputEl) {
   const preferAvif = async (file) => {
     if (file.type === 'image/avif') return file;
     if (await hasAnimation(file)) {
-      if (typeof window.convertAnimatedMedia === 'function') {
-        try {
-          const converted = await window.convertAnimatedMedia(file);
-          if (converted) return converted;
-        } catch (error) {
-          console.warn('Animated AVIF conversion unavailable; preserving original media.', error);
-        }
-      }
+      const converted = typeof window.convertMediaToAvif === 'function'
+        ? await window.convertMediaToAvif(file)
+        : null;
+      if (converted) return converted;
       return file;
     }
     let bitmap;

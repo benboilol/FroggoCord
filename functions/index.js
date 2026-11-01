@@ -2,59 +2,9 @@ const {initializeApp} = require('firebase-admin/app');
 const {getFirestore, FieldValue} = require('firebase-admin/firestore');
 const {onDocumentCreated} = require('firebase-functions/v2/firestore');
 const {onCall, HttpsError} = require('firebase-functions/v2/https');
-const sharp = require('sharp');
 
 initializeApp();
 const db = getFirestore();
-const MAX_MEDIA_BYTES = 4 * 1024 * 1024;
-
-exports.convertAnimatedMedia = onCall(async (request) => {
-  if (!request.auth) throw new HttpsError('unauthenticated', 'Must be authenticated');
-  const input = request.data || {};
-  if (!['image/gif', 'image/apng', 'image/webp'].includes(input.type) || typeof input.data !== 'string') {
-    throw new HttpsError('invalid-argument', 'Only animated GIF, APNG, and WebP files are supported');
-  }
-  const encoded = input.data.split(',')[1];
-  if (!encoded) throw new HttpsError('invalid-argument', 'Media data is missing');
-  const source = Buffer.from(encoded, 'base64');
-  if (!source.length || source.length > MAX_MEDIA_BYTES) {
-    throw new HttpsError('invalid-argument', 'Media must be between 1 byte and 4MB');
-  }
-  try {
-    const output = await sharp(source, { animated: true })
-      .avif({ quality: 72, effort: 4 })
-      .toBuffer();
-    if (output.length > MAX_MEDIA_BYTES) {
-      throw new HttpsError('resource-exhausted', 'Converted media exceeds the 4MB limit');
-    }
-    return {
-      type: 'image/avif',
-      data: 'data:image/avif;base64,' + output.toString('base64')
-    };
-  } catch (error) {
-    if (error instanceof HttpsError) throw error;
-    console.error('Animated AVIF conversion failed', error);
-    throw new HttpsError('internal', 'Animated AVIF conversion failed');
-  }
-});
-
-exports.grantDeveloperBadge = onCall(async (request) => {
-  if (!request.auth || request.auth.token.admin !== true) {
-    throw new HttpsError('permission-denied', 'Administrator access is required');
-  }
-  const username = String(request.data && request.data.username || '').trim();
-  if (!/^[A-Za-z0-9_.-]{1,32}$/.test(username)) {
-    throw new HttpsError('invalid-argument', 'A valid username is required');
-  }
-  await db.collection('developerBadges').doc(username).set({
-    user: username,
-    badge: 'developer',
-    grantedAt: FieldValue.serverTimestamp(),
-    grantedBy: request.auth.uid
-  });
-  return {user: username, badge: 'developer'};
-});
-
 // Rate limiting: track message counts per user per minute
 const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
 const RATE_LIMIT_MAX_MESSAGES = 30; // max messages per minute

@@ -57,14 +57,10 @@ service cloud.firestore {
       allow update: if isAuth()
         && (resource.data.uid == request.auth.uid || !('uid' in resource.data) || resource.data.user == username())
         && request.resource.data.user == resource.data.user
+        && (!('developerBadge' in request.resource.data) || request.resource.data.developerBadge == resource.data.developerBadge)
         && (!('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid);
 
       allow delete: if isAuth() && resource.data.uid == request.auth.uid;
-    }
-
-    match /developerBadges/{userId} {
-      allow read: if isAuth();
-      allow write: if false;
     }
 
     match /presence/{userId} {

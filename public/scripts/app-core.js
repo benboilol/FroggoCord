@@ -21,9 +21,7 @@ const {
   setDoc,
   where,
   getDocs,
-  getDoc,
-  getFunctions,
-  httpsCallable
+  getDoc
 } = window.froggocordFirebase;
 
     const config = { apiKey: "AIzaSyBdcQW56DH7tM37elwMYFQdzfpfCdEkzMs", authDomain: "froggocord.firebaseapp.com", projectId: "froggocord", storageBucket: "froggocord.firebasestorage.app", messagingSenderId: "237791448036", appId: "1:237791448036:web:82886ca5b0ce6dafa6d5f1", measurementId: "G-J7CRQ9D4VD" };
@@ -32,30 +30,30 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 window.auth = auth;
 window.db = db;
-const functions = getFunctions(app);
-const convertAnimatedMedia = httpsCallable(functions, 'convertAnimatedMedia');
-window.convertAnimatedMedia = async (file) => {
-  if (!file || !file.type || file.size > 4 * 1024 * 1024) return null;
-  const dataUrl = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-  const result = await convertAnimatedMedia({
-    name: file.name,
-    type: file.type,
-    data: dataUrl
-  });
-  const output = result.data;
-  if (!output || typeof output.data !== 'string' || output.type !== 'image/avif') return null;
-  const binary = atob(output.data.split(',')[1] || '');
-  const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
-  return new File([bytes], file.name.replace(/\.[^.]+$/, '') + '.avif', { type: 'image/avif' });
-};
     let chan = null, user = null, typingUnsub = null, typingTimer = null, isSignUpMode = false, pfp = '', reply = null, curStat = 'online', idle = null, mode = 'dms', dmWith = null, servers = [], currentServer = null, lastPresenceUsers = [], lastRead = {}, curActivity = '';
     let heartbeat = null, idleNow = false, lastActivity = Date.now();
     let allUsers = [], backfillUsers = [], userPfpMap = new Map(), userPrivacyMap = new Map(), userBannerMap = new Map(), userBackgroundMap = new Map(), userAccentMap = new Map(), userDecorationMap = new Map(), userBgColorMap = new Map(), userTextColorMap = new Map(), userCustomStatusMap = new Map(), userPronounsMap = new Map(), userBioMap = new Map(), userDisplayNameMap = new Map(), userBadgesMap = new Map();
+    window.convertMediaToAvif = async (file) => {
+      if (!file || file.size > 4 * 1024 * 1024 || typeof createImageBitmap !== 'function') return null;
+      try {
+        const bitmap = await createImageBitmap(file);
+        const canvas = typeof OffscreenCanvas === 'function'
+          ? new OffscreenCanvas(bitmap.width, bitmap.height)
+          : Object.assign(document.createElement('canvas'), { width: bitmap.width, height: bitmap.height });
+        const context = canvas.getContext('2d');
+        if (!context) return null;
+        context.drawImage(bitmap, 0, 0);
+        bitmap.close();
+        const blob = canvas.convertToBlob
+          ? await canvas.convertToBlob({ type: 'image/avif', quality: 0.8 })
+          : await new Promise(resolve => canvas.toBlob(resolve, 'image/avif', 0.8));
+        if (!blob || blob.type !== 'image/avif' || blob.size > 4 * 1024 * 1024) return null;
+        return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.avif', { type: 'image/avif' });
+      } catch (error) {
+        console.warn('Browser AVIF conversion unavailable; preserving original media.', error);
+        return null;
+      }
+    };
     let blockedUsers = new Set();
     function loadBlockedUsers() { try { const raw = localStorage.getItem('froggocord-blocked'); if (raw) blockedUsers = new Set(JSON.parse(raw)); } catch (e) {} }
     function saveBlockedUsers() { try { localStorage.setItem('froggocord-blocked', JSON.stringify([...blockedUsers])); } catch (e) {} }
@@ -967,7 +965,7 @@ window.convertAnimatedMedia = async (file) => {
       // Handle image dimensions
       if (pendingFiles.some(p => p.isImage)) {
         for (const pf of pendingFiles) {
-          if (pf.isImage && pf.file && pf.file.size > 700000) {
+          if (pf.isImage && pf.file && pf.file.size > MAX_ATTACHMENT_SIZE) {
             pending.status = 'failed';
             pending.error = 'Image too large (max ~700KB)';
             pendingMessages = pendingMessages.filter(m => m.clientId !== clientId);

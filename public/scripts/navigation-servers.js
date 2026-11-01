@@ -272,16 +272,18 @@ async function createServerFromModal() {
   const name = document.getElementById('sm-name').value.trim();
   if (!name) { appAlert('Enter a server name'); return; }
 
+  const uid = auth.currentUser && auth.currentUser.uid;
+  if (!uid || !user) { appAlert('You must be signed in to create a server'); return; }
   const code = Math.random().toString(36).substring(2, 8).toUpperCase();
   const ref = await addDoc(collection(db, 'servers'), {
     name,
     owner: user,
-    ownerUid: (auth.currentUser && auth.currentUser.uid) || null,
+    ownerUid: uid,
     inviteCode: code,
     members: [user],
-    memberUids: [(auth.currentUser && auth.currentUser.uid) || null],
-    admins: [],
-    adminUids: [],
+    memberUids: [uid],
+    admins: [user],
+    adminUids: [uid],
     banned: [],
     welcomeMessage: '',
     public: false,
@@ -326,16 +328,18 @@ async function createServer() {
   const name = await appPrompt('Server name:');
   if (!name) return;
 
+  const uid = auth.currentUser && auth.currentUser.uid;
+  if (!uid || !user) { appAlert('You must be signed in to create a server'); return; }
   const code = Math.random().toString(36).substring(2, 8).toUpperCase();
   const ref = await addDoc(collection(db, 'servers'), {
     name,
     owner: user,
-    ownerUid: (auth.currentUser && auth.currentUser.uid) || null,
+    ownerUid: uid,
     inviteCode: code,
     members: [user],
-    memberUids: [(auth.currentUser && auth.currentUser.uid) || null],
-    admins: [],
-    adminUids: [],
+    memberUids: [uid],
+    admins: [user],
+    adminUids: [uid],
     banned: [],
     welcomeMessage: '',
     public: false,
