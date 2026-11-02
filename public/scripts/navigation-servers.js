@@ -163,9 +163,13 @@ function renderUserList() {
     const avContent = hasPfp ? '' : escHtml((name || '?')[0].toUpperCase());
 
     const act = p && p.activity ? escHtml(p.activity) : '';
+    const s = currentServer ? servers.find(sv => sv.id === currentServer) : null;
+    const isOwner = s && s.owner === name;
+    const isAdmin = s && (s.admins || []).includes(name);
+    const roleBadge = isOwner ? '<span style="font-size:9px;background:var(--danger);color:#fff;padding:1px 4px;border-radius:3px;margin-left:4px;">OWNER</span>' : isAdmin ? '<span style="font-size:9px;background:var(--yellow);color:#000;padding:1px 4px;border-radius:3px;margin-left:4px;">ADMIN</span>' : '';
     return `<div class="member ${status === 'offline' ? 'off' : ''}" data-user="${escHtml(name)}" onclick="openProfile(this.dataset.user)">` +
       `<div class="member-avatar" ${avStyle}>${avContent}<span class="status-dot" title="${labels[status] || 'Online'}" style="background:${colors[status] || 'var(--mut)'}"></span></div>` +
-      `<div class="member-name">${escHtml(name)}</div>` +
+      `<div class="member-name">${escHtml(name)}${roleBadge}</div>` +
       (act ? `<div class="member-activity" style="font-size:11px;color:var(--mut);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${act}</div>` : '') +
       `</div>`;
   };
