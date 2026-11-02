@@ -415,6 +415,7 @@ ctxMenu.innerHTML = `
 <div style="height:1px;background:var(--border);margin:4px 0;"></div>
 <div data-action="pin" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">Pin</div>
 <div data-action="copylink" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">Copy Message Link</div>
+<div data-action="copytext" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">Copy Message Text</div>
 <div data-action="bookmark" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">Bookmark</div>
 <div data-action="report" style="padding:8px 16px;cursor:pointer;font-size:13px;color:var(--mut);">Report</div>
 <div style="height:1px;background:var(--border);margin:4px 0;"></div>
@@ -468,6 +469,17 @@ ctxMenu.addEventListener('click', (e) => {
     if (typeof window.pinMessage === 'function') window.pinMessage(ctxMsgId);
   } else if (act === 'copylink') {
     if (typeof window.copyMessageLink === 'function') window.copyMessageLink(ctxMsgId);
+  } else if (act === 'copytext') {
+    const msg = document.querySelector(`[data-id="${ctxMsgId}"]`);
+    const body = msg ? msg.querySelector('.msg-bubble') : null;
+    const text = body ? body.textContent : '';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        if (typeof appAlert === 'function') appAlert('Message text copied.');
+      }).catch(() => { prompt('Copy this text:', text); });
+    } else {
+      prompt('Copy this text:', text);
+    }
   } else if (act === 'bookmark') {
     if (typeof window.toggleBookmark === 'function') {
       const added = window.toggleBookmark(ctxMsgId);
