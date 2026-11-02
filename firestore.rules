@@ -39,14 +39,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isAuth() && (
-        (
-          resource.data.channel is string
-          && isChannelForServer(resource.data.channel)
-          && canAccessServerChannel(resource.data.channel)
-        )
-        || (resource.data.channel is string && isDmChannelForUser(resource.data.channel))
-      );
+      allow read: if isAuth();
       allow create: if isAuth()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.user == userId
@@ -100,7 +93,7 @@ service cloud.firestore {
         && (
           (
             (resource.data.uid == request.auth.uid || (!('uid' in resource.data) && resource.data.user == username()))
-            && request.resource.data.user == resource.data.user
+            && (!('user' in request.resource.data) || request.resource.data.user == resource.data.user)
             && request.resource.data.text is string
             && request.resource.data.text.size() <= 4000
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'editedAt', 'replyTo', 'images', 'files', 'attachments', 'imageW', 'imageH', 'clientMsgId'])

@@ -277,6 +277,7 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
     function observeChatImages() {
       document.querySelectorAll('#message-container img[data-src]').forEach(img => chatImgObserver.observe(img));
     }
+    window.observeChatImages = observeChatImages;
 
     document.getElementById('gif-search').addEventListener('input', (e) => {
       const q = e.target.value.trim();
@@ -375,6 +376,7 @@ const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','🥳','🤔','
     });
 
     async function updatePresence(s) { if (user) { curStat = s; await setDoc(doc(db,"presence",user),{user,status:s,lastActive:serverTimestamp(),activity:curActivity || ''},{merge:true}); } }
+    window.updatePresence = updatePresence;
     window.setActivity = async (activity) => { curActivity = activity || ''; if (user) await setDoc(doc(db,"presence",user),{user,activity:curActivity,lastActive:serverTimestamp()},{merge:true}); };
      function setTyping(active) {
        if (!user || !chan) return;
