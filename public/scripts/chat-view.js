@@ -1111,10 +1111,15 @@ window.unfriendReq = async (id) => {
           msgs.forEach(m => {
             const from = tokens.find(token => token.startsWith('from:'))?.slice(5);
             const date = tokens.find(token => token.startsWith('date:'))?.slice(5);
-            const terms = tokens.filter(token => !token.startsWith('from:') && !token.startsWith('date:'));
+            const before = tokens.find(token => token.startsWith('before:'))?.slice(7);
+            const after = tokens.find(token => token.startsWith('after:'))?.slice(6);
+            const terms = tokens.filter(token => !token.startsWith('from:') && !token.startsWith('date:') && !token.startsWith('before:') && !token.startsWith('after:'));
             const text = (m.textContent || '').toLowerCase();
+            const msgDate = m.dataset.date || '';
             const isMatch = (!from || (m.dataset.user || '').toLowerCase() === from)
-              && (!date || (m.dataset.date || '') === date)
+              && (!date || msgDate === date)
+              && (!before || msgDate < before)
+              && (!after || msgDate > after)
               && terms.every(term => text.includes(term));
             if (isMatch) {
               m.style.display = '';
