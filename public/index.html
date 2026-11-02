@@ -413,6 +413,19 @@
     </div>
     </div>
 
+    <div id="invite-modal" class="modal">
+    <div class="modal-card">
+        <h3>Invite to Server</h3>
+        <div style="margin:8px 0;">
+        <input id="invite-code-display" class="inp2" readonly style="font-family:monospace;">
+        <button type="button" class="btn btn-primary" onclick="copyInviteLink(currentServer)" style="margin-top:8px;">Copy Invite Link</button>
+        </div>
+        <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeInviteModal()">Close</button>
+        </div>
+    </div>
+    </div>
+
     <div id="discover-modal" class="modal">
     <div class="modal-card">
         <h3>Discover Servers</h3>

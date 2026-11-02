@@ -1178,6 +1178,24 @@ window.jumpToFirstUnread = () => {
   if (mc) mc.scrollTop = mc.scrollHeight;
 };
 
+// ---------- Invite Modal ----------
+window.openInviteModal = () => {
+  const modal = document.getElementById('invite-modal');
+  if (!modal) return;
+  const s = getServerById(ctxServerId || currentServer);
+  const input = document.getElementById('invite-code-display');
+  if (input && s) input.value = window.location.origin + '?join=' + (s.inviteCode || '');
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => { modal.classList.add('visible'); modal.querySelector('.modal-card').classList.add('visible'); });
+};
+window.closeInviteModal = () => {
+  const modal = document.getElementById('invite-modal');
+  if (!modal) return;
+  modal.classList.remove('visible');
+  modal.querySelector('.modal-card').classList.remove('visible');
+  setTimeout(() => { modal.style.display = 'none'; }, 180);
+};
+
 window.togglePublicServer = togglePublicServer;
 // ---------- Server Stats ----------
 window.viewServerStats = async () => {
