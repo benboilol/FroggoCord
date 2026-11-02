@@ -1147,6 +1147,27 @@ window.filterDiscoverServers = () => {
   `).join('');
 };
 
+// ---------- Jump to First Unread ----------
+window.jumpToFirstUnread = () => {
+  const msgs = document.querySelectorAll('#message-container .msg');
+  for (const m of msgs) {
+    const id = m.dataset.id;
+    if (id && typeof window.isMessageRead === 'function') {
+      // Check if message is unread by comparing timestamp
+      const timeEl = m.querySelector('.msg-time');
+      if (timeEl && timeEl.textContent.includes('NEW')) {
+        m.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        m.style.background = 'var(--mention-bg)';
+        setTimeout(() => { m.style.background = ''; }, 2000);
+        return;
+      }
+    }
+  }
+  // Fallback: scroll to bottom
+  const mc = document.getElementById('message-container');
+  if (mc) mc.scrollTop = mc.scrollHeight;
+};
+
 window.togglePublicServer = togglePublicServer;
 // ---------- Server Stats ----------
 window.viewServerStats = async () => {

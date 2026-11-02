@@ -1725,7 +1725,12 @@ window.toggleGifBlock = (u) => {
       // Ctrl/Cmd + /: show keyboard shortcuts
       if ((e.ctrlKey || e.metaKey) && e.key === '/') {
         e.preventDefault();
-        appAlert('Keyboard Shortcuts:\\n\\nCtrl+K: Search\\nCtrl+Enter: Send\\nCtrl+Shift+M: Mark all read\\nCtrl+Shift+U: Toggle DMs\\nEsc: Close modals\\nArrow keys: Navigate messages\\nEnter: Open profile');
+        appAlert('Keyboard Shortcuts:\\n\\nCtrl+K: Search\\nCtrl+Enter: Send\\nCtrl+Shift+M: Mark all read\\nCtrl+Shift+U: Toggle DMs\\nEsc: Close modals\\nArrow keys: Navigate messages\\nEnter: Open profile\\nCtrl+Shift+J: Jump to first unread');
+      }
+      // Ctrl/Cmd + Shift + J: jump to first unread
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'J') {
+        e.preventDefault();
+        if (typeof window.jumpToFirstUnread === 'function') window.jumpToFirstUnread();
       }
     });
 
