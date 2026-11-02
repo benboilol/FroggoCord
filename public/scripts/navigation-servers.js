@@ -1305,7 +1305,12 @@ async function leaveServer() {
     return;
   }
 
+  const reason = await appPrompt('Leave reason (optional):');
+  if (reason === null) return;
   if (!(await appConfirm('Leave ' + s.name + '?'))) return;
+
+  // Log the leave
+  if (typeof logAudit === 'function') logAudit(ctxServerId, 'leave', user, reason || 'No reason');
 
   const remaining = (s.members || []).filter(m => m !== user);
   const admins = (s.admins || []).filter(m => m !== user);
