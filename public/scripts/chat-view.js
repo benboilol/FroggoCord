@@ -513,7 +513,7 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
         <div class="msg-content">
           ${rep}
           <div class="msg-head">
-            <span class="msg-author ${me ? 'self' : ''}" onclick="openProfile('${safeUser}')" style="cursor:pointer;">${safeUser}</span>
+            <span class="msg-author ${me ? 'self' : ''}" onclick="openProfile('${safeUser}')" style="cursor:pointer;" onmouseenter="showUserHoverCard(event,'${safeUser}')" onmouseleave="hideUserHoverCard()">${safeUser}</span>
             ${renderUserBadges(safeUser)}
             <span class="msg-time">${pending ? 'just now' : fmtMsgTime(m.timestamp)}${editedLabel}</span>
             <span class="msg-actions">${pending ? '' : reactBtn + rBtn + btns}</span>

@@ -1244,6 +1244,44 @@ window.db = db;
       } catch (e) { appAlert('Translation service unavailable.'); }
     };
 
+    // ---------- User Hover Cards ----------
+    let hoverCardTimer = null;
+    const hoverCard = document.createElement('div');
+    hoverCard.id = 'user-hover-card';
+    hoverCard.style.cssText = 'position:fixed;z-index:9998;display:none;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px;min-width:200px;box-shadow:0 4px 12px rgba(0,0,0,.3);pointer-events:none;';
+    document.body.appendChild(hoverCard);
+
+    window.showUserHoverCard = (e, u) => {
+      if (hoverCardTimer) clearTimeout(hoverCardTimer);
+      hoverCardTimer = setTimeout(() => {
+        const pfpUrl = (typeof userPfpMap !== 'undefined') ? userPfpMap.get(u) : null;
+        const displayName = (typeof userDisplayNameMap !== 'undefined') ? userDisplayNameMap.get(u) : null;
+        const customStatus = (typeof userCustomStatusMap !== 'undefined') ? userCustomStatusMap.get(u) : null;
+        const pronouns = (typeof userPronounsMap !== 'undefined') ? userPronounsMap.get(u) : null;
+        const bio = (typeof userBioMap !== 'undefined') ? userBioMap.get(u) : null;
+        const badges = (typeof userBadgesMap !== 'undefined') ? userBadgesMap.get(u) : null;
+        const pfpStyle = pfpUrl ? `background-image:url('${escHtml(pfpUrl)}');background-size:cover;background-position:center;` : '';
+        let html = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--bg-t);${pfpStyle}display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--bright);">${pfpUrl ? '' : escHtml((u || '?')[0].toUpperCase())}</div>
+          <div>
+            <div style="font-weight:600;color:var(--bright);">${escHtml(displayName || u)}</div>
+            ${pronouns ? `<div style="font-size:11px;color:var(--mut);">${escHtml(pronouns)}</div>` : ''}
+          </div>
+        </div>`;
+        if (customStatus) html += `<div style="font-size:12px;color:var(--txt);margin-bottom:4px;">${escHtml(customStatus)}</div>`;
+        if (bio) html += `<div style="font-size:11px;color:var(--mut);margin-bottom:4px;">${escHtml(bio.slice(0, 100))}</div>`;
+        if (badges && badges.length) html += `<div style="font-size:11px;color:var(--mut);">Badges: ${badges.map(b => b).join(', ')}</div>`;
+        hoverCard.innerHTML = html;
+        hoverCard.style.left = (e.clientX + 12) + 'px';
+        hoverCard.style.top = (e.clientY + 12) + 'px';
+        hoverCard.style.display = 'block';
+      }, 500);
+    };
+    window.hideUserHoverCard = () => {
+      if (hoverCardTimer) clearTimeout(hoverCardTimer);
+      hoverCard.style.display = 'none';
+    };
+
     // ---------- Download your data ----------
     window.downloadMyData = async () => {
       if (!user) { appAlert('Sign in first.'); return; }
