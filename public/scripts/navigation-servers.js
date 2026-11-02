@@ -1335,14 +1335,18 @@ function fileToDataUrl(file) {
 
 window.leaveServerFromCtx = () => {
   console.log('leaveServerFromCtx called');
+  console.log('leaveServerFromCtx: typeof leaveServer=', typeof leaveServer);
   const sid = document.getElementById('server-ctx')?.dataset?.serverId || ctxServerId || currentServer;
   console.log('leaveServerFromCtx: sid=', sid, 'ctxServerId=', ctxServerId, 'currentServer=', currentServer);
   if (!sid) { appAlert('No server selected.'); return; }
   hideServerCtx();
-  leaveServer(sid);
+  console.log('leaveServerFromCtx: about to call leaveServer');
+  leaveServer(sid).catch(e => console.error('leaveServerFromCtx: leaveServer promise rejected:', e));
+  console.log('leaveServerFromCtx: leaveServer called');
 };
 
 async function leaveServer(sid) {
+  console.log('leaveServer entered with sid=', sid);
   try {
     hideServerCtx();
     const targetId = sid || document.getElementById('server-ctx')?.dataset?.serverId || ctxServerId || currentServer;
