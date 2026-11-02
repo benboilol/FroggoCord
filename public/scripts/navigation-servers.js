@@ -188,7 +188,7 @@ function renderUserList() {
   }
 
   const rt = document.getElementById('rs-title');
-  if (rt) rt.textContent = 'Online — ' + online.length;
+  if (rt) rt.textContent = 'Online (' + online.length + ') / Offline (' + offline.length + ')';
 }
 
 let userListSig = '';
