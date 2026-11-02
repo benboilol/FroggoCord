@@ -1352,6 +1352,9 @@ async function leaveServer() {
 
   const remaining = (s.members || []).filter(m => m !== user);
   const admins = (s.admins || []).filter(m => m !== user);
+  const uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
+  const remainingUids = (s.memberUids || []).filter(u => u !== uid);
+  const adminsUids = (s.adminUids || []).filter(u => u !== uid);
 
   if (remaining.length === 0) {
     try { await window.deleteServerMessages(s); } catch (e) { console.warn('deleteServerMessages failed (permission):', e); }
@@ -1359,7 +1362,9 @@ async function leaveServer() {
   } else {
     await updateDoc(doc(db, 'servers', ctxServerId), {
       members: remaining,
-      admins
+      memberUids: remainingUids,
+      admins,
+      adminUids: adminsUids
     });
   }
 
