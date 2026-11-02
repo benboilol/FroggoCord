@@ -1333,10 +1333,11 @@ function fileToDataUrl(file) {
   });
 }
 
-async function leaveServer() {
+async function leaveServer(sid) {
   hideServerCtx();
+  if (sid) ctxServerId = sid;
   const s = getServerById(ctxServerId);
-  if (!s) return;
+  if (!s) { console.error('leaveServer: server not found for', ctxServerId); appAlert('Server not found.'); return; }
 
   if (s.owner === user) {
     appAlert('The owner must delete the server instead of leaving it.');
@@ -1358,14 +1359,20 @@ async function leaveServer() {
 
   if (remaining.length === 0) {
     try { await window.deleteServerMessages(s); } catch (e) { console.warn('deleteServerMessages failed (permission):', e); }
-    await deleteDoc(doc(db, 'servers', ctxServerId));
+    try { await deleteDoc(doc(db, 'servers', ctxServerId)); } catch (e) { console.error('deleteDoc failed:', e); appAlert('Failed to delete server: ' + (e.message || e)); return; }
   } else {
-    await updateDoc(doc(db, 'servers', ctxServerId), {
-      members: remaining,
-      memberUids: remainingUids,
-      admins,
-      adminUids: adminsUids
-    });
+    try {
+      await updateDoc(doc(db, 'servers', ctxServerId), {
+        members: remaining,
+        memberUids: remainingUids,
+        admins,
+        adminUids: adminsUids
+      });
+    } catch (e) {
+      console.error('leaveServer updateDoc failed:', e);
+      appAlert('Failed to leave server: ' + (e.message || e));
+      return;
+    }
   }
 
   if (currentServer === ctxServerId) { currentServer = null; chan = null; mode = 'channels'; dmWith = null; }
@@ -1397,8 +1404,9 @@ document.getElementById('ctx-settings').onclick = (e) => {
 
 document.getElementById('ctx-leave').onclick = (e) => {
   e.stopPropagation();
+  const sid = document.getElementById('server-ctx').dataset.serverId;
   hideServerCtx();
-  leaveServer();
+  leaveServer(sid);
 };
 
 window.openLightbox = (url, label) => {
