@@ -416,7 +416,16 @@ function renderServerList() {
     const active = currentServer === s.id;
     const iconStyle = s.icon ? `background-image:url('${s.icon}');background-size:cover;background-position:center;` : '';
     const accentStyle = s.accent ? `border-left:3px solid ${escHtml(s.accent)};` : '';
-    return `<div class="si ${active ? 'active' : ''}" onclick="switchServer('${s.id}')" oncontextmenu="showServerCtx(event,'${s.id}')" title="${escHtml(s.name)}" style="${iconStyle}${accentStyle}">${s.icon ? '' : escHtml(s.name)[0].toUpperCase()}</div>`;
+    // Calculate unread count for server
+    let unread = 0;
+    if (window._unreadCounts) {
+      (s.channels || []).forEach(c => {
+        const key = 'srv_' + s.id + '_' + c.name;
+        unread += (window._unreadCounts[key] || 0);
+      });
+    }
+    const badge = unread > 0 ? '<span class="badge" style="position:absolute;top:2px;right:2px;background:var(--bl);color:#000;border-radius:10px;font-size:10px;padding:1px 4px;">' + unread + '</span>' : '';
+    return `<div class="si ${active ? 'active' : ''}" onclick="switchServer('${s.id}')" oncontextmenu="showServerCtx(event,'${s.id}')" title="${escHtml(s.name)}" style="position:relative;${iconStyle}${accentStyle}">${s.icon ? '' : escHtml(s.name)[0].toUpperCase()}${badge}</div>`;
   }).join('');
 }
 
@@ -1086,6 +1095,19 @@ window.showServerRules = async (serverId) => {
   localStorage.setItem(key, '1');
 };
 
+// ---------- Mark All Read ----------
+window.markAllRead = () => {
+  if (!user) return;
+  try {
+    if (window._unreadCounts) {
+      Object.keys(window._unreadCounts).forEach(k => { window._unreadCounts[k] = 0; });
+    }
+    if (typeof renderSidebar === 'function') renderSidebar();
+    if (typeof renderServerList === 'function') renderServerList();
+    appAlert('All messages marked as read.');
+  } catch (e) { console.error('markAllRead failed', e); }
+};
+
 window.togglePublicServer = togglePublicServer;
 // ---------- Server Stats ----------
 window.viewServerStats = async () => {
@@ -1311,6 +1333,11 @@ function switchServer(id) {
 
     bannerName.textContent = s.name;
     if (s.description) banner.title = s.description;
+    // Show online count
+    const onlineCount = lastPresenceUsers.filter(p => p && effStatus(p) === 'online').length;
+    const totalCount = (s.members || []).length;
+    const countBadge = document.getElementById('server-member-count');
+    if (countBadge) countBadge.textContent = onlineCount + '/' + totalCount + ' online';
     // Show welcome message for new members
     if (s.welcomeMessage) {
       const welcomeKey = 'froggocord-welcome-seen-' + s.id;

@@ -1712,6 +1712,11 @@ window.toggleGifBlock = (u) => {
         e.preventDefault();
         if (typeof window.sendMessage === 'function') window.sendMessage();
       }
+      // Ctrl/Cmd + Shift + M: mark all read
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'M') {
+        e.preventDefault();
+        if (typeof window.markAllRead === 'function') window.markAllRead();
+      }
     });
 
 

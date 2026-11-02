@@ -303,6 +303,13 @@ const chatGifDims = {};
 const REACTION_EMOJIS = ['👍','👎','❤️','😂','👮','😢','😡','🎉','🔥','👀','✅','❌','💯','🤔','😍','🙏','👏','💀','😭','😎','🥳','🤯'];
 const messageEditHistory = new Map(); // msgId => [{ text, timestamp }]
 const RECENT_EMOJIS_KEY = 'froggocord-recent-emojis';
+
+function renderUserBadges(u) {
+  const badges = (typeof userBadgesMap !== 'undefined') ? userBadgesMap.get(u) : null;
+  if (!badges || !badges.length) return '';
+  const badgeEmojis = { 'first-message': '💬', 'active-chatter': '🔥', 'server-creator': '🏰', 'popular': '⭐', 'first-friend': '🤝', 'chatter': '💬', 'super-chatter': '🏆', 'theme-explorer': '🎨', 'profile-customizer': '✨' };
+  return badges.map(b => `<span style="font-size:11px;margin-left:2px;" title="${escHtml(b)}">${badgeEmojis[b] || '🏅'}</span>`).join('');
+}
 let recentEmojis = [];
 try { recentEmojis = JSON.parse(localStorage.getItem(RECENT_EMOJIS_KEY) || '[]'); } catch (e) {}
 function addRecentEmoji(emoji) {
@@ -475,7 +482,7 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
     const av = (m.pfp && !m.pfp.startsWith('file:///')) ? `style="background-image:url('${escHtml(m.pfp)}');text-indent:-9999px;"` : '';
     const rep = m.replyTo ? `<div class="msg-reply"><span class="bar"></span><span>Replying to <b>@${escHtml(m.replyTo.user)}</b> ${escHtml(m.replyTo.text)}</span></div>` : '';
     const textVal = String(m.text ?? '');
-    const editedLabel = !pending && m.editedAt ? '<span class="msg-edited" title="Edited">(edited)</span>' : '';
+    const editedLabel = !pending && m.editedAt ? '<span class="msg-edited" style="cursor:pointer;color:var(--mut);font-size:11px;" onclick="window.viewEditHistory(\'' + m.id + '\')" title="Click to view edit history">(edited)</span>' : '';
         // Link preview - loaded async below
         let linkPreviewHtml = '';
     const isP = textVal.includes('@everyone') || textVal.includes(`@${user}`);
@@ -507,6 +514,7 @@ function renderMessagePages({ forceBottom = false, preserveScroll = false, conte
           ${rep}
           <div class="msg-head">
             <span class="msg-author ${me ? 'self' : ''}" onclick="openProfile('${safeUser}')" style="cursor:pointer;">${safeUser}</span>
+            ${renderUserBadges(safeUser)}
             <span class="msg-time">${pending ? 'just now' : fmtMsgTime(m.timestamp)}${editedLabel}</span>
             <span class="msg-actions">${pending ? '' : reactBtn + rBtn + btns}</span>
           </div>
