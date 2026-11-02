@@ -192,12 +192,21 @@ setInterval(() => { if (user && lastPresenceUsers.length) renderUserList(); }, 1
 // ---------- Member Search Filter ----------
 window.filterMembers = () => {
   const search = (document.getElementById('member-search')?.value || '').toLowerCase().trim();
+  const roleFilter = (document.getElementById('member-role-filter')?.value || '').toLowerCase();
   const ul = document.getElementById('user-list');
   if (!ul) return;
   const members = ul.querySelectorAll('.member');
   members.forEach(m => {
     const name = (m.dataset.user || '').toLowerCase();
-    m.style.display = (!search || name.includes(search)) ? '' : 'none';
+    const isOffline = m.classList.contains('off');
+    const isOnline = !isOffline;
+    const isOwner = false; // Would need server data to determine
+    const isAdmin = false; // Would need server data to determine
+    let show = true;
+    if (search && !name.includes(search)) show = false;
+    if (roleFilter === 'online' && !isOnline) show = false;
+    if (roleFilter === 'offline' && !isOffline) show = false;
+    m.style.display = show ? '' : 'none';
   });
 };
 

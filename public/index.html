@@ -462,6 +462,14 @@
     <div class="sb-scroll">
         <div style="padding:4px 8px;">
         <input id="member-search" class="inp2" placeholder="Search members..." style="font-size:12px;padding:4px 8px;" oninput="filterMembers()">
+        <select id="member-role-filter" class="inp2" style="font-size:12px;padding:4px 8px;margin-top:4px;" onchange="filterMembers()">
+            <option value="">All Roles</option>
+            <option value="owner">Owner</option>
+            <option value="admin">Admin</option>
+            <option value="member">Member</option>
+            <option value="online">Online</option>
+            <option value="offline">Offline</option>
+        </select>
         </div>
         <div class="ch">
         <div class="cat">Servers</div>
