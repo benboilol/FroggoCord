@@ -1116,6 +1116,25 @@ window.joinVoiceChannel = (sid, cname) => {
   appAlert('Voice channel "' + cname + '" - Voice chat coming soon! (requires WebRTC)');
 };
 
+// ---------- Discover Server Filtering ----------
+window.filterDiscoverServers = () => {
+  const list = document.getElementById('discover-list');
+  if (!list) return;
+  const search = (document.getElementById('discover-search')?.value || '').toLowerCase().trim();
+  const servers = (window._discoverServers || []).filter(s => !search || s.name.toLowerCase().includes(search));
+  if (!servers.length) { list.innerHTML = '<div style="color:var(--mut);padding:12px;">No matching servers.</div>'; return; }
+  list.innerHTML = servers.map(s => `
+    <div style="padding:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+      <div style="width:40px;height:40px;border-radius:8px;background:var(--bg-t);background-image:url('${escHtml(s.icon || '')}');background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--bright);">${s.icon ? '' : escHtml(s.name)[0].toUpperCase()}</div>
+      <div style="flex:1;">
+        <div style="font-weight:600;color:var(--bright);">${escHtml(s.name)}</div>
+        <div style="font-size:11px;color:var(--mut);">${(s.members || []).length} members</div>
+      </div>
+      <button class="btn btn-primary" style="font-size:11px;padding:4px 8px;" onclick="joinServer('${escHtml(s.inviteCode)}'); closeDiscoverModal();">Join</button>
+    </div>
+  `).join('');
+};
+
 window.togglePublicServer = togglePublicServer;
 // ---------- Server Stats ----------
 window.viewServerStats = async () => {
@@ -1662,18 +1681,9 @@ async function openDiscoverModal() {
   if (list) list.innerHTML = '<div style="color:var(--mut);padding:12px;">Loading...</div>';
   try {
     const snap = await getDocs(query(collection(db, 'servers'), where('public', '==', true)));
-    const servers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    if (!servers.length) { if (list) list.innerHTML = '<div style="color:var(--mut);padding:12px;">No public servers yet.</div>'; return; }
-    if (list) list.innerHTML = servers.map(s => `
-      <div style="padding:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
-        <div style="width:40px;height:40px;border-radius:8px;background:var(--bg-t);background-image:url('${escHtml(s.icon || '')}');background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--bright);">${s.icon ? '' : escHtml(s.name)[0].toUpperCase()}</div>
-        <div style="flex:1;">
-          <div style="font-weight:600;color:var(--bright);">${escHtml(s.name)}</div>
-          <div style="font-size:11px;color:var(--mut);">${(s.members || []).length} members</div>
-        </div>
-        <button class="btn btn-primary" style="font-size:11px;padding:4px 8px;" onclick="joinServer('${escHtml(s.inviteCode)}'); closeDiscoverModal();">Join</button>
-      </div>
-    `).join('');
+    window._discoverServers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!window._discoverServers.length) { if (list) list.innerHTML = '<div style="color:var(--mut);padding:12px;">No public servers yet.</div>'; return; }
+    filterDiscoverServers();
   } catch (e) { if (list) list.innerHTML = '<div style="color:var(--danger);padding:12px;">Failed to load servers.</div>'; }
 }
 
