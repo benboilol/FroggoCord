@@ -1333,6 +1333,15 @@ function fileToDataUrl(file) {
   });
 }
 
+window.leaveServerFromCtx = () => {
+  console.log('leaveServerFromCtx called');
+  const sid = document.getElementById('server-ctx')?.dataset?.serverId || ctxServerId || currentServer;
+  console.log('leaveServerFromCtx: sid=', sid, 'ctxServerId=', ctxServerId, 'currentServer=', currentServer);
+  if (!sid) { appAlert('No server selected.'); return; }
+  hideServerCtx();
+  leaveServer(sid);
+};
+
 async function leaveServer(sid) {
   try {
     hideServerCtx();
@@ -1408,13 +1417,6 @@ document.getElementById('ctx-settings').onclick = (e) => {
   const sid = document.getElementById('server-ctx').dataset.serverId;
   hideServerCtx();
   openServerSettings(sid);
-};
-
-document.getElementById('ctx-leave').onclick = (e) => {
-  e.stopPropagation();
-  const sid = document.getElementById('server-ctx').dataset.serverId;
-  hideServerCtx();
-  leaveServer(sid);
 };
 
 window.openLightbox = (url, label) => {
