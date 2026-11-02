@@ -1334,34 +1334,36 @@ function fileToDataUrl(file) {
 }
 
 async function leaveServer(sid) {
-  hideServerCtx();
-  const targetId = sid || document.getElementById('server-ctx')?.dataset?.serverId || ctxServerId || currentServer;
-  if (targetId) ctxServerId = targetId;
-  const s = getServerById(ctxServerId);
-  if (!s) { console.error('leaveServer: server not found for', ctxServerId); appAlert('Server not found. Please refresh and try again.'); return; }
+  try {
+    hideServerCtx();
+    const targetId = sid || document.getElementById('server-ctx')?.dataset?.serverId || ctxServerId || currentServer;
+    if (!targetId) { appAlert('No server selected.'); return; }
+    ctxServerId = targetId;
+    console.log('leaveServer: targetId=', targetId, 'currentServer=', currentServer, 'user=', user);
 
-  if (s.owner === user) {
-    appAlert('The owner must delete the server instead of leaving it.');
-    return;
-  }
+    const s = getServerById(ctxServerId);
+    if (!s) { appAlert('Server not found. Please refresh and try again.'); return; }
+    console.log('leaveServer: server=', s.name, 'owner=', s.owner, 'members=', s.members, 'uid=', (auth && auth.currentUser && auth.currentUser.uid) || 'null');
 
-  const reason = await appPrompt('Leave reason (optional):');
-  if (reason === null) return;
-  if (!(await appConfirm('Leave ' + s.name + '?'))) return;
+    if (s.owner === user) {
+      appAlert('The owner must delete the server instead of leaving it.');
+      return;
+    }
 
-  // Log the leave
-  if (typeof logAudit === 'function') logAudit(ctxServerId, 'leave', user, reason || 'No reason');
+    const reason = await appPrompt('Leave reason (optional):');
+    if (reason === null) return;
+    if (!(await appConfirm('Leave ' + s.name + '?'))) return;
 
-  const remaining = (s.members || []).filter(m => m !== user);
-  const admins = (s.admins || []).filter(m => m !== user);
-  const uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
-  const remainingUids = (s.memberUids || []).filter(u => u !== uid);
-  const adminsUids = (s.adminUids || []).filter(u => u !== uid);
+    // Log the leave (non-blocking)
+    if (typeof logAudit === 'function') { try { await logAudit(ctxServerId, 'leave', user, reason || 'No reason'); } catch(e) { console.warn('audit log failed:', e); } }
 
-  if (remaining.length === 0) {
-    try { await window.deleteServerMessages(s); } catch (e) { console.warn('deleteServerMessages failed (permission):', e); }
-    try { await deleteDoc(doc(db, 'servers', ctxServerId)); } catch (e) { console.error('deleteDoc failed:', e); appAlert('Failed to delete server: ' + (e.message || e)); return; }
-  } else {
+    const remaining = (s.members || []).filter(m => m !== user);
+    const admins = (s.admins || []).filter(m => m !== user);
+    const uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
+    const remainingUids = (s.memberUids || []).filter(u => u !== uid);
+    const adminsUids = (s.adminUids || []).filter(u => u !== uid);
+    console.log('leaveServer: remaining=', remaining, 'remainingUids=', remainingUids, 'uid=', uid);
+
     try {
       await updateDoc(doc(db, 'servers', ctxServerId), {
         members: remaining,
@@ -1369,23 +1371,28 @@ async function leaveServer(sid) {
         admins,
         adminUids: adminsUids
       });
+      console.log('leaveServer: updateDoc succeeded');
     } catch (e) {
       console.error('leaveServer updateDoc failed:', e);
-      appAlert('Failed to leave server: ' + (e.message || e));
+      appAlert('Failed to leave server: ' + (e.message || String(e)));
       return;
     }
-  }
 
-  if (currentServer === ctxServerId) { currentServer = null; chan = null; mode = 'channels'; dmWith = null; }
-  await loadServers();
-  if (currentServer) switchServer(currentServer);
-  else if (servers.length > 0) { switchServer(servers[0].id); }
-  else {
-    document.querySelector('.sb h3').textContent = 'Channels';
-    document.getElementById('server-banner').style.display = 'none';
-    document.querySelector('.ch').innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`;
-    updateHeader();
-    listen();
+    if (currentServer === ctxServerId) { currentServer = null; chan = null; mode = 'channels'; dmWith = null; }
+    await loadServers();
+    if (currentServer) switchServer(currentServer);
+    else if (servers.length > 0) { switchServer(servers[0].id); }
+    else {
+      document.querySelector('.sb h3').textContent = 'Channels';
+      document.getElementById('server-banner').style.display = 'none';
+      document.querySelector('.ch').innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`;
+      updateHeader();
+      listen();
+    }
+    appAlert('You left the server.');
+  } catch (e) {
+    console.error('leaveServer unexpected error:', e);
+    appAlert('Leave failed: ' + (e.message || String(e)));
   }
 }
 
