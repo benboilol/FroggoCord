@@ -228,15 +228,17 @@ service cloud.firestore {
           && request.resource.data.members == resource.data.members
           && request.resource.data.memberUids == resource.data.memberUids
           && (request.resource.data.admins == resource.data.admins
+              || !(resource.data.admins is list)
               || (request.resource.data.admins is list
-                  && request.resource.data.admins.size() == resource.data.admins.size() - 1
+                  && (resource.data.admins is list ? request.resource.data.admins.size() == resource.data.admins.size() - 1 : true)
                   && !request.resource.data.admins.has(username())
-                  && resource.data.admins.hasAll(request.resource.data.admins)))
+                  && (resource.data.admins is list ? resource.data.admins.hasAll(request.resource.data.admins) : true)))
           && (request.resource.data.adminUids == resource.data.adminUids
+              || !(resource.data.adminUids is list)
               || (request.resource.data.adminUids is list
-                  && request.resource.data.adminUids.size() == resource.data.adminUids.size() - 1
+                  && (resource.data.adminUids is list ? request.resource.data.adminUids.size() == resource.data.adminUids.size() - 1 : true)
                   && !(request.auth.uid in request.resource.data.adminUids)
-                  && resource.data.adminUids.hasAll(request.resource.data.adminUids)))
+                  && (resource.data.adminUids is list ? resource.data.adminUids.hasAll(request.resource.data.adminUids) : true)))
         )
         ||
         (
@@ -246,15 +248,17 @@ service cloud.firestore {
           && request.resource.data.ownerUid == resource.data.ownerUid
           && request.resource.data.inviteCode == resource.data.inviteCode
           && (request.resource.data.admins == resource.data.admins
+              || !(resource.data.admins is list)
               || (request.resource.data.admins is list
-                  && request.resource.data.admins.size() == resource.data.admins.size() - 1
+                  && (resource.data.admins is list ? request.resource.data.admins.size() == resource.data.admins.size() - 1 : true)
                   && !request.resource.data.admins.has(username())
-                  && resource.data.admins.hasAll(request.resource.data.admins)))
+                  && (resource.data.admins is list ? resource.data.admins.hasAll(request.resource.data.admins) : true)))
           && (request.resource.data.adminUids == resource.data.adminUids
+              || !(resource.data.adminUids is list)
               || (request.resource.data.adminUids is list
-                  && request.resource.data.adminUids.size() == resource.data.adminUids.size() - 1
+                  && (resource.data.adminUids is list ? request.resource.data.adminUids.size() == resource.data.adminUids.size() - 1 : true)
                   && !(request.auth.uid in request.resource.data.adminUids)
-                  && resource.data.adminUids.hasAll(request.resource.data.adminUids)))
+                  && (resource.data.adminUids is list ? resource.data.adminUids.hasAll(request.resource.data.adminUids) : true)))
           && request.resource.data.members is list
           && request.resource.data.members.size() <= 500
           && request.resource.data.memberUids is list
@@ -281,23 +285,25 @@ service cloud.firestore {
           && request.resource.data.ownerUid == resource.data.ownerUid
           && request.resource.data.inviteCode == resource.data.inviteCode
           && (request.resource.data.admins == resource.data.admins
+              || !(resource.data.admins is list)
               || (request.resource.data.admins is list
-                  && request.resource.data.admins.size() == resource.data.admins.size() - 1
+                  && (resource.data.admins is list ? request.resource.data.admins.size() == resource.data.admins.size() - 1 : true)
                   && !request.resource.data.admins.has(username())
-                  && resource.data.admins.hasAll(request.resource.data.admins)))
+                  && (resource.data.admins is list ? resource.data.admins.hasAll(request.resource.data.admins) : true)))
           && (request.resource.data.adminUids == resource.data.adminUids
+              || !(resource.data.adminUids is list)
               || (request.resource.data.adminUids is list
-                  && request.resource.data.adminUids.size() == resource.data.adminUids.size() - 1
+                  && (resource.data.adminUids is list ? request.resource.data.adminUids.size() == resource.data.adminUids.size() - 1 : true)
                   && !(request.auth.uid in request.resource.data.adminUids)
-                  && resource.data.adminUids.hasAll(request.resource.data.adminUids)))
+                  && (resource.data.adminUids is list ? resource.data.adminUids.hasAll(request.resource.data.adminUids) : true)))
           && request.resource.data.members is list
           && request.resource.data.members.size() == resource.data.members.size() - 1
           && !request.resource.data.members.has(username())
-          && resource.data.members.hasAll(request.resource.data.members)
+          && (resource.data.members is list ? resource.data.members.hasAll(request.resource.data.members) : true)
           && request.resource.data.memberUids is list
-          && request.resource.data.memberUids.size() == resource.data.memberUids.size() - 1
+          && (resource.data.memberUids is list ? request.resource.data.memberUids.size() == resource.data.memberUids.size() - 1 : true)
           && !(request.auth.uid in request.resource.data.memberUids)
-          && request.auth.uid in resource.data.memberUids
+          && (resource.data.memberUids is list ? request.auth.uid in resource.data.memberUids : true)
         )
       );
 

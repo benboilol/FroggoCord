@@ -1335,9 +1335,10 @@ function fileToDataUrl(file) {
 
 async function leaveServer(sid) {
   hideServerCtx();
-  if (sid) ctxServerId = sid;
+  const targetId = sid || document.getElementById('server-ctx')?.dataset?.serverId || ctxServerId || currentServer;
+  if (targetId) ctxServerId = targetId;
   const s = getServerById(ctxServerId);
-  if (!s) { console.error('leaveServer: server not found for', ctxServerId); appAlert('Server not found.'); return; }
+  if (!s) { console.error('leaveServer: server not found for', ctxServerId); appAlert('Server not found. Please refresh and try again.'); return; }
 
   if (s.owner === user) {
     appAlert('The owner must delete the server instead of leaving it.');

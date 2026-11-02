@@ -152,3 +152,4 @@
  - 20a6d-2026.11.02-02.00.00-0500: Filtered file:/// URLs from user profile maps (pfp/banner/background) and server banners to eliminate browser security errors.
  - 20a6d-2026.11.02-03.00.00-0500: Fixed leave server still failing by adding memberUids and adminUids to the update payload (Firestore self-leave rule requires them; they were previously omitted).
  - 20a6d-2026.11.02-04.00.00-0500: Fixed leave server still broken by making ctx-leave onclick read server ID from DOM dataset (matching ctx-settings pattern) instead of relying on stale module-level ctxServerId.
+ - 20a6d-2026.11.02-05.00.00-0500: Hardened Firestore self-leave rule to handle missing memberUids/adminUids/admins fields gracefully (legacy servers), and added Leave Server button to server settings modal.
