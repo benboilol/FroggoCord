@@ -918,9 +918,9 @@ onAuthStateChanged(window.auth, async (u) => {
       snap.docs.forEach(d => {
         const data = d.data();
         if (data.user) allUsers.push(data.user);
-        if (data.user && data.pfp) userPfpMap.set(data.user, data.pfp);
-        if (data.user && data.banner) userBannerMap.set(data.user, data.banner);
-        if (data.user && data.background) userBackgroundMap.set(data.user, data.background);
+        if (data.user && data.pfp && !String(data.pfp).startsWith('file:///')) userPfpMap.set(data.user, data.pfp);
+        if (data.user && data.banner && !String(data.banner).startsWith('file:///')) userBannerMap.set(data.user, data.banner);
+        if (data.user && data.background && !String(data.background).startsWith('file:///')) userBackgroundMap.set(data.user, data.background);
         if (data.user && data.accent) userAccentMap.set(data.user, data.accent);
         if (data.user && data.decoration) userDecorationMap.set(data.user, data.decoration);
         if (data.user && data.badges) userBadgesMap.set(data.user, data.badges);

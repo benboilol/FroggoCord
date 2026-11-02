@@ -1442,7 +1442,7 @@ function switchServer(id) {
     const banner = document.getElementById('server-banner');
     const bannerName = document.getElementById('server-banner-name');
 
-    if (s.banner) { banner.style.display = 'block'; banner.style.backgroundImage = 'url(' + s.banner + ')'; }
+    if (s.banner && !String(s.banner).startsWith('file:///')) { banner.style.display = 'block'; banner.style.backgroundImage = 'url(' + s.banner + ')'; }
     else { banner.style.display = 'none'; banner.style.backgroundImage = ''; }
 
     bannerName.textContent = s.name;
