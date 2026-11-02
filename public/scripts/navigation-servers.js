@@ -6,6 +6,7 @@ window.switchChannel = (c) => {
   currentServer = null;
   chan = c;
   document.getElementById('dm-btn').classList.remove('active');
+  if (typeof window.addRecentChannel === 'function') window.addRecentChannel(c);
   renderServerList();
   renderUserList();
   renderSidebar();
@@ -1468,6 +1469,7 @@ window.switchServerChannel = (sid, cname) => {
   document.getElementById('dm-btn').classList.remove('active');
 
   chan = 'srv_' + sid + '_' + cname;
+  if (typeof window.addRecentChannel === 'function') window.addRecentChannel(chan);
       const visibleChs2 = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (s.admins || []).includes(user));
       const cats2 = {};
       const uncat2 = [];

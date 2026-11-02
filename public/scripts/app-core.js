@@ -1282,6 +1282,24 @@ window.db = db;
       hoverCard.style.display = 'none';
     };
 
+    // ---------- Recently Viewed Channels ----------
+    window.getRecentChannels = () => {
+      try { return JSON.parse(localStorage.getItem('froggocord-recent-channels') || '[]'); } catch (e) { return []; }
+    };
+    window.addRecentChannel = (ch) => {
+      if (!ch) return;
+      let list = getRecentChannels();
+      list = list.filter(c => c !== ch);
+      list.unshift(ch);
+      list = list.slice(0, 5);
+      try { localStorage.setItem('froggocord-recent-channels', JSON.stringify(list)); } catch (e) {}
+    };
+    window.showRecentChannels = () => {
+      const list = getRecentChannels();
+      if (!list.length) { appAlert('No recent channels.'); return; }
+      appAlert('Recent channels:\\n\\n' + list.map((c, i) => (i + 1) + '. ' + c).join('\\n'));
+    };
+
     // ---------- Download your data ----------
     window.downloadMyData = async () => {
       if (!user) { appAlert('Sign in first.'); return; }
@@ -1763,12 +1781,17 @@ window.toggleGifBlock = (u) => {
       // Ctrl/Cmd + /: show keyboard shortcuts
       if ((e.ctrlKey || e.metaKey) && e.key === '/') {
         e.preventDefault();
-        appAlert('Keyboard Shortcuts:\\n\\nCtrl+K: Search\\nCtrl+Enter: Send\\nCtrl+Shift+M: Mark all read\\nCtrl+Shift+U: Toggle DMs\\nEsc: Close modals\\nArrow keys: Navigate messages\\nEnter: Open profile\\nCtrl+Shift+J: Jump to first unread');
+        appAlert('Keyboard Shortcuts:\\n\\nCtrl+K: Search\\nCtrl+Enter: Send\\nCtrl+Shift+M: Mark all read\\nCtrl+Shift+U: Toggle DMs\\nCtrl+Shift+J: Jump to first unread\\nCtrl+Shift+R: Recent channels\\nEsc: Close modals\\nArrow keys: Navigate messages\\nEnter: Open profile');
       }
       // Ctrl/Cmd + Shift + J: jump to first unread
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'J') {
         e.preventDefault();
         if (typeof window.jumpToFirstUnread === 'function') window.jumpToFirstUnread();
+      }
+      // Ctrl/Cmd + Shift + R: recent channels
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
+        e.preventDefault();
+        if (typeof window.showRecentChannels === 'function') window.showRecentChannels();
       }
     });
 
