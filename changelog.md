@@ -148,3 +148,4 @@
  - 1f89a-2026.11.01-10.45.00-0500: Improved light Alpenglow contrast for muted, accent, and danger text to meet WCAG AA contrast targets.
  - 1f89a-2026.11.01-10.50.00-0500: Fixed invisible inactive Create/Join tabs in the new-server modal by using the theme’s readable text color.
  - 20a6d-2026.11.02-00.00.00-0500: Fixed leave server button (self-leave rule now allows removing self from admins), fixed members not showing on sidebar (reset userListSig on server switch, fixed undefined p reference in row renderer), hardened admin access to UID-based adminUids (removed username-based admins fallback in rules and client), and removed Download my data button from settings.
+ - 20a6d-2026.11.02-01.00.00-0500: Fixed observeChatImages and updatePresence ReferenceErrors (exposed on window from message-actions.js), fixed users snapshot permission error (allow authenticated read), fixed badge award permission error (allow partial merge updates without requiring user field).
