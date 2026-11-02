@@ -1345,68 +1345,74 @@ window.leaveServerFromCtx = () => {
   console.log('leaveServerFromCtx: leaveServer called');
 };
 
-async function leaveServer(sid) {
-  console.log('leaveServer entered with sid=', sid);
-  try {
-    hideServerCtx();
-    const targetId = sid || document.getElementById('server-ctx')?.dataset?.serverId || ctxServerId || currentServer;
-    if (!targetId) { appAlert('No server selected.'); return; }
-    ctxServerId = targetId;
-    console.log('leaveServer: targetId=', targetId, 'currentServer=', currentServer, 'user=', user);
+function leaveServer(sid) {
+  console.log('leaveServer v2 called with sid=', sid);
+  return new Promise((resolve, reject) => {
+    (async () => {
+      try {
+        hideServerCtx();
+        const targetId = sid || document.getElementById('server-ctx')?.dataset?.serverId || ctxServerId || currentServer;
+        if (!targetId) { appAlert('No server selected.'); resolve(); return; }
+        ctxServerId = targetId;
+        console.log('leaveServer: targetId=', targetId, 'currentServer=', currentServer, 'user=', user);
 
-    const s = getServerById(ctxServerId);
-    if (!s) { appAlert('Server not found. Please refresh and try again.'); return; }
-    console.log('leaveServer: server=', s.name, 'owner=', s.owner, 'members=', s.members, 'uid=', (auth && auth.currentUser && auth.currentUser.uid) || 'null');
+        const s = getServerById(ctxServerId);
+        if (!s) { appAlert('Server not found. Please refresh and try again.'); resolve(); return; }
+        console.log('leaveServer: server=', s.name, 'owner=', s.owner, 'members=', s.members, 'uid=', (auth && auth.currentUser && auth.currentUser.uid) || 'null');
 
-    if (s.owner === user) {
-      appAlert('The owner must delete the server instead of leaving it.');
-      return;
-    }
+        if (s.owner === user) {
+          appAlert('The owner must delete the server instead of leaving it.');
+          resolve(); return;
+        }
 
-    const reason = await appPrompt('Leave reason (optional):');
-    if (reason === null) return;
-    if (!(await appConfirm('Leave ' + s.name + '?'))) return;
+        const reason = await appPrompt('Leave reason (optional):');
+        if (reason === null) { resolve(); return; }
+        if (!(await appConfirm('Leave ' + s.name + '?'))) { resolve(); return; }
 
-    // Log the leave (non-blocking)
-    if (typeof logAudit === 'function') { try { await logAudit(ctxServerId, 'leave', user, reason || 'No reason'); } catch(e) { console.warn('audit log failed:', e); } }
+        // Log the leave (non-blocking)
+        if (typeof logAudit === 'function') { try { await logAudit(ctxServerId, 'leave', user, reason || 'No reason'); } catch(e) { console.warn('audit log failed:', e); } }
 
-    const remaining = (s.members || []).filter(m => m !== user);
-    const admins = (s.admins || []).filter(m => m !== user);
-    const uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
-    const remainingUids = (s.memberUids || []).filter(u => u !== uid);
-    const adminsUids = (s.adminUids || []).filter(u => u !== uid);
-    console.log('leaveServer: remaining=', remaining, 'remainingUids=', remainingUids, 'uid=', uid);
+        const remaining = (s.members || []).filter(m => m !== user);
+        const admins = (s.admins || []).filter(m => m !== user);
+        const uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
+        const remainingUids = (s.memberUids || []).filter(u => u !== uid);
+        const adminsUids = (s.adminUids || []).filter(u => u !== uid);
+        console.log('leaveServer: remaining=', remaining, 'remainingUids=', remainingUids, 'uid=', uid);
 
-    try {
-      await updateDoc(doc(db, 'servers', ctxServerId), {
-        members: remaining,
-        memberUids: remainingUids,
-        admins,
-        adminUids: adminsUids
-      });
-      console.log('leaveServer: updateDoc succeeded');
-    } catch (e) {
-      console.error('leaveServer updateDoc failed:', e);
-      appAlert('Failed to leave server: ' + (e.message || String(e)));
-      return;
-    }
+        try {
+          await updateDoc(doc(db, 'servers', ctxServerId), {
+            members: remaining,
+            memberUids: remainingUids,
+            admins,
+            adminUids: adminsUids
+          });
+          console.log('leaveServer: updateDoc succeeded');
+        } catch (e) {
+          console.error('leaveServer updateDoc failed:', e);
+          appAlert('Failed to leave server: ' + (e.message || String(e)));
+          resolve(); return;
+        }
 
-    if (currentServer === ctxServerId) { currentServer = null; chan = null; mode = 'channels'; dmWith = null; }
-    await loadServers();
-    if (currentServer) switchServer(currentServer);
-    else if (servers.length > 0) { switchServer(servers[0].id); }
-    else {
-      document.querySelector('.sb h3').textContent = 'Channels';
-      document.getElementById('server-banner').style.display = 'none';
-      document.querySelector('.ch').innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`;
-      updateHeader();
-      listen();
-    }
-    appAlert('You left the server.');
-  } catch (e) {
-    console.error('leaveServer unexpected error:', e);
-    appAlert('Leave failed: ' + (e.message || String(e)));
-  }
+        if (currentServer === ctxServerId) { currentServer = null; chan = null; mode = 'channels'; dmWith = null; }
+        await loadServers();
+        if (currentServer) switchServer(currentServer);
+        else if (servers.length > 0) { switchServer(servers[0].id); }
+        else {
+          document.querySelector('.sb h3').textContent = 'Channels';
+          document.getElementById('server-banner').style.display = 'none';
+          document.querySelector('.ch').innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`;
+          updateHeader();
+          listen();
+        }
+        appAlert('You left the server.');
+        resolve();
+      } catch (e) {
+        console.error('leaveServer unexpected error:', e);
+        appAlert('Leave failed: ' + (e.message || String(e)));
+        reject(e);
+      }
+    })();
+  });
 }
 
 document.getElementById('ctx-invite').onclick = (e) => {
