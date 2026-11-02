@@ -1717,6 +1717,16 @@ window.toggleGifBlock = (u) => {
         e.preventDefault();
         if (typeof window.markAllRead === 'function') window.markAllRead();
       }
+      // Ctrl/Cmd + Shift + U: toggle DM view
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'U') {
+        e.preventDefault();
+        if (typeof window.toggleDMView === 'function') window.toggleDMView();
+      }
+      // Ctrl/Cmd + /: show keyboard shortcuts
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        appAlert('Keyboard Shortcuts:\\n\\nCtrl+K: Search\\nCtrl+Enter: Send\\nCtrl+Shift+M: Mark all read\\nCtrl+Shift+U: Toggle DMs\\nEsc: Close modals\\nArrow keys: Navigate messages\\nEnter: Open profile');
+      }
     });
 
 
