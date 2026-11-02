@@ -151,3 +151,4 @@
  - 20a6d-2026.11.02-01.00.00-0500: Fixed observeChatImages and updatePresence ReferenceErrors (exposed on window from message-actions.js), fixed users snapshot permission error (allow authenticated read), fixed badge award permission error (allow partial merge updates without requiring user field).
  - 20a6d-2026.11.02-02.00.00-0500: Filtered file:/// URLs from user profile maps (pfp/banner/background) and server banners to eliminate browser security errors.
  - 20a6d-2026.11.02-03.00.00-0500: Fixed leave server still failing by adding memberUids and adminUids to the update payload (Firestore self-leave rule requires them; they were previously omitted).
+ - 20a6d-2026.11.02-04.00.00-0500: Fixed leave server still broken by making ctx-leave onclick read server ID from DOM dataset (matching ctx-settings pattern) instead of relying on stale module-level ctxServerId.
