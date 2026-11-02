@@ -1300,6 +1300,28 @@ window.db = db;
       appAlert('Recent channels:\\n\\n' + list.map((c, i) => (i + 1) + '. ' + c).join('\\n'));
     };
 
+    // ---------- Pinned Messages View ----------
+    window.viewPinnedMessages = async () => {
+      if (!chan) { appAlert('No channel selected.'); return; }
+      try {
+        const snap = await getDocs(query(collection(db, 'pins'), where('channel', '==', chan)));
+        const pins = snap.docs.map(d => d.data());
+        if (!pins.length) { appAlert('No pinned messages in this channel.'); return; }
+        let html = '<div style="max-height:300px;overflow-y:auto;">';
+        pins.forEach((p, i) => {
+          const msg = (typeof messagePages !== 'undefined' && messagePages.length) ? messagePages[0].messages.get(p.messageId) : null;
+          const text = msg ? String(msg.text || '').slice(0, 80) : 'Message';
+          const author = msg ? (msg.user || '') : '';
+          html += `<div style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="window.jumpToMessage('${p.messageId}');">
+            <div style="font-size:11px;color:var(--mut);">${escHtml(author)} · ${p.pinnedBy ? 'pinned by ' + escHtml(p.pinnedBy) : ''}</div>
+            <div style="font-size:13px;color:var(--txt);white-space:pre-wrap;">${escHtml(text)}</div>
+          </div>`;
+        });
+        html += '</div>';
+        appAlert(html);
+      } catch (e) { appAlert('Failed to load pinned messages.'); }
+    };
+
     // ---------- Download your data ----------
     window.downloadMyData = async () => {
       if (!user) { appAlert('Sign in first.'); return; }
@@ -1781,7 +1803,7 @@ window.toggleGifBlock = (u) => {
       // Ctrl/Cmd + /: show keyboard shortcuts
       if ((e.ctrlKey || e.metaKey) && e.key === '/') {
         e.preventDefault();
-        appAlert('Keyboard Shortcuts:\\n\\nCtrl+K: Search\\nCtrl+Enter: Send\\nCtrl+Shift+M: Mark all read\\nCtrl+Shift+U: Toggle DMs\\nCtrl+Shift+J: Jump to first unread\\nCtrl+Shift+R: Recent channels\\nEsc: Close modals\\nArrow keys: Navigate messages\\nEnter: Open profile');
+        appAlert('Keyboard Shortcuts:\\n\\nCtrl+K: Search\\nCtrl+Enter: Send\\nCtrl+Shift+M: Mark all read\\nCtrl+Shift+U: Toggle DMs\\nCtrl+Shift+J: Jump to first unread\\nCtrl+Shift+R: Recent channels\\nCtrl+Shift+P: View pinned messages\\nEsc: Close modals\\nArrow keys: Navigate messages\\nEnter: Open profile');
       }
       // Ctrl/Cmd + Shift + J: jump to first unread
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'J') {
@@ -1792,6 +1814,11 @@ window.toggleGifBlock = (u) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
         e.preventDefault();
         if (typeof window.showRecentChannels === 'function') window.showRecentChannels();
+      }
+      // Ctrl/Cmd + Shift + P: view pinned messages
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'P') {
+        e.preventDefault();
+        if (typeof window.viewPinnedMessages === 'function') window.viewPinnedMessages();
       }
     });
 
