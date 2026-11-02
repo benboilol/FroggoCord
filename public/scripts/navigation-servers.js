@@ -189,6 +189,18 @@ function renderUserList() {
 let userListSig = '';
 setInterval(() => { if (user && lastPresenceUsers.length) renderUserList(); }, 15000);
 
+// ---------- Member Search Filter ----------
+window.filterMembers = () => {
+  const search = (document.getElementById('member-search')?.value || '').toLowerCase().trim();
+  const ul = document.getElementById('user-list');
+  if (!ul) return;
+  const members = ul.querySelectorAll('.member');
+  members.forEach(m => {
+    const name = (m.dataset.user || '').toLowerCase();
+    m.style.display = (!search || name.includes(search)) ? '' : 'none';
+  });
+};
+
 function updateHeader() {
   const h = document.getElementById('chat-header');
   h.style.display = 'flex';
