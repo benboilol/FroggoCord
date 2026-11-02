@@ -12,12 +12,7 @@ int main(int argc,char* argv[]){
     std::tm tm=*std::localtime(&time);
     std::string id=argv[1];
     std::ofstream changelogFile("changelog.md",std::ios::app);
-    if(changelogFile.is_open()){
-        std::cout<<id<<"-"<<std::put_time(&tm,"%Y.%m.%d-%H.%M.%S%z")<<"\n"<<std::flush;
-        changelogFile<<" - "<<id<<"-"<<std::put_time(&tm,"%Y.%m.%d-%H.%M.%S%z: ");
-        changelogFile.close();
-    }else{
-        std::cerr<<"Error: Could not find the changelog file\n"<<std::flush;
-        return 1;
-    }
+    std::cout<<id<<"-"<<std::put_time(&tm,"%Y.%m.%d-%H.%M.%S%z")<<"\n"<<std::flush;
+    changelogFile<<" - "<<id<<"-"<<std::put_time(&tm,"%Y.%m.%d-%H.%M.%S%z: ");
+    changelogFile.close();
 }
