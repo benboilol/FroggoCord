@@ -1322,6 +1322,23 @@ window.db = db;
       } catch (e) { appAlert('Failed to load pinned messages.'); }
     };
 
+    // ---------- Bookmarks Viewer ----------
+    window.viewBookmarks = () => {
+      const b = getBookmarks();
+      if (!b.length) { appAlert('No bookmarked messages.'); return; }
+      let html = '<div style="max-height:300px;overflow-y:auto;">';
+      b.forEach((id, i) => {
+        const msg = document.querySelector(`[data-id="${id}"]`);
+        const text = msg ? (msg.querySelector('.msg-bubble')?.textContent || msg.textContent || '').slice(0, 80) : 'Message';
+        html += `<div style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="window.jumpToMessage('${id}');">
+          <div style="font-size:12px;color:var(--txt);white-space:pre-wrap;">${escHtml(text)}</div>
+          <div style="font-size:10px;color:var(--mut);margin-top:2px;">${escHtml(id)}</div>
+        </div>`;
+      });
+      html += '</div>';
+      appAlert(html);
+    };
+
     // ---------- Download your data ----------
     window.downloadMyData = async () => {
       if (!user) { appAlert('Sign in first.'); return; }
@@ -1819,6 +1836,11 @@ window.toggleGifBlock = (u) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'P') {
         e.preventDefault();
         if (typeof window.viewPinnedMessages === 'function') window.viewPinnedMessages();
+      }
+      // Ctrl/Cmd + Shift + B: view bookmarks
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'B') {
+        e.preventDefault();
+        if (typeof window.viewBookmarks === 'function') window.viewBookmarks();
       }
     });
 
