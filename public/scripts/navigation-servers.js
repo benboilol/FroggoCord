@@ -528,7 +528,8 @@ function renderChannelItem(server, channel) {
     ? `<span class="channel-controls" onclick="event.stopPropagation()"><button type="button" onclick="channelAction('${server.id}','${encodedName}','rename')" title="Rename channel">✎</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','access')" title="Manage channel access">🔒</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','up')" title="Move up">↑</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','down')" title="Move down">↓</button>${channel.name !== 'general' ? `<button type="button" onclick="channelAction('${server.id}','${encodedName}','delete')" title="Delete channel">×</button>` : ''}</span>`
     : '';
   const voiceIcon = channel.type === 'voice' ? '🔊 ' : '';
-  return `<div class="channel-row"><button class="cb ${active ? 'active' : ''}" onclick="switchServerChannel('${server.id}','${escHtml(channel.name)}')">${channel.private ? '🔒 ' : ''}${channel.announcement ? '📢 ' : ''}${voiceIcon}# ${escHtml(channel.name)}</button>${unreadBadge('srv_' + server.id + '_' + channel.name)}${controls}</div>`;
+  const voiceJoin = channel.type === 'voice' ? `<button style="margin-left:4px;background:transparent;border:none;color:var(--bl);cursor:pointer;font-size:11px;" onclick="joinVoiceChannel('${server.id}','${escHtml(channel.name)}')" title="Join voice">🔊 Join</button>` : '';
+  return `<div class="channel-row"><button class="cb ${active ? 'active' : ''}" onclick="switchServerChannel('${server.id}','${escHtml(channel.name)}')">${channel.private ? '🔒 ' : ''}${channel.announcement ? '📢 ' : ''}${voiceIcon}# ${escHtml(channel.name)}</button>${voiceJoin}${unreadBadge('srv_' + server.id + '_' + channel.name)}${controls}</div>`;
 }
 
 function showServerCtx(e, sid) {
@@ -1106,6 +1107,13 @@ window.markAllRead = () => {
     if (typeof renderServerList === 'function') renderServerList();
     appAlert('All messages marked as read.');
   } catch (e) { console.error('markAllRead failed', e); }
+};
+
+// ---------- Voice Channel Join ----------
+window.joinVoiceChannel = (sid, cname) => {
+  const s = getServerById(sid);
+  if (!s) return;
+  appAlert('Voice channel "' + cname + '" - Voice chat coming soon! (requires WebRTC)');
 };
 
 window.togglePublicServer = togglePublicServer;
