@@ -162,7 +162,8 @@ function renderUserList() {
     const avStyle = hasPfp ? `style="background-image:url('${escHtml(upfp)}');"` : '';
     const avContent = hasPfp ? '' : escHtml((name || '?')[0].toUpperCase());
 
-    const act = p && p.activity ? escHtml(p.activity) : '';
+    const memberPresence = presMap.get(name);
+    const act = memberPresence && memberPresence.activity ? escHtml(memberPresence.activity) : '';
     const s = currentServer ? servers.find(sv => sv.id === currentServer) : null;
     const isOwner = s && s.owner === name;
     const isAdmin = s && (s.admins || []).includes(name);
@@ -229,7 +230,7 @@ function updateHeader() {
     const ch = s && (s.channels || []).find(c => c.name === label);
     const topic = ch && ch.topic ? ch.topic : '';
     const desc = ch && ch.description ? ch.description : '';
-    const canEdit = s && (s.owner === user || (s.admins || []).includes(user));
+    const canEdit = s && (s.owner === user || (typeof getServerRole === 'function' && getServerRole(s).isAdmin));
     const topicBtn = canEdit ? `<button onclick="setChannelTopic('${currentServer}','${escHtml(label)}')" style="margin-left:8px;background:transparent;border:none;color:var(--mut);cursor:pointer;font-size:11px;" title="Set topic">✎</button>` : '';
     const descBtn = canEdit ? `<button onclick="setChannelDescription('${currentServer}','${escHtml(label)}')" style="margin-left:4px;background:transparent;border:none;color:var(--mut);cursor:pointer;font-size:11px;" title="Set description">📝</button>` : '';
     h.innerHTML = `<span class="hash">#</span><span class="hname">${escHtml(label)}</span><span id="header-typing" style="margin-left:8px;font-size:11px;color:var(--mut);"></span>${topic ? `<span class="channel-topic" style="margin-left:12px;color:var(--mut);font-size:12px;font-weight:400;">${escHtml(topic)}</span>` : ''}${topicBtn}${descBtn}${desc ? `<div style="width:100%;color:var(--mut);font-size:11px;margin-top:2px;">${escHtml(desc)}</div>` : ''}`;
@@ -459,8 +460,13 @@ let ctxServerId = null;
 
 function getServerRole(server) {
   const admins = Array.isArray(server && server.admins) ? server.admins : [];
+  const adminUids = Array.isArray(server && server.adminUids) ? server.adminUids : [];
+  const uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
   const isOwner = !!server && server.owner === user;
-  const isAdmin = isOwner || admins.includes(user);
+  // Prefer UID-based check; fall back to username-based for legacy servers
+  const isAdminByUid = uid ? adminUids.includes(uid) : false;
+  const isAdminByName = admins.includes(user);
+  const isAdmin = isOwner || isAdminByUid || (adminUids.length === 0 && isAdminByName);
   return { isOwner, isAdmin };
 }
 
@@ -671,7 +677,7 @@ function renderMembersList(s) {
       btn += ` <button onclick="kickMember('${escHtml(m)}')" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Kick</button>`;
       btn += ` <button onclick="banMember('${escHtml(m)}')" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Ban</button>`;
       btn += ` <button onclick="transferOwnership('${escHtml(m)}')" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--yellow);color:var(--accent-contrast);cursor:pointer;">Transfer Owner</button>`;
-    } else if ((s.admins || []).includes(user) && !isOwner) {
+    } else if ((typeof getServerRole === 'function' && getServerRole(s).isAdmin) && !isOwner) {
       btn = `<button onclick="kickMember('${escHtml(m)}')" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Kick</button>`;
     }
 
@@ -679,7 +685,7 @@ function renderMembersList(s) {
   }).join('');
   // Show banned users
   const banned = Array.isArray(s.banned) ? s.banned : [];
-  if (banned.length && (s.owner === user || (s.admins || []).includes(user))) {
+  if (banned.length && (s.owner === user || (typeof getServerRole === 'function' && getServerRole(s).isAdmin))) {
     el.innerHTML += '<div style="margin-top:8px;font-size:11px;color:var(--mut);">Banned:</div>' + banned.map(b => {
       const name = (typeof b === 'string') ? b : (b && b.user) || '';
       const reason = (typeof b === 'string') ? '' : (b && b.reason) || '';
@@ -740,10 +746,20 @@ async function toggleAdmin(member, makeAdmin) {
   }
 
   const admins = new Set(Array.isArray(s.admins) ? s.admins : []);
-  if (makeAdmin) admins.add(member);
-  else admins.delete(member);
+  const adminUids = new Set(Array.isArray(s.adminUids) ? s.adminUids : []);
+  // Find the member's UID from memberUids (parallel to members array)
+  const memberIdx = (s.members || []).indexOf(member);
+  const memberUid = memberIdx >= 0 && Array.isArray(s.memberUids) ? s.memberUids[memberIdx] : null;
 
-  await updateDoc(doc(db, 'servers', ctxServerId), { admins: Array.from(admins) });
+  if (makeAdmin) {
+    admins.add(member);
+    if (memberUid) adminUids.add(memberUid);
+  } else {
+    admins.delete(member);
+    if (memberUid) adminUids.delete(memberUid);
+  }
+
+  await updateDoc(doc(db, 'servers', ctxServerId), { admins: Array.from(admins), adminUids: Array.from(adminUids) });
   await loadServers();
 
   const updated = getServerById(ctxServerId);
@@ -1338,7 +1354,7 @@ async function leaveServer() {
   const admins = (s.admins || []).filter(m => m !== user);
 
   if (remaining.length === 0) {
-    await window.deleteServerMessages(s);
+    try { await window.deleteServerMessages(s); } catch (e) { console.warn('deleteServerMessages failed (permission):', e); }
     await deleteDoc(doc(db, 'servers', ctxServerId));
   } else {
     await updateDoc(doc(db, 'servers', ctxServerId), {
@@ -1409,6 +1425,7 @@ window.leaveServer = leaveServer;
 
 function switchServer(id) {
   if (typeof window.closeMobileNav === 'function') window.closeMobileNav();
+  userListSig = '';
   currentServer = id;
   mode = 'channels';
   dmWith = null;
@@ -1449,7 +1466,7 @@ function switchServer(id) {
     }
     if (s.accent) { banner.style.borderLeft = `4px solid ${escHtml(s.accent)}`; bannerName.style.color = s.accent; }
 
-    const visibleChs = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (s.admins || []).includes(user));
+    const visibleChs = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (typeof getServerRole === 'function' && getServerRole(s).isAdmin));
     // Group by category
     const cats = {};
     const uncat = [];
@@ -1497,7 +1514,7 @@ window.switchServerChannel = (sid, cname) => {
 
   chan = 'srv_' + sid + '_' + cname;
   if (typeof window.addRecentChannel === 'function') window.addRecentChannel(chan);
-      const visibleChs2 = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (s.admins || []).includes(user));
+      const visibleChs2 = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (typeof getServerRole === 'function' && getServerRole(s).isAdmin));
       const cats2 = {};
       const uncat2 = [];
       visibleChs2.forEach(c => { if (c.category) { if (!cats2[c.category]) cats2[c.category] = []; cats2[c.category].push(c); } else { uncat2.push(c); } });
