@@ -1820,7 +1820,7 @@ window.toggleGifBlock = (u) => {
       // Ctrl/Cmd + /: show keyboard shortcuts
       if ((e.ctrlKey || e.metaKey) && e.key === '/') {
         e.preventDefault();
-        appAlert('Keyboard Shortcuts:\\n\\nCtrl+K: Search\\nCtrl+Enter: Send\\nCtrl+Shift+M: Mark all read\\nCtrl+Shift+U: Toggle DMs\\nCtrl+Shift+J: Jump to first unread\\nCtrl+Shift+R: Recent channels\\nCtrl+Shift+P: View pinned messages\\nEsc: Close modals\\nArrow keys: Navigate messages\\nEnter: Open profile');
+        appAlert('Keyboard Shortcuts:\\n\\nCtrl+K: Search\\nCtrl+Enter: Send\\nCtrl+Shift+M: Mark all read\\nCtrl+Shift+U: Toggle DMs\\nCtrl+Shift+J: Jump to first unread\\nCtrl+Shift+R: Recent channels\\nCtrl+Shift+P: View pinned messages\\nCtrl+Shift+B: View bookmarks\\nEsc: Close modals\\nArrow keys: Navigate messages\\nEnter: Open profile');
       }
       // Ctrl/Cmd + Shift + J: jump to first unread
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'J') {
