@@ -1368,8 +1368,11 @@ window.leaveServerFromCtx = async () => {
 };
 
 async function leaveServer(sid) {
+  console.log('leaveServer (async) called with sid=', sid);
   hideServerCtx();
+  console.log('leaveServer: hideServerCtx done');
   const targetId = sid || document.getElementById('server-ctx')?.dataset?.serverId || ctxServerId || currentServer;
+  console.log('leaveServer: targetId=', targetId);
   if (!targetId) { appAlert('No server selected.'); return; }
   ctxServerId = targetId;
 
