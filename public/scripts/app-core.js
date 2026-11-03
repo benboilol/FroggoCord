@@ -1418,10 +1418,10 @@ window.db = db;
       const card = dlg.querySelector('.modal-card');
       dlg.classList.remove('visible');
       card.classList.remove('visible');
-      setTimeout(() => {
-        dlg.style.display = 'none';
-        if (_dlgResolve) { _dlgResolve(val); _dlgResolve = null; }
-      }, 180);
+      const resolve = _dlgResolve;
+      _dlgResolve = null;
+      if (resolve) resolve(val);
+      setTimeout(() => { dlg.style.display = 'none'; }, 180);
     }
     (function wireDlg() {
       const ok = document.getElementById('dlg-ok');
