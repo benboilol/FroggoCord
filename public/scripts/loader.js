@@ -7,7 +7,8 @@ const appScripts=[
     'navigation-servers.js',
     'server-permissions.js',
     'message-actions.js',
-    'chat-view.js'
+    'chat-view.js',
+    'voice-chat.js'
 ];
 for(const file of appScripts){
     await new Promise((resolve,reject)=>{

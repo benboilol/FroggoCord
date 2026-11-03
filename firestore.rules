@@ -257,6 +257,18 @@ service cloud.firestore {
       allow read, write: if isAuth();
     }
 
+    match /voiceParticipants/{participantId} {
+      allow read: if isAuth();
+      allow create, update: if isAuth() && request.resource.data.username == username();
+      allow delete: if isAuth() && resource.data.username == username();
+    }
+
+    match /voiceSignals/{signalId} {
+      allow read: if isAuth();
+      allow create: if isAuth() && request.resource.data.from == username();
+      allow delete: if isAuth() && resource.data.to == username();
+    }
+
     match /reports/{reportId} {
       allow read: if request.auth != null;
       allow create: if isAuth()
