@@ -1397,8 +1397,7 @@ async function leaveServer(sid) {
   if (reason === null) return;
   if (!(await appConfirm('Leave ' + s.name + '?'))) return;
 
-  // Log the leave (non-blocking)
-  if (typeof logAudit === 'function') { try { await logAudit(ctxServerId, 'leave', user, reason || 'No reason'); } catch(e) { console.warn('audit log failed:', e); } }
+  // Skip audit log for now (auditLog collection has no rules)
 
   const remaining = (s.members || []).filter(m => m !== user);
   const admins = (s.admins || []).filter(m => m !== user);
