@@ -576,6 +576,7 @@ async function manageChannelAccess(sid, cname) {
 }
 
 function renderChannelItem(server, channel) {
+  console.log('renderChannelItem called with channel:', channel.name, 'type:', channel.type);
   const active = chan === ('srv_' + server.id + '_' + channel.name);
   const canManage = canManageServer(server);
   const encodedName = encodeURIComponent(channel.name);
@@ -584,7 +585,9 @@ function renderChannelItem(server, channel) {
     : '';
   const voiceIcon = channel.type === 'voice' ? '🔊 ' : '';
   const voiceJoin = channel.type === 'voice' ? `<button style="margin-left:4px;background:transparent;border:none;color:var(--bl);cursor:pointer;font-size:11px;" onclick="joinVoiceChannel('${server.id}','${escHtml(channel.name)}')" title="Join voice">🔊 Join</button>` : '';
-  return `<div class="channel-row" oncontextmenu="event.preventDefault();showChannelCtx(event,'${server.id}','${escHtml(channel.name)}');return false;"><button class="cb ${active ? 'active' : ''}" onclick="switchServerChannel('${server.id}','${escHtml(channel.name)}')" oncontextmenu="event.preventDefault();showChannelCtx(event,'${server.id}','${escHtml(channel.name)}');return false;">${channel.private ? '🔒 ' : ''}${channel.announcement ? '📢 ' : ''}${voiceIcon}# ${escHtml(channel.name)}</button>${voiceJoin}${unreadBadge('srv_' + server.id + '_' + channel.name)}${controls}</div>`;
+  const result = `<div class="channel-row" oncontextmenu="event.preventDefault();showChannelCtx(event,'${server.id}','${escHtml(channel.name)}');return false;"><button class="cb ${active ? 'active' : ''}" onclick="switchServerChannel('${server.id}','${escHtml(channel.name)}')" oncontextmenu="event.preventDefault();showChannelCtx(event,'${server.id}','${escHtml(channel.name)}');return false;">${channel.private ? '🔒 ' : ''}${channel.announcement ? '📢 ' : ''}${voiceIcon}# ${escHtml(channel.name)}</button>${voiceJoin}${unreadBadge('srv_' + server.id + '_' + channel.name)}${controls}</div>`;
+  console.log('renderChannelItem returning:', result.substring(0, 100));
+  return result;
 }
 
 function showServerCtx(e, sid) {
