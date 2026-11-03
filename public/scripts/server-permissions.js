@@ -1,11 +1,18 @@
 (function () {
+  function getCurrentUser() {
+    if (typeof auth !== 'undefined' && auth.currentUser && auth.currentUser.email) {
+      return auth.currentUser.email.split('@')[0];
+    }
+    return null;
+  }
   function getServerPermissions(server) {
     const admins = Array.isArray(server && server.admins) ? server.admins : [];
     const adminUids = Array.isArray(server && server.adminUids) ? server.adminUids : [];
     const uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
-    const isOwner = !!server && server.owner === user;
+    const currentUser = getCurrentUser();
+    const isOwner = !!server && server.owner === currentUser;
     const isAdminByUid = uid ? adminUids.includes(uid) : false;
-    const isAdminByName = admins.includes(user);
+    const isAdminByName = currentUser ? admins.includes(currentUser) : false;
     const isAdmin = isOwner || isAdminByUid || (adminUids.length === 0 && isAdminByName);
     return { isOwner, isAdmin, canManage: isAdmin };
   }
@@ -20,7 +27,7 @@
       const isAdmin = admins.has(member);
       const badge = isOwner ? ' (Owner)' : (isAdmin ? ' (Admin)' : '');
       let action = '';
-      const canManageAdmins = server.owner === user;
+      const canManageAdmins = server.owner === getCurrentUser();
       if (canManageAdmins && !isOwner) {
         action = isAdmin
           ? `<button onclick="toggleAdmin('${String(member).replace(/'/g, "\\'")}', false)" style="font-size:11px;padding:2px 8px;border:none;border-radius:4px;background:var(--danger);color:var(--white);cursor:pointer;">Remove Admin</button>`
