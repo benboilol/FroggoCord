@@ -231,40 +231,5 @@
       await loadServers();
       if (currentServer === sid) switchServer(sid);
     };
-
-    window.leaveServer = async function () {
-      const server = Array.isArray(window.servers) ? window.servers.find((entry) => entry.id === window.ctxServerId) : null;
-      if (!server) return;
-      if (server.owner === user) {
-        if (typeof appAlert === 'function') appAlert('The owner must transfer ownership or delete the server instead of leaving.');
-        return;
-      }
-      if (!(await appConfirm('Leave ' + server.name + '?'))) return;
-      const remaining = (server.members || []).filter((member) => member !== user);
-      const admins = Array.isArray(server.admins) ? server.admins.filter((member) => member !== user) : [];
-      if (remaining.length === 0) {
-        if (typeof window.deleteServerMessages === 'function') await window.deleteServerMessages(server);
-        await deleteDoc(doc(db, 'servers', window.ctxServerId));
-      } else {
-        await updateDoc(doc(db, 'servers', window.ctxServerId), {
-          members: remaining,
-          admins
-        });
-      }
-      if (currentServer === window.ctxServerId) {
-        currentServer = null;
-        chan = null;
-        mode = 'channels';
-        dmWith = null;
-      }
-      await loadServers();
-      if (currentServer) switchServer(currentServer);
-      else if (servers.length > 0) switchServer(servers[0].id);
-      else {
-        document.querySelector('.sb h3').textContent = 'Channels';
-        document.getElementById('server-banner').style.display = 'none';
-        document.querySelector('.ch').innerHTML = '<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>';
-      }
-    };
   }
 })();
