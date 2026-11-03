@@ -1406,14 +1406,18 @@ async function leaveServer(sid) {
   const remainingUids = (s.memberUids || []).filter(u => u !== uid);
   const adminsUids = (s.adminUids || []).filter(u => u !== uid);
   console.log('leaveServer: remaining=', remaining, 'remainingUids=', remainingUids, 'uid=', uid);
+  console.log('leaveServer: db=', !!db, 'doc=', !!doc, 'updateDoc=', !!updateDoc);
+  console.log('leaveServer: ctxServerId=', ctxServerId, 'remaining type=', typeof remaining, 'is array=', Array.isArray(remaining));
 
   try {
+    console.log('leaveServer: about to call updateDoc');
     await updateDoc(doc(db, 'servers', ctxServerId), {
       members: remaining,
       memberUids: remainingUids,
       admins,
       adminUids: adminsUids
     });
+    console.log('leaveServer: updateDoc succeeded');
     console.log('leaveServer: updateDoc succeeded');
   } catch (e) {
     console.error('leaveServer updateDoc failed:', e);
