@@ -1536,6 +1536,7 @@ function switchServer(id) {
       `<button class="cb muted" onclick="shareInvite('${s.id}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
       `<button class="cb muted" onclick="revokeInvite('${s.id}')" style="color:var(--danger);">Revoke Invite</button>` +
 `<button class="cb muted" onclick="copyInviteLink('${s.id}')" style="color:var(--bl);">Copy Invite</button>`;
+  console.log('switchServer: .ch innerHTML set, channel-row count:', document.querySelectorAll('.channel-row').length);
   } else {
     chan = null; mode = 'channels'; dmWith = null;
     document.querySelector('.sb h3').textContent = 'Channels';
@@ -1545,8 +1546,10 @@ function switchServer(id) {
 
   console.log('switchServer: calling renderServerList, updateHeader, renderUserList');
   renderServerList();
+  console.log('switchServer: after renderServerList, channel-row count:', document.querySelectorAll('.channel-row').length);
   updateHeader();
   renderUserList();
+  console.log('switchServer: after renderUserList, channel-row count:', document.querySelectorAll('.channel-row').length);
 
   if (chan && currentServer) {
     const cname = chan.split('_').slice(2).join('_');
