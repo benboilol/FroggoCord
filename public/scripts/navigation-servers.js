@@ -1358,7 +1358,14 @@ function leaveServer(sid) {
         ctxServerId = targetId;
         console.log('leaveServer: targetId=', targetId, 'currentServer=', currentServer, 'user=', user);
 
-        const s = getServerById(ctxServerId);
+        let s = getServerById(ctxServerId);
+        if (!s) {
+          // Fallback: fetch server from Firestore if not in local cache
+          try {
+            const snap = await getDoc(doc(db, 'servers', ctxServerId));
+            if (snap.exists()) { s = snap.data(); s.id = ctxServerId; }
+          } catch (e) { console.warn('leaveServer: server fetch failed:', e); }
+        }
         if (!s) { appAlert('Server not found. Please refresh and try again.'); resolve(); return; }
         console.log('leaveServer: server=', s.name, 'owner=', s.owner, 'members=', s.members, 'uid=', (auth && auth.currentUser && auth.currentUser.uid) || 'null');
 
