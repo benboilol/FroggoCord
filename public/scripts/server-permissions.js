@@ -1,8 +1,12 @@
 (function () {
   function getServerPermissions(server) {
     const admins = Array.isArray(server && server.admins) ? server.admins : [];
+    const adminUids = Array.isArray(server && server.adminUids) ? server.adminUids : [];
+    const uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
     const isOwner = !!server && server.owner === user;
-    const isAdmin = isOwner || admins.includes(user);
+    const isAdminByUid = uid ? adminUids.includes(uid) : false;
+    const isAdminByName = admins.includes(user);
+    const isAdmin = isOwner || isAdminByUid || (adminUids.length === 0 && isAdminByName);
     return { isOwner, isAdmin, canManage: isAdmin };
   }
 
@@ -44,7 +48,7 @@
       if (typeof originalShowServerCtx === 'function') {
         originalShowServerCtx(event, sid);
       }
-      const server = Array.isArray(window.servers) ? window.servers.find((entry) => entry.id === sid) : null;
+      const server = (typeof getServerById === 'function') ? getServerById(sid) : null;
       const settingsButton = document.getElementById('ctx-settings');
       if (settingsButton) {
         const { canManage } = getServerPermissions(server);
@@ -56,7 +60,7 @@
       if (sid) {
         window.ctxServerId = sid;
       }
-      const server = Array.isArray(window.servers) ? window.servers.find((entry) => entry.id === (window.ctxServerId || sid)) : null;
+      const server = (typeof getServerById === 'function') ? getServerById(window.ctxServerId || sid) : null;
       if (!server) return;
 
       const { isOwner, canManage } = getServerPermissions(server);
@@ -118,7 +122,7 @@
     };
 
     window.toggleAdmin = async function (member, makeAdmin) {
-      const server = Array.isArray(window.servers) ? window.servers.find((entry) => entry.id === window.ctxServerId) : null;
+      const server = (typeof getServerById === 'function') ? getServerById(window.ctxServerId) : null;
       if (!server) return;
       const { isOwner } = getServerPermissions(server);
       if (!isOwner) {
@@ -147,12 +151,12 @@
 
       await updateDoc(doc(db, 'servers', window.ctxServerId), { admins: Array.from(admins), adminUids: Array.from(adminUids) });
       await loadServers();
-      const updated = Array.isArray(window.servers) ? window.servers.find((entry) => entry.id === window.ctxServerId) : null;
+      const updated = (typeof getServerById === 'function') ? getServerById(window.ctxServerId) : null;
       if (updated) renderServerMembersList(updated);
     };
 
     window.saveServerSettings = async function () {
-      const server = Array.isArray(window.servers) ? window.servers.find((entry) => entry.id === window.ctxServerId) : null;
+      const server = (typeof getServerById === 'function') ? getServerById(window.ctxServerId) : null;
       if (!server) return;
       if (!enforceServerManage(server, 'save server settings')) return;
 
@@ -203,7 +207,7 @@
 
 
     window.deleteChannel = async function (sid, cname) {
-      const server = Array.isArray(window.servers) ? window.servers.find((entry) => entry.id === sid) : null;
+      const server = (typeof getServerById === 'function') ? getServerById(sid) : null;
       if (!server) return;
       if (!enforceServerManage(server, 'delete channels')) return;
       if (cname === 'general') {
