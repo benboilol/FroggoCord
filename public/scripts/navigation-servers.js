@@ -1394,8 +1394,11 @@ async function leaveServer(sid) {
   }
 
   const reason = await appPrompt('Leave reason (optional):');
+  console.log('leaveServer: after appPrompt, reason=', JSON.stringify(reason));
   if (reason === null) return;
-  if (!(await appConfirm('Leave ' + s.name + '?'))) return;
+  const confirmed = await appConfirm('Leave ' + s.name + '?');
+  console.log('leaveServer: after appConfirm, confirmed=', confirmed);
+  if (!confirmed) return;
 
   // Skip audit log for now (auditLog collection has no rules)
 
