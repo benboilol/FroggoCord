@@ -1473,6 +1473,7 @@ window.saveServerSettings = saveServerSettings;
 window.leaveServer = leaveServer;
 
 function switchServer(id) {
+  console.log('switchServer called with id=', id);
   if (typeof window.closeMobileNav === 'function') window.closeMobileNav();
   userListSig = '';
   currentServer = id;
@@ -1525,7 +1526,7 @@ function switchServer(id) {
     textChs.forEach(c => { if (c.category) { if (!cats[c.category]) cats[c.category] = []; cats[c.category].push(c); } else { uncat.push(c); } });
     let chBtns = '';
     if (voiceChs.length) chBtns += `<div class="cat">Voice Channels</div>` + voiceChs.map(c => renderChannelItem(s, c)).join('');
-    if (uncat.length) chBtns += `<div class="cat">Text Channels</div>` + uncat.map(c => renderChannelItem(s, c)).join('');
+    if (uncat.length) { console.log('switchServer: rendering', uncat.length, 'channels with renderChannelItem'); chBtns += `<div class="cat">Text Channels</div>` + uncat.map(c => renderChannelItem(s, c)).join(''); }
     Object.keys(cats).sort().forEach(cat => { chBtns += `<div class="cat" style="margin-top:8px;font-size:11px;color:var(--mut);text-transform:uppercase;">${escHtml(cat)}</div>` + cats[cat].map(c => renderChannelItem(s, c)).join(''); });
     document.querySelector('.ch').innerHTML = chBtns +
       `<button class="cb muted" onclick="openChannelModal('${s.id}')" style="color:var(--bl);">+ Add Channel</button>` +
@@ -1539,6 +1540,7 @@ function switchServer(id) {
     document.querySelector('.ch').innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`;
   }
 
+  console.log('switchServer: calling renderServerList, updateHeader, renderUserList');
   renderServerList();
   updateHeader();
   renderUserList();
