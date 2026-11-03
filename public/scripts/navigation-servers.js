@@ -1356,14 +1356,11 @@ function fileToDataUrl(file) {
 }
 
 window.leaveServerFromCtx = async () => {
-  console.log('leaveServerFromCtx called');
   const sid = document.getElementById('server-ctx')?.dataset?.serverId || ctxServerId || currentServer;
-  console.log('leaveServerFromCtx: sid=', sid, 'ctxServerId=', ctxServerId, 'currentServer=', currentServer);
   if (!sid) { appAlert('No server selected.'); return; }
   hideServerCtx();
   try {
     await leaveServer(sid);
-    console.log('leaveServerFromCtx: leaveServer completed');
   } catch (e) {
     console.error('leaveServerFromCtx: leaveServer threw:', e);
     appAlert('Leave failed: ' + (e.message || String(e)));
@@ -1371,12 +1368,11 @@ window.leaveServerFromCtx = async () => {
 };
 
 async function leaveServer(sid) {
-  console.log('leaveServer (async) called with sid=', sid);
   hideServerCtx();
   const targetId = sid || document.getElementById('server-ctx')?.dataset?.serverId || ctxServerId || currentServer;
   if (!targetId) { appAlert('No server selected.'); return; }
   ctxServerId = targetId;
-  console.log('leaveServer: targetId=', targetId, 'currentServer=', currentServer, 'user=', user);
+
 
   let s = getServerById(ctxServerId);
   if (!s) {
@@ -1386,7 +1382,7 @@ async function leaveServer(sid) {
     } catch (e) { console.warn('leaveServer: server fetch failed:', e); }
   }
   if (!s) { appAlert('Server not found. Please refresh and try again.'); return; }
-  console.log('leaveServer: server=', s.name, 'owner=', s.owner, 'members=', s.members, 'uid=', (auth && auth.currentUser && auth.currentUser.uid) || 'null');
+
 
   if (s.owner === user) {
     appAlert('The owner must delete the server instead of leaving it.');
@@ -1394,10 +1390,10 @@ async function leaveServer(sid) {
   }
 
   const reason = await appPrompt('Leave reason (optional):');
-  console.log('leaveServer: after appPrompt, reason=', JSON.stringify(reason));
+
   if (reason === null) return;
   const confirmed = await appConfirm('Leave ' + s.name + '?');
-  console.log('leaveServer: after appConfirm, confirmed=', confirmed);
+
   if (!confirmed) return;
 
   // Skip audit log for now (auditLog collection has no rules)
@@ -1407,20 +1403,13 @@ async function leaveServer(sid) {
   const uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
   const remainingUids = (s.memberUids || []).filter(u => u !== uid);
   const adminsUids = (s.adminUids || []).filter(u => u !== uid);
-  console.log('leaveServer: remaining=', remaining, 'remainingUids=', remainingUids, 'uid=', uid);
-  console.log('leaveServer: db=', !!db, 'doc=', !!doc, 'updateDoc=', !!updateDoc);
-  console.log('leaveServer: ctxServerId=', ctxServerId, 'remaining type=', typeof remaining, 'is array=', Array.isArray(remaining));
-
   try {
-    console.log('leaveServer: about to call updateDoc');
     await updateDoc(doc(db, 'servers', ctxServerId), {
       members: remaining,
       memberUids: remainingUids,
       admins,
       adminUids: adminsUids
     });
-    console.log('leaveServer: updateDoc succeeded');
-    console.log('leaveServer: updateDoc succeeded');
   } catch (e) {
     console.error('leaveServer updateDoc failed:', e);
     appAlert('Failed to leave server: ' + (e.message || String(e)));
