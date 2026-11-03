@@ -199,23 +199,8 @@
       }
     };
 
-    window.createChannel = async function (sid) {
-      const server = Array.isArray(window.servers) ? window.servers.find((entry) => entry.id === sid) : null;
-      if (!server) return;
-      if (!enforceServerManage(server, 'create channels')) return;
+    // Channel creation handled by navigation-servers.js (supports voice/VC, private, NSFW, etc.)
 
-      const name = (await appPrompt('Channel name:') || '').trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
-      if (!name) return;
-      const channels = Array.isArray(server.channels) ? server.channels.slice() : [{ name: 'general', id: 'general' }];
-      if (channels.some((channel) => channel.name === name)) {
-        appAlert('Channel already exists');
-        return;
-      }
-      channels.push({ name, id: name });
-      await updateDoc(doc(db, 'servers', sid), { channels });
-      await loadServers();
-      if (typeof switchServerChannel === 'function') switchServerChannel(sid, name);
-    };
 
     window.deleteChannel = async function (sid, cname) {
       const server = Array.isArray(window.servers) ? window.servers.find((entry) => entry.id === sid) : null;

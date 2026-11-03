@@ -1515,11 +1515,15 @@ function switchServer(id) {
     if (s.accent) { banner.style.borderLeft = `4px solid ${escHtml(s.accent)}`; bannerName.style.color = s.accent; }
 
     const visibleChs = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (typeof getServerRole === 'function' && getServerRole(s).isAdmin));
-    // Group by category
+    // Separate voice and text channels
+    const voiceChs = visibleChs.filter(c => c.type === 'voice');
+    const textChs = visibleChs.filter(c => c.type !== 'voice');
+    // Group text by category
     const cats = {};
     const uncat = [];
-    visibleChs.forEach(c => { if (c.category) { if (!cats[c.category]) cats[c.category] = []; cats[c.category].push(c); } else { uncat.push(c); } });
+    textChs.forEach(c => { if (c.category) { if (!cats[c.category]) cats[c.category] = []; cats[c.category].push(c); } else { uncat.push(c); } });
     let chBtns = '';
+    if (voiceChs.length) chBtns += `<div class="cat">Voice Channels</div>` + voiceChs.map(c => renderChannelItem(s, c)).join('');
     if (uncat.length) chBtns += `<div class="cat">Text Channels</div>` + uncat.map(c => renderChannelItem(s, c)).join('');
     Object.keys(cats).sort().forEach(cat => { chBtns += `<div class="cat" style="margin-top:8px;font-size:11px;color:var(--mut);text-transform:uppercase;">${escHtml(cat)}</div>` + cats[cat].map(c => renderChannelItem(s, c)).join(''); });
     document.querySelector('.ch').innerHTML = chBtns +
@@ -1563,10 +1567,13 @@ window.switchServerChannel = (sid, cname) => {
   chan = 'srv_' + sid + '_' + cname;
   if (typeof window.addRecentChannel === 'function') window.addRecentChannel(chan);
       const visibleChs2 = (s.channels || [{ name: 'general' }]).filter(c => !c.private || s.owner === user || (typeof getServerRole === 'function' && getServerRole(s).isAdmin));
+      const voiceChs2 = visibleChs2.filter(c => c.type === 'voice');
+      const textChs2 = visibleChs2.filter(c => c.type !== 'voice');
       const cats2 = {};
       const uncat2 = [];
-      visibleChs2.forEach(c => { if (c.category) { if (!cats2[c.category]) cats2[c.category] = []; cats2[c.category].push(c); } else { uncat2.push(c); } });
+      textChs2.forEach(c => { if (c.category) { if (!cats2[c.category]) cats2[c.category] = []; cats2[c.category].push(c); } else { uncat2.push(c); } });
       let chBtns2 = '';
+      if (voiceChs2.length) chBtns2 += `<div class="cat">Voice Channels</div>` + voiceChs2.map(c => renderChannelItem(s, c)).join('');
       if (uncat2.length) chBtns2 += `<div class="cat">Text Channels</div>` + uncat2.map(c => renderChannelItem(s, c)).join('');
       Object.keys(cats2).sort().forEach(cat => { chBtns2 += `<div class="cat" style="margin-top:8px;font-size:11px;color:var(--mut);text-transform:uppercase;">${escHtml(cat)}</div>` + cats2[cat].map(c => renderChannelItem(s, c)).join(''); });
       document.querySelector('.ch').innerHTML = chBtns2 +
@@ -1612,7 +1619,8 @@ async function createChannel(sid) {
   const category = await appPrompt('Category (leave blank for none):');
   const slowMode = await appPrompt('Slow mode seconds (0 for none):');
   const announcement = await appConfirm('Announcement channel (@everyone notifications)?');
-  const isVoice = await appConfirm('Voice channel?');
+  const channelType = await appPrompt('Channel type (text or voice/vc):', 'text');
+  const isVoice = (channelType || '').toLowerCase().trim() === 'voice' || (channelType || '').toLowerCase().trim() === 'vc';
   channels.push({ name, id: name, type: isVoice ? 'voice' : 'text', private: !!isPrivate, nsfw: !!isNsfw, category: category || '', topic: '', description: '', slowMode: parseInt(slowMode || '0', 10) || 0, announcement: !!announcement });
   await updateDoc(doc(db, 'servers', sid), { channels });
   await loadServers();
