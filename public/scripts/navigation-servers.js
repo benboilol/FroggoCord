@@ -420,7 +420,9 @@ async function joinServer(codeParam) {
 
   await updateDoc(doc(db, 'servers', s.id), {
     members: [...members, user],
-    memberUids: Array.from(new Set([...memberUids, (auth.currentUser && auth.currentUser.uid) || null].filter(Boolean)))
+    memberUids: Array.from(new Set([...memberUids, (auth.currentUser && auth.currentUser.uid) || null].filter(Boolean))),
+    admins: Array.isArray(data.admins) ? data.admins : [],
+    adminUids: Array.isArray(data.adminUids) ? data.adminUids : []
   });
 
   appAlert('Joined ' + data.name);
