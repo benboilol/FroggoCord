@@ -418,16 +418,36 @@ async function joinServer(codeParam) {
     return;
   }
 
-  await updateDoc(doc(db, 'servers', s.id), {
-    members: [...members, user],
-    memberUids: Array.from(new Set([...memberUids, (auth.currentUser && auth.currentUser.uid) || null].filter(Boolean))),
-    admins: Array.isArray(data.admins) ? data.admins : [],
-    adminUids: Array.isArray(data.adminUids) ? data.adminUids : []
-  });
-
-  appAlert('Joined ' + data.name);
-  await loadServers();
-  switchServer(s.id);
+  try {
+    await updateDoc(doc(db, 'servers', s.id), {
+      members: [...members, user],
+      memberUids: Array.from(new Set([...memberUids, (auth.currentUser && auth.currentUser.uid) || null].filter(Boolean))),
+      admins: Array.isArray(data.admins) ? data.admins : [],
+      adminUids: Array.isArray(data.adminUids) ? data.adminUids : []
+    });
+    console.log('joinServer: updateDoc succeeded');
+  } catch (e) {
+    console.error('joinServer: updateDoc failed:', e);
+    appAlert('Join failed: ' + (e.message || String(e)));
+    return;
+  }
+  console.log('joinServer: about to call loadServers');
+  try {
+    await loadServers();
+    console.log('joinServer: loadServers succeeded');
+  } catch (e) {
+    console.error('joinServer: loadServers failed:', e);
+    appAlert('Load servers failed: ' + (e.message || String(e)));
+    return;
+  }
+  console.log('joinServer: about to call switchServer');
+  try {
+    switchServer(s.id);
+    console.log('joinServer: switchServer called');
+  } catch (e) {
+    console.error('joinServer: switchServer failed:', e);
+    appAlert('Switch server failed: ' + (e.message || String(e)));
+  }
 }
 
 async function loadServers() {

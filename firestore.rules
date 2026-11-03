@@ -176,14 +176,7 @@ service cloud.firestore {
     }
 
     match /servers/{serverId} {
-      allow read: if isAuth()
-        && (
-          resource.data.public == true
-          || resource.data.public == null
-          || resource.data.members == null
-          || username() in resource.data.members
-          || (resource.data.memberUids is list && request.auth.uid in resource.data.memberUids)
-        );
+      allow read: if isAuth();
 
       allow create: if isAuth()
         && request.resource.data.owner == username()
