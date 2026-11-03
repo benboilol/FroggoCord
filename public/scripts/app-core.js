@@ -1297,7 +1297,25 @@ window.db = db;
     window.showRecentChannels = () => {
       const list = getRecentChannels();
       if (!list.length) { appAlert('No recent channels.'); return; }
-      appAlert('Recent channels:\\n\\n' + list.map((c, i) => (i + 1) + '. ' + c).join('\\n'));
+      // Convert raw channel IDs to human-readable names
+      const readable = list.map(ch => {
+        if (typeof ch === 'string' && ch.startsWith('srv_')) {
+          const parts = ch.split('_');
+          // Format: srv_{serverId}_{channelName} - extract channel name (everything after second underscore)
+          if (parts.length >= 3) {
+            const channelName = parts.slice(2).join('_');
+            // Try to find server name
+            let serverName = '';
+            if (typeof servers !== 'undefined' && Array.isArray(servers)) {
+              const srv = servers.find(s => s.id === parts[1]);
+              if (srv) serverName = srv.name;
+            }
+            return serverName ? serverName + ' / #' + channelName : '#' + channelName;
+          }
+        }
+        return ch;
+      });
+      appAlert('Recent channels:\\n\\n' + readable.map((c, i) => (i + 1) + '. ' + c).join('\\n'));
     };
 
     // ---------- Pinned Messages View ----------
