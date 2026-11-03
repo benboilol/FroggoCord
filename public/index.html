@@ -41,6 +41,41 @@
     <div id="ctx-leave" style="color:var(--danger);" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='transparent'" onclick="leaveServerFromCtx()">Leave Server</div>
     </div>
 
+    <div id="channel-ctx">
+    <div id="ctx-add-channel" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='transparent'" onclick="openChannelModalFromCtx()">Add Channel</div>
+    <div id="ctx-add-vc" onmouseover="this.style.background='var(--hover)'" onmouseout="this.style.background='transparent'" onclick="openChannelModalFromCtx('voice')">Add Voice Channel (VC)</div>
+    </div>
+
+    <div id="channel-create-modal" class="modal">
+    <div class="modal-card">
+        <h3>Add Channel</h3>
+        <label class="field-label">Channel Name</label>
+        <input id="cc-name" class="inp2" placeholder="channel-name">
+        <label class="field-label">Channel Type</label>
+        <select id="cc-type" class="inp2">
+            <option value="text">Text Channel</option>
+            <option value="voice">Voice Channel (VC)</option>
+        </select>
+        <label class="field-label">Category (optional)</label>
+        <input id="cc-category" class="inp2" placeholder="Category name">
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+            <input type="checkbox" id="cc-private" style="margin:0;"> Private (restricted access)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+            <input type="checkbox" id="cc-nsfw" style="margin:0;"> NSFW (age-restricted)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin:10px 0;">
+            <input type="checkbox" id="cc-announcement" style="margin:0;"> Announcement channel
+        </label>
+        <label class="field-label">Slow Mode (seconds, 0 for none)</label>
+        <input id="cc-slowmode" class="inp2" type="number" min="0" value="0">
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeChannelModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="createChannelFromModal()">Create Channel</button>
+        </div>
+    </div>
+    </div>
+
     <div id="server-settings-modal" class="modal">
     <div class="modal-card">
         <h3>Server Settings</h3>

@@ -583,7 +583,7 @@ function renderChannelItem(server, channel) {
     : '';
   const voiceIcon = channel.type === 'voice' ? '🔊 ' : '';
   const voiceJoin = channel.type === 'voice' ? `<button style="margin-left:4px;background:transparent;border:none;color:var(--bl);cursor:pointer;font-size:11px;" onclick="joinVoiceChannel('${server.id}','${escHtml(channel.name)}')" title="Join voice">🔊 Join</button>` : '';
-  return `<div class="channel-row"><button class="cb ${active ? 'active' : ''}" onclick="switchServerChannel('${server.id}','${escHtml(channel.name)}')">${channel.private ? '🔒 ' : ''}${channel.announcement ? '📢 ' : ''}${voiceIcon}# ${escHtml(channel.name)}</button>${voiceJoin}${unreadBadge('srv_' + server.id + '_' + channel.name)}${controls}</div>`;
+  return `<div class="channel-row" oncontextmenu="showChannelCtx(event,'${server.id}','${escHtml(channel.name)}')"><button class="cb ${active ? 'active' : ''}" onclick="switchServerChannel('${server.id}','${escHtml(channel.name)}')">${channel.private ? '🔒 ' : ''}${channel.announcement ? '📢 ' : ''}${voiceIcon}# ${escHtml(channel.name)}</button>${voiceJoin}${unreadBadge('srv_' + server.id + '_' + channel.name)}${controls}</div>`;
 }
 
 function showServerCtx(e, sid) {
@@ -1527,7 +1527,7 @@ function switchServer(id) {
     if (uncat.length) chBtns += `<div class="cat">Text Channels</div>` + uncat.map(c => renderChannelItem(s, c)).join('');
     Object.keys(cats).sort().forEach(cat => { chBtns += `<div class="cat" style="margin-top:8px;font-size:11px;color:var(--mut);text-transform:uppercase;">${escHtml(cat)}</div>` + cats[cat].map(c => renderChannelItem(s, c)).join(''); });
     document.querySelector('.ch').innerHTML = chBtns +
-      `<button class="cb muted" onclick="createChannel('${s.id}')" style="color:var(--bl);">+ Add Channel</button>` +
+      `<button class="cb muted" onclick="openChannelModal('${s.id}')" style="color:var(--bl);">+ Add Channel</button>` +
       `<button class="cb muted" onclick="shareInvite('${s.id}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
       `<button class="cb muted" onclick="revokeInvite('${s.id}')" style="color:var(--danger);">Revoke Invite</button>` +
 `<button class="cb muted" onclick="copyInviteLink('${s.id}')" style="color:var(--bl);">Copy Invite</button>`;
@@ -1577,7 +1577,7 @@ window.switchServerChannel = (sid, cname) => {
       if (uncat2.length) chBtns2 += `<div class="cat">Text Channels</div>` + uncat2.map(c => renderChannelItem(s, c)).join('');
       Object.keys(cats2).sort().forEach(cat => { chBtns2 += `<div class="cat" style="margin-top:8px;font-size:11px;color:var(--mut);text-transform:uppercase;">${escHtml(cat)}</div>` + cats2[cat].map(c => renderChannelItem(s, c)).join(''); });
       document.querySelector('.ch').innerHTML = chBtns2 +
-    `<button class="cb muted" onclick="createChannel('${sid}')" style="color:var(--bl);">+ Add Channel</button>` +
+    `<button class="cb muted" onclick="openChannelModal('${sid}')" style="color:var(--bl);">+ Add Channel</button>` +
     `<button class="cb muted" onclick="shareInvite('${sid}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
     `<button class="cb muted" onclick="revokeInvite('${sid}')" style="color:var(--danger);">Revoke Invite</button>` +
 `<button class="cb muted" onclick="copyInviteLink('${sid}')" style="color:var(--bl);">Copy Invite</button>`;
@@ -1841,3 +1841,119 @@ function closeDiscoverModal() {
 
 window.openDiscoverModal = openDiscoverModal;
 window.closeDiscoverModal = closeDiscoverModal;
+
+// ---------- Channel Context Menu ----------
+let ctxChannelServerId = null;
+let ctxChannelName = null;
+
+function showChannelCtx(e, sid, cname) {
+  e.preventDefault();
+  e.stopPropagation();
+  ctxChannelServerId = sid;
+  ctxChannelName = cname;
+  const m = document.getElementById('channel-ctx');
+  if (!m) return;
+  m.dataset.serverId = sid;
+  m.dataset.channelName = cname;
+  m.style.display = 'block';
+  m.style.left = e.clientX + 'px';
+  m.style.top = e.clientY + 'px';
+}
+
+function hideChannelCtx() {
+  const m = document.getElementById('channel-ctx');
+  if (m) m.style.display = 'none';
+}
+
+document.addEventListener('click', hideChannelCtx);
+
+// ---------- Channel Creation Modal ----------
+let currentChannelServerId = null;
+
+function openChannelModal(sid) {
+  currentChannelServerId = sid || ctxChannelServerId;
+  const s = getServerById(currentChannelServerId);
+  if (!s) { appAlert('No server selected.'); return; }
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner && !isAdmin) { appAlert('Only the owner or admins can create channels.'); return; }
+  
+  hideChannelCtx();
+  const modal = document.getElementById('channel-create-modal');
+  if (!modal) return;
+  
+  // Reset form
+  document.getElementById('cc-name').value = '';
+  document.getElementById('cc-type').value = 'text';
+  document.getElementById('cc-category').value = '';
+  document.getElementById('cc-private').checked = false;
+  document.getElementById('cc-nsfw').checked = false;
+  document.getElementById('cc-announcement').checked = false;
+  document.getElementById('cc-slowmode').value = '0';
+  
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => { modal.classList.add('visible'); modal.querySelector('.modal-card').classList.add('visible'); });
+  setTimeout(() => { document.getElementById('cc-name').focus(); }, 200);
+}
+
+function openChannelModalFromCtx(type) {
+  const sid = document.getElementById('channel-ctx')?.dataset?.serverId || ctxChannelServerId;
+  hideChannelCtx();
+  openChannelModal(sid);
+  if (type === 'voice') {
+    setTimeout(() => { document.getElementById('cc-type').value = 'voice'; }, 100);
+  }
+}
+
+function closeChannelModal() {
+  const modal = document.getElementById('channel-create-modal');
+  if (!modal) return;
+  modal.classList.remove('visible');
+  modal.querySelector('.modal-card').classList.remove('visible');
+  setTimeout(() => { modal.style.display = 'none'; }, 180);
+}
+
+async function createChannelFromModal() {
+  const sid = currentChannelServerId;
+  const s = getServerById(sid);
+  if (!s) { appAlert('No server selected.'); return; }
+  
+  const { isOwner, isAdmin } = getServerRole(s);
+  if (!isOwner && !isAdmin) { appAlert('Only the owner or admins can create channels.'); return; }
+  
+  const name = (document.getElementById('cc-name').value || '').trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  if (!name) { appAlert('Please enter a channel name.'); return; }
+  
+  const channels = s.channels || [{ name: 'general', id: 'general' }];
+  if (channels.some(c => c.name === name)) { appAlert('Channel already exists'); return; }
+  
+  const type = document.getElementById('cc-type').value;
+  const isVoice = type === 'voice';
+  const isPrivate = document.getElementById('cc-private').checked;
+  const isNsfw = document.getElementById('cc-nsfw').checked;
+  const category = document.getElementById('cc-category').value.trim();
+  const slowMode = parseInt(document.getElementById('cc-slowmode').value || '0', 10) || 0;
+  const announcement = document.getElementById('cc-announcement').checked;
+  
+  channels.push({ name, id: name, type: isVoice ? 'voice' : 'text', private: isPrivate, nsfw: isNsfw, category: category, topic: '', description: '', slowMode: slowMode, announcement: announcement });
+  
+  try {
+    await updateDoc(doc(db, 'servers', sid), { channels });
+    await loadServers();
+    closeChannelModal();
+    switchServerChannel(sid, name);
+  } catch (e) {
+    console.error('createChannelFromModal failed:', e);
+    appAlert('Failed to create channel: ' + (e.message || String(e)));
+  }
+}
+
+// Export
+window.showChannelCtx = showChannelCtx;
+window.hideChannelCtx = hideChannelCtx;
+window.openChannelModal = openChannelModal;
+window.closeChannelModal = closeChannelModal;
+window.createChannelFromModal = createChannelFromModal;
+window.openChannelModalFromCtx = openChannelModalFromCtx;
+window.ctxChannelServerId = ctxChannelServerId;
+window.ctxChannelName = ctxChannelName;
+

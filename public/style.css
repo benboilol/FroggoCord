@@ -230,6 +230,9 @@ textarea.inp2 { resize: vertical; }
 #sm-result { color: var(--bl); font-size: 12px; margin-top: 12px; word-break: break-all; min-height: 16px; }
 #server-ctx { display: none; position: fixed; background: var(--context-bg); border-radius: 6px; padding: 6px; z-index: 3000; min-width: 170px; box-shadow: 0 8px 24px var(--overlay-shadow); }
 #server-ctx > div { padding: 7px 10px; cursor: pointer; border-radius: 4px; font-size: 14px; }
+#channel-ctx { display: none; position: fixed; background: var(--context-bg); border-radius: 6px; padding: 6px; z-index: 3000; min-width: 170px; box-shadow: 0 8px 24px var(--overlay-shadow); }
+#channel-ctx > div { padding: 7px 10px; cursor: pointer; border-radius: 4px; font-size: 14px; color: var(--txt); }
+#channel-ctx > div:hover { background: var(--hover); }
 #server-settings-modal .modal-card { width: 480px; }
 #ss-admins-section { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--hover); }
 #ss-members { margin-top: 6px; max-height: 180px; overflow-y: auto; }
