@@ -108,11 +108,21 @@ function renderSidebar() {
     h3.textContent = srv ? srv.name : 'Channels';
 
     if (srv) {
-      ch.innerHTML =
-        `<div class="cat">Text Channels</div>` +
-        (srv.channels || [{ name: 'general' }]).map(c => {
-          return `<button class="cb ${chan === ('srv_' + currentServer + '_' + c.name) ? 'active' : ''}" onclick="switchServerChannel('${srv.id}','${escHtml(c.name)}')"># ${escHtml(c.name)}</button>${unreadBadge('srv_' + currentServer + '_' + c.name)}`;
-        }).join('');
+      const visibleChs = (srv.channels || [{ name: 'general' }]).filter(c => !c.private || srv.owner === user || (typeof getServerRole === 'function' && getServerRole(srv).isAdmin));
+      const voiceChs = visibleChs.filter(c => c.type === 'voice');
+      const textChs = visibleChs.filter(c => c.type !== 'voice');
+      const cats = {};
+      const uncat = [];
+      textChs.forEach(c => { if (c.category) { if (!cats[c.category]) cats[c.category] = []; cats[c.category].push(c); } else { uncat.push(c); } });
+      let chBtns = '';
+      if (voiceChs.length) chBtns += `<div class="cat">Voice Channels</div>` + voiceChs.map(c => renderChannelItem(srv, c)).join('');
+      if (uncat.length) chBtns += `<div class="cat">Text Channels</div>` + uncat.map(c => renderChannelItem(srv, c)).join('');
+      Object.keys(cats).sort().forEach(cat => { chBtns += `<div class="cat" style="margin-top:8px;font-size:11px;color:var(--mut);text-transform:uppercase;">${escHtml(cat)}</div>` + cats[cat].map(c => renderChannelItem(srv, c)).join(''); });
+      ch.innerHTML = chBtns +
+        `<button class="cb muted" onclick="openChannelModal('${srv.id}')" style="color:var(--bl);">+ Add Channel</button>` +
+        `<button class="cb muted" onclick="shareInvite('${srv.id}')">Invite Code: ${escHtml(srv.inviteCode)}</button>` +
+        `<button class="cb muted" onclick="revokeInvite('${srv.id}')" style="color:var(--danger);">Revoke Invite</button>` +
+        `<button class="cb muted" onclick="copyInviteLink('${srv.id}')" style="color:var(--bl);">Copy Invite</button>`;
     } else {
       ch.innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`;
     }
@@ -576,7 +586,7 @@ async function manageChannelAccess(sid, cname) {
 }
 
 function renderChannelItem(server, channel) {
-  console.log('renderChannelItem called with channel:', channel.name, 'type:', channel.type);
+
   const active = chan === ('srv_' + server.id + '_' + channel.name);
   const canManage = canManageServer(server);
   const encodedName = encodeURIComponent(channel.name);
@@ -586,7 +596,6 @@ function renderChannelItem(server, channel) {
   const voiceIcon = channel.type === 'voice' ? '🔊 ' : '';
   const voiceJoin = channel.type === 'voice' ? `<button style="margin-left:4px;background:transparent;border:none;color:var(--bl);cursor:pointer;font-size:11px;" onclick="joinVoiceChannel('${server.id}','${escHtml(channel.name)}')" title="Join voice">🔊 Join</button>` : '';
   const result = `<div class="channel-row" oncontextmenu="event.preventDefault();showChannelCtx(event,'${server.id}','${escHtml(channel.name)}');return false;"><button class="cb ${active ? 'active' : ''}" onclick="switchServerChannel('${server.id}','${escHtml(channel.name)}')" oncontextmenu="event.preventDefault();showChannelCtx(event,'${server.id}','${escHtml(channel.name)}');return false;">${channel.private ? '🔒 ' : ''}${channel.announcement ? '📢 ' : ''}${voiceIcon}# ${escHtml(channel.name)}</button>${voiceJoin}${unreadBadge('srv_' + server.id + '_' + channel.name)}${controls}</div>`;
-  console.log('renderChannelItem returning:', result.substring(0, 100));
   return result;
 }
 
@@ -1476,7 +1485,7 @@ window.saveServerSettings = saveServerSettings;
 window.leaveServer = leaveServer;
 
 function switchServer(id) {
-  console.log('switchServer called with id=', id);
+
   if (typeof window.closeMobileNav === 'function') window.closeMobileNav();
   userListSig = '';
   currentServer = id;
@@ -1529,14 +1538,14 @@ function switchServer(id) {
     textChs.forEach(c => { if (c.category) { if (!cats[c.category]) cats[c.category] = []; cats[c.category].push(c); } else { uncat.push(c); } });
     let chBtns = '';
     if (voiceChs.length) chBtns += `<div class="cat">Voice Channels</div>` + voiceChs.map(c => renderChannelItem(s, c)).join('');
-    if (uncat.length) { console.log('switchServer: rendering', uncat.length, 'channels, uncat=', JSON.stringify(uncat.map(c=>c.name))); chBtns += `<div class="cat">Text Channels</div>` + uncat.map(c => renderChannelItem(s, c)).join(''); console.log('switchServer: chBtns after render=', chBtns.substring(0, 200)); }
+    if (uncat.length) chBtns += `<div class="cat">Text Channels</div>` + uncat.map(c => renderChannelItem(s, c)).join(''); console.log('switchServer: chBtns after render=', chBtns.substring(0, 200)); }
     Object.keys(cats).sort().forEach(cat => { chBtns += `<div class="cat" style="margin-top:8px;font-size:11px;color:var(--mut);text-transform:uppercase;">${escHtml(cat)}</div>` + cats[cat].map(c => renderChannelItem(s, c)).join(''); });
     document.querySelector('.ch').innerHTML = chBtns +
       `<button class="cb muted" onclick="openChannelModal('${s.id}')" style="color:var(--bl);">+ Add Channel</button>` +
       `<button class="cb muted" onclick="shareInvite('${s.id}')">Invite Code: ${escHtml(s.inviteCode)}</button>` +
       `<button class="cb muted" onclick="revokeInvite('${s.id}')" style="color:var(--danger);">Revoke Invite</button>` +
 `<button class="cb muted" onclick="copyInviteLink('${s.id}')" style="color:var(--bl);">Copy Invite</button>`;
-  console.log('switchServer: .ch innerHTML set, channel-row count:', document.querySelectorAll('.channel-row').length);
+
   } else {
     chan = null; mode = 'channels'; dmWith = null;
     document.querySelector('.sb h3').textContent = 'Channels';
@@ -1544,12 +1553,12 @@ function switchServer(id) {
     document.querySelector('.ch').innerHTML = `<div class="cat">Servers</div><div class="rs-empty" style="padding:8px;">Select a server from the rail</div>`;
   }
 
-  console.log('switchServer: calling renderServerList, updateHeader, renderUserList');
+
   renderServerList();
-  console.log('switchServer: after renderServerList, channel-row count:', document.querySelectorAll('.channel-row').length);
+
   updateHeader();
   renderUserList();
-  console.log('switchServer: after renderUserList, channel-row count:', document.querySelectorAll('.channel-row').length);
+
 
   if (chan && currentServer) {
     const cname = chan.split('_').slice(2).join('_');
