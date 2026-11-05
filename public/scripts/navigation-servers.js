@@ -322,6 +322,7 @@ async function createServerFromModal() {
     admins: [user],
     adminUids: [uid],
     banned: [],
+    timeouts: {},
     welcomeMessage: '',
     public: false,
     channels: [{ name: 'general', id: 'general' }],
@@ -378,6 +379,7 @@ async function createServer() {
     admins: [user],
     adminUids: [uid],
     banned: [],
+    timeouts: {},
     welcomeMessage: '',
     public: false,
     channels: [{ name: 'general', id: 'general' }],
@@ -1487,6 +1489,11 @@ window.leaveServer = leaveServer;
 function switchServer(id) {
 
   if (typeof window.closeMobileNav === 'function') window.closeMobileNav();
+  const _s = servers.find(x => x.id === id);
+  if (!_s) return;
+  const _uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
+  const _isMember = (_s.members || []).includes(user) || (_uid && Array.isArray(_s.memberUids) && _s.memberUids.includes(_uid));
+  if (!_isMember) { appAlert('You are not a member of this server.'); return; }
   userListSig = '';
   currentServer = id;
   mode = 'channels';
@@ -1576,6 +1583,9 @@ window.switchServerChannel = (sid, cname) => {
   if (typeof window.closeMobileNav === 'function') window.closeMobileNav();
   const s = servers.find(x => x.id === sid);
   if (!s) return;
+  const _uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
+  const _isMember = (s.members || []).includes(user) || (_uid && Array.isArray(s.memberUids) && s.memberUids.includes(_uid));
+  if (!_isMember) { appAlert('You are not a member of this server.'); return; }
 
   currentServer = sid;
   mode = 'channels';

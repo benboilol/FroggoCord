@@ -1014,6 +1014,15 @@ onAuthStateChanged(window.auth, async (u) => {
           const sid = parts[1];
           const cname = decodeURIComponent(parts[2]);
           setTimeout(() => {
+            // Membership check before switching
+            if (typeof servers !== 'undefined' && Array.isArray(servers)) {
+              const srv = servers.find(x => x.id === sid);
+              if (srv) {
+                const uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
+                const isMember = (srv.members || []).includes(user) || (uid && Array.isArray(srv.memberUids) && srv.memberUids.includes(uid));
+                if (!isMember) { window.__skipPush = false; return; }
+              }
+            }
             if (typeof switchServerChannel === 'function') switchServerChannel(sid, cname);
             else if (typeof switchServer === 'function') switchServer(sid);
             window.__skipPush = false;
@@ -1147,9 +1156,18 @@ window.addEventListener('popstate', () => {
   try {
     const parts = window.location.pathname.split('/').filter(Boolean);
     if (parts[0] === 'channel' && parts[1] && parts[2]) {
-      window.__skipPush = true;
       const sid = parts[1];
       const cname = decodeURIComponent(parts[2]);
+      // Membership check before switching
+      if (typeof servers !== 'undefined' && Array.isArray(servers)) {
+        const srv = servers.find(x => x.id === sid);
+        if (srv) {
+          const uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
+          const isMember = (srv.members || []).includes(user) || (uid && Array.isArray(srv.memberUids) && srv.memberUids.includes(uid));
+          if (!isMember) return;
+        }
+      }
+      window.__skipPush = true;
       if (typeof switchServerChannel === 'function') switchServerChannel(sid, cname);
       window.__skipPush = false;
     }

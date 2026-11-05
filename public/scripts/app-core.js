@@ -969,6 +969,87 @@ window.db = db;
         appAlert('Select a channel or direct message before sending.');
         return;
       }
+
+      // Check if user is timed out
+      if (chan && chan.startsWith('srv_')) {
+        const sid = chan.split('_')[1];
+        const s = (typeof servers !== 'undefined') ? servers.find(x => x.id === sid) : null;
+        if (s && s.timeouts && s.timeouts[user]) {
+          const t2 = s.timeouts[user];
+          if (t2.until && Date.now() < t2.until) {
+            const remaining = Math.ceil((t2.until - Date.now()) / 1000);
+            appAlert('You are timed out. Try again in ' + remaining + 's.');
+            input.value = t;
+            return;
+          }
+        }
+      }
+
+      // Handle slash commands
+      if (t.startsWith('/ban ') || t === '/ban') {
+        const parts = t.split(' ');
+        const target = (parts[1] || '').replace(/^@/, '');
+        const reason = parts.slice(2).join(' ') || 'No reason provided';
+        if (!target) { appAlert('Usage: /ban @username [reason]'); return; }
+        if (!chan.startsWith('srv_')) { appAlert('Ban command can only be used in server channels.'); return; }
+        const sid = chan.split('_')[1];
+        const s = (typeof servers !== 'undefined') ? servers.find(x => x.id === sid) : null;
+        if (!s) { appAlert('Server not found.'); return; }
+        const { isOwner, isAdmin } = (typeof getServerRole === 'function') ? getServerRole(s) : { isOwner: false, isAdmin: false };
+        if (!isOwner && !isAdmin) { appAlert('Only admins can ban members.'); return; }
+        if (target === s.owner) { appAlert('Cannot ban the server owner.'); return; }
+        if (!(s.members || []).includes(target)) { appAlert('That user is not a member of this server.'); return; }
+        const members = (s.members || []).filter(m => m !== target);
+        const memberUids = (s.memberUids || []).filter((_, i) => (s.members || [])[i] !== target);
+        const banned = Array.isArray(s.banned) ? [...s.banned, { user: target, reason, bannedAt: serverTimestamp() }] : [{ user: target, reason, bannedAt: serverTimestamp() }];
+        try {
+          await updateDoc(doc(db, 'servers', sid), { members, memberUids, banned });
+          if (typeof logAudit === 'function') logAudit(sid, 'member.ban', target, 'Reason: ' + reason);
+          await loadServers();
+          if (currentServer === sid) switchServer(sid);
+          appAlert(target + ' has been banned.');
+        } catch (e) {
+          appAlert('Failed to ban: ' + (e.message || String(e)));
+        }
+        input.value = '';
+        return;
+      }
+
+      if (t.startsWith('/timeout ') || t === '/timeout') {
+        const parts = t.split(' ');
+        const target = (parts[1] || '').replace(/^@/, '');
+        const duration = parts[2];
+        const reason = parts.slice(3).join(' ') || 'No reason provided';
+        if (!target || !duration) { appAlert('Usage: /timeout @username <duration> [reason]\nDuration: 30s, 5m, 1h, 1d'); return; }
+        if (!chan.startsWith('srv_')) { appAlert('Timeout command can only be used in server channels.'); return; }
+        const sid = chan.split('_')[1];
+        const s = (typeof servers !== 'undefined') ? servers.find(x => x.id === sid) : null;
+        if (!s) { appAlert('Server not found.'); return; }
+        const { isOwner, isAdmin } = (typeof getServerRole === 'function') ? getServerRole(s) : { isOwner: false, isAdmin: false };
+        if (!isOwner && !isAdmin) { appAlert('Only admins can timeout members.'); return; }
+        if (target === s.owner) { appAlert('Cannot timeout the server owner.'); return; }
+        if (!(s.members || []).includes(target)) { appAlert('That user is not a member of this server.'); return; }
+        const match = duration.match(/^(\d+)(s|m|h|d)$/);
+        if (!match) { appAlert('Invalid duration. Use: 30s, 5m, 1h, 1d'); return; }
+        const amount = parseInt(match[1], 10);
+        const unit = match[2];
+        const multipliers = { s: 1000, m: 60000, h: 3600000, d: 86400000 };
+        const timeoutMs = amount * multipliers[unit];
+        const until = Date.now() + timeoutMs;
+        const timeouts = Object.assign({}, s.timeouts || {});
+        timeouts[target] = { until, reason, by: user };
+        try {
+          await updateDoc(doc(db, 'servers', sid), { timeouts });
+          if (typeof logAudit === 'function') logAudit(sid, 'member.timeout', target, 'Duration: ' + duration + ' Reason: ' + reason);
+          await loadServers();
+          appAlert(target + ' has been timed out for ' + duration + '.');
+        } catch (e) {
+          appAlert('Failed to timeout: ' + (e.message || String(e)));
+        }
+        input.value = '';
+        return;
+      }
+
       // Slow mode check
       if (chan && chan.startsWith('srv_')) {
         const parts = chan.split('_');
