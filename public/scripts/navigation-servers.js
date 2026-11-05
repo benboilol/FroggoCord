@@ -593,7 +593,7 @@ function renderChannelItem(server, channel) {
   const controls = canManage
     ? `<span class="channel-controls" onclick="event.stopPropagation()"><button type="button" onclick="channelAction('${server.id}','${encodedName}','rename')" title="Rename channel">✎</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','access')" title="Manage channel access">🔒</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','up')" title="Move up">↑</button><button type="button" onclick="channelAction('${server.id}','${encodedName}','down')" title="Move down">↓</button>${channel.name !== 'general' ? `<button type="button" onclick="channelAction('${server.id}','${encodedName}','delete')" title="Delete channel">×</button>` : ''}</span>`
     : '';
-  const voiceIcon = channel.type === 'voice' ? '🔊 ' : '';
+  const voiceIcon = '';
   const voiceJoin = channel.type === 'voice' ? `<button style="margin-left:4px;background:transparent;border:none;color:var(--bl);cursor:pointer;font-size:11px;" onclick="joinVoiceChannel('${server.id}','${escHtml(channel.name)}')" title="Join voice">🔊 Join</button>` : '';
   const result = `<div class="channel-row" oncontextmenu="event.preventDefault();showChannelCtx(event,'${server.id}','${escHtml(channel.name)}');return false;"><button class="cb ${active ? 'active' : ''}" onclick="switchServerChannel('${server.id}','${escHtml(channel.name)}')" oncontextmenu="event.preventDefault();showChannelCtx(event,'${server.id}','${escHtml(channel.name)}');return false;">${channel.private ? '🔒 ' : ''}${channel.announcement ? '📢 ' : ''}${voiceIcon}# ${escHtml(channel.name)}</button>${voiceJoin}${unreadBadge('srv_' + server.id + '_' + channel.name)}${controls}</div>`;
   return result;
