@@ -810,7 +810,13 @@ function listen() {
 }
 
 const atPopup = document.getElementById('at-popup');
+const cmdPopup = document.getElementById('cmd-popup');
 const chatInput = document.getElementById('chat-input');
+
+const CMD_LIST = [
+  { name: '/ban', desc: '@user [reason] — Ban a member (admin+)' },
+  { name: '/timeout', desc: '@user <duration> [reason] — Timeout a member (admin+)' },
+];
 
 chatInput.addEventListener('blur', () => { if (user) setTyping(false); });
 chatInput.addEventListener('input', (e) => {
@@ -819,11 +825,35 @@ chatInput.addEventListener('input', (e) => {
   if (user && chan) {
     if (val.trim()) { setTyping(true); } else { setTyping(false); }
   }
+  // Command tooltip
+  if (val.startsWith('/') && !val.includes(' ')) {
+    const filtered = CMD_LIST.filter(c => c.name.startsWith(val.toLowerCase()));
+    if (filtered.length) {
+      cmdPopup.innerHTML = filtered.map(c => `<div style="cursor:pointer;padding:6px 12px;border-radius:4px;color:var(--white);" data-cmd="${escHtml(c.name)}" onmouseover="this.style.background='var(--bl)'" onmouseout="this.style.background='transparent'"><span class="cmd-name">${escHtml(c.name)}</span><span class="cmd-desc">${escHtml(c.desc)}</span></div>`).join('');
+      cmdPopup.style.display = 'flex';
+    } else {
+      cmdPopup.style.display = 'none';
+    }
+  } else if (val.startsWith('/') && val.includes(' ')) {
+    cmdPopup.style.display = 'none';
+  } else {
+    cmdPopup.style.display = 'none';
+  }
+  // @ mention popup
   if (at !== -1 && at === val.length - 1) {
     const uList = knownUsers();
     atPopup.innerHTML = ['everyone', ...uList].map(u => `<div style="cursor:pointer;padding:6px 12px;border-radius:4px;color:var(--white);" data-u="${escHtml(u)}" onmouseover="this.style.background='var(--bl)'" onmouseout="this.style.background='transparent'">@${escHtml(u)}</div>`).join('');
     atPopup.style.display = 'flex';
   } else if (!val.includes('@') || val.endsWith(' ')) { atPopup.style.display = 'none'; }
+});
+
+cmdPopup.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-cmd]');
+  if (el) {
+    chatInput.value = el.dataset.cmd + ' ';
+    cmdPopup.style.display = 'none';
+    chatInput.focus();
+  }
 });
 
 atPopup.addEventListener('click', (e) => {
@@ -842,7 +872,12 @@ window.insertAt = (u) => {
 window.handleKeyPress = (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
+    if (cmdPopup) cmdPopup.style.display = 'none';
     window.sendMessage();
+  }
+  if (e.key === 'Escape') {
+    if (cmdPopup) cmdPopup.style.display = 'none';
+    if (atPopup) atPopup.style.display = 'none';
   }
 };
 
